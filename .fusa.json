@@ -1,0 +1,10 @@
+{
+  "project": "cpp-FuSa",
+  "version": "0.4.0",
+  "standard": "iso26262",
+  "asil": "B",
+  "language": "cpp17",
+  "strict": false,
+  "source_dirs": ["src", "include"],
+  "exclude_patterns": ["build/", "_deps/"]
+}

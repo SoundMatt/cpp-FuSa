@@ -1,0 +1,72 @@
+[
+  {
+    "id": "REQ-RT001",
+    "title": "Watchdog timer",
+    "description": "A RAII watchdog timer shall be provided to detect task hangs in safety-critical loops.",
+    "standard_ref": "ISO 26262-6 §7.4.10",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-RT002",
+    "title": "Safe-state transition",
+    "description": "The system shall provide a scope-guard mechanism to ensure safe-state is engaged on unexpected exit paths.",
+    "standard_ref": "ISO 26262-4 §7.4.3",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-RT003",
+    "title": "Heartbeat monitor",
+    "description": "A heartbeat monitor shall be provided to detect liveness failures in periodic tasks.",
+    "standard_ref": "IEC 61508-2 §7.4.2.3",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-LINT001",
+    "title": "No raw new/delete",
+    "description": "Smart pointers shall be used instead of raw new/delete to prevent memory leaks.",
+    "standard_ref": "MISRA C++:2023 A18-5-2",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-LINT002",
+    "title": "No goto",
+    "description": "goto statements are prohibited to maintain structured control flow.",
+    "standard_ref": "MISRA C++:2023 A6-6-1",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-LINT003",
+    "title": "reinterpret_cast justification",
+    "description": "All reinterpret_cast uses shall be justified with a fusa:unsafe annotation.",
+    "standard_ref": "MISRA C++:2023 A5-2-4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-LINT004",
+    "title": "Safe-state before abort",
+    "description": "abort()/exit() calls shall be preceded by a safe-state transition.",
+    "standard_ref": "MISRA C++:2023 A15-5-3",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-ANAL001",
+    "title": "Thread-safe global access",
+    "description": "All writes to shared global state shall be protected by a synchronisation primitive.",
+    "standard_ref": "AUTOSAR C++14 A3-3-2",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-ANAL002",
+    "title": "No unbounded loops",
+    "description": "All loops shall have a deterministic termination condition or a fusa:bounded annotation.",
+    "standard_ref": "JSF++ 197",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-CFG001",
+    "title": "Project configuration",
+    "description": "A .fusa.json configuration file shall exist at the project root.",
+    "standard_ref": "Internal",
+    "severity": "info"
+  }
+]
