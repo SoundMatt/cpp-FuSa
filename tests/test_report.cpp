@@ -1,3 +1,4 @@
+//fusa:test REQ-RPT001 REQ-RPT002 REQ-RPT003 REQ-RPT004 REQ-RPT005
 #include <catch2/catch_all.hpp>
 #include "report/report.hpp"
 

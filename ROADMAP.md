@@ -98,30 +98,36 @@ Artifacts match go-FuSa filenames exactly.
 
 ---
 
-## v0.6 — Extended Coverage
+## v0.6 — Full Go-FuSa v0.21 Parity ✅
 
-**Goal:** Deeper analysis and coverage tooling.
+**Goal:** Feature parity with go-FuSa v0.21 across all major categories.
 
-- LCOV/gcov structural coverage parser (statement, branch, MC/DC)
-- `cpfusa coverage` — DO-178C §6.4.4 coverage report
-- `cpfusa vuln` — OSV API + CMake dependency vulnerability scan
-- `cpfusa boundary` — Component boundary diagram (Mermaid + DOT)
-- `cpfusa fix` — Auto-fix guidance with code patterns
-
-Deliverables: `cpfusa coverage`, `cpfusa vuln`, `cpfusa boundary`, `cpfusa fix`
+- `cpfusa hara` — HARA management (show/init/asil), ISO 26262-3 Table 4 ASIL determination → `.fusa-hara.json`
+- `cpfusa iso26262` — ISO 26262 Part 6 gap assessment → `iso26262-gap-report.json`
+- `cpfusa iec61508` — IEC 61508 Parts 1-3 gap assessment → `iec61508-gap-report.json`
+- `cpfusa boundary` — Component boundary diagram → `boundary.mermaid` + `boundary.dot`
+- `cpfusa metrics` — Safety metrics time series → `.fusa-metrics.json`
+- `cpfusa vuln` — CMake dependency vulnerability scan → `vuln.json`
+- `cpfusa coverage` — LCOV structural coverage (DO-178C) → `coverage-report.json`
+- `cpfusa disposition` — Finding disposition lifecycle (add/list/show) → `.fusa-dispositions.json`
+- `cpfusa impact` — git diff + req mapping impact analysis
+- `cpfusa do178` — DO-178C Annex A objectives → `do178-gap-report.json`
+- `cpfusa sas` — Software Accomplishment Summary → `sas.json` + `sas.md`
+- `cpfusa sci` — Software Configuration Index with SHA-256 → `sci.json`
+- `cpfusa pr` — Problem Report log → `.fusa-problems.json`
+- `cpfusa fix` — Fix guidance catalog with before/after code examples
+- `safety-case.md` added as third safety-case artifact
+- Docker image + `docker-compose.yml` + `docker-publish.yml` workflow
 
 ---
 
-## v0.7 — DO-178C + SAS + SCI
+## v0.7 — DO-178C + IEC 62443 + SLSA
 
-**Goal:** Complete DO-178C process support.
+**Goal:** Deeper process and supply-chain security coverage.
 
-- Annex A gap report (38 objectives, Tables A-1 to A-11)
-- Software Accomplishment Summary (SAS) — 20 evidence items
-- Software Configuration Index (SCI) — SHA-256 lifecycle data
-- Problem Report log (CRUD + PR001 engine rule)
-
-Deliverables: `cpfusa do178`, `cpfusa sas`, `cpfusa sci`, `cpfusa pr`
+- Full DO-178C Annex A — all 38 objectives (Tables A-1 to A-11)
+- IEC 62443 Security Level compliance checks
+- SLSA L2/L3 supply-chain provenance checks
 
 ---
 

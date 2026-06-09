@@ -46,6 +46,7 @@ bool is_excluded(const fs::path& p, const config::ProjectConfig& cfg) {
     return false;
 }
 
+//fusa:req REQ-CYBER001 REQ-CYBER002 REQ-CYBER003 REQ-CYBER004 REQ-CYBER005 REQ-CYBER006 REQ-CYBER007 REQ-CYBER008 REQ-CYBER009 REQ-CYBER010
 std::vector<Rule> build_rules() {
     return {
         {
@@ -68,9 +69,9 @@ std::vector<Rule> build_rules() {
         },
         {
             "CYBER004", "CWE-242", Severity::WARNING,
-            std::regex(R"re(\breinterpret_cast\s*<)re"),
-            "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
-            "Avoid reinterpret_cast; use static_cast with explicit range checks"
+            std::regex(R"re(\breinterpret_cast\s*<)re"), // fusa:suppress LINT003
+            "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3", // fusa:suppress LINT003
+            "Avoid reinterpret_cast; use static_cast with explicit range checks" // fusa:suppress LINT003
         },
         {
             "CYBER005", "CWE-78", Severity::ERROR,

@@ -145,6 +145,7 @@ std::vector<Finding> run_cppcheck(const fs::path& dir, const std::string& bin) {
 // ── Own analysis passes ─────────────────────────────────────────────────────
 
 // ANAL003 – Write to global variable in function without mutex/lock_guard
+//fusa:req REQ-ANAL001 REQ-ANAL003
 std::vector<Finding> check_thread_unsafe_global(const fs::path& dir) {
     std::vector<Finding> out;
     // Heuristic: assignment to a known global pattern without adjacent lock.
@@ -173,6 +174,7 @@ std::vector<Finding> check_thread_unsafe_global(const fs::path& dir) {
 }
 
 // ANAL004 – Raw pointer arithmetic
+//fusa:req REQ-ANAL002 REQ-ANAL004
 std::vector<Finding> check_raw_ptr_arithmetic(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\w+\s*[\+\-]\s*\d+\s*(?!=)|\w+\[\w+[\+\-]\w+\])");
@@ -194,6 +196,7 @@ std::vector<Finding> check_raw_ptr_arithmetic(const fs::path& dir) {
 }
 
 // ANAL005 – Loop with no obvious bound or counter
+//fusa:req REQ-ANAL005
 std::vector<Finding> check_unbounded_loop(const fs::path& dir) {
     std::vector<Finding> out;
     // Flag `while (true)` and `for (;;)` without a nearby break/return.

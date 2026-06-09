@@ -4,6 +4,7 @@
 
 namespace cpfusa::engine {
 
+//fusa:req REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004
 void Engine::register_rule(Rule rule) {
     rules_.push_back(std::move(rule));
 }

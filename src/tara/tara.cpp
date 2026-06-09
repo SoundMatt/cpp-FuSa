@@ -62,7 +62,7 @@ std::vector<ThreatScenario> default_scenarios(const config::ProjectConfig& cfg) 
 
 } // namespace
 
-//fusa:req REQ-TARA001
+//fusa:req REQ-TARA001 REQ-TARA002 REQ-TARA003 REQ-TARA004 REQ-TARA005
 Result<TARAReport> generate(const fs::path& /*dir*/, const config::ProjectConfig& cfg) {
     TARAReport rpt;
     rpt.generated_at = now_iso8601();

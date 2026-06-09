@@ -82,7 +82,7 @@ std::vector<Declaration> scan_declarations(const fs::path& dir,
 
 } // namespace
 
-//fusa:req REQ-FMEA001
+//fusa:req REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006
 Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cfg) {
     FMEAReport rpt;
     rpt.generated_at = now_iso8601();
@@ -126,7 +126,7 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
     return rpt;
 }
 
-//fusa:req REQ-FMEA002
+//fusa:req REQ-FMEA002 REQ-FMEA004
 Result<std::monostate> write(const fs::path& dir, const FMEAReport& rpt) {
     try {
         // fmea.json

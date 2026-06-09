@@ -1,3 +1,4 @@
+//fusa:test REQ-LINT001 REQ-LINT002 REQ-LINT003 REQ-LINT004 REQ-LINT005 REQ-LINT006 REQ-LINT007 REQ-LINT008 REQ-LINT009 REQ-LINT010
 #include <catch2/catch_all.hpp>
 #include "lint/lint.hpp"
 #include "testutil/testutil.hpp"

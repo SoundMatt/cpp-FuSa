@@ -6,6 +6,40 @@ add_executable(cpfusa_tests
     test_trace.cpp
     test_report.cpp
     test_runtime.cpp
+    test_analyze.cpp
+    test_cyber.cpp
+    test_qualify.cpp
+    test_badge.cpp
+    test_diff.cpp
+    test_sign.cpp
+    test_tara.cpp
+    test_fmea.cpp
+    test_safety_case.cpp
+    test_release.cpp
+    test_auditpack.cpp
+    test_hooks.cpp
+    test_verify.cpp
+    test_vuln.cpp
+    test_boundary.cpp
+    test_nf.cpp
+    test_cli.cpp
+    test_misra.cpp
+    test_coupling.cpp
+    test_coverage.cpp
+    test_disposition.cpp
+    test_do178.cpp
+    test_fix.cpp
+    test_hara.cpp
+    test_iec61508.cpp
+    test_impact.cpp
+    test_iso26262.cpp
+    test_metrics.cpp
+    test_pr.cpp
+    test_sas.cpp
+    test_sci.cpp
+    test_template.cpp
+    test_iec62443.cpp
+    test_slsa.cpp
 )
 
 target_include_directories(cpfusa_tests

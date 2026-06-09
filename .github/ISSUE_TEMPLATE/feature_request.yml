@@ -1,0 +1,56 @@
+name: Feature Request
+description: Propose a new feature or enhancement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement to cpp-FuSa.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of cpfusa does this affect?
+      options:
+        - CLI / subcommand
+        - Rule engine (FUSA rules)
+        - Lint rules (MISRA/AUTOSAR)
+        - Traceability (trace)
+        - Report (text/JSON/HTML/SARIF)
+        - Cyber (TARA/FMEA/cyber)
+        - Safety documents (sas/sci/do178/iso26262/iec61508)
+        - Runtime (watchdog/safe-state/heartbeat)
+        - CI / toolchain integration
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What safety-engineering task is currently painful or impossible?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature you'd like to see.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative approaches you've thought about?
+
+  - type: input
+    id: standard
+    attributes:
+      label: Relevant standard (if applicable)
+      placeholder: "e.g. ISO 26262 Part 6, IEC 61508 Part 3"

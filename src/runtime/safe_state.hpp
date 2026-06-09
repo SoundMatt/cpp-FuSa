@@ -21,6 +21,7 @@ public:
         : on_fault_(std::move(on_fault)), armed_(true) {}
 
     // Disarm — safe path taken, no safe-state needed.
+    //fusa:req REQ-RT002 REQ-RT005
     void commit() noexcept { armed_ = false; }
 
     ~SafeStateGuard() {

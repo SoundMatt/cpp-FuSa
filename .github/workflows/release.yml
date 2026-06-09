@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            artifact: cpfusa-linux-x86_64
+            ext: ''
+          - os: macos-14
+            artifact: cpfusa-macos-arm64
+            ext: ''
+          - os: windows-2022
+            artifact: cpfusa-windows-x86_64
+            ext: '.exe'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y cmake ninja-build
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j1
+
+      - name: Stage binary
+        shell: bash
+        run: |
+          mkdir dist
+          cp build/cpfusa${{ matrix.ext }} dist/${{ matrix.artifact }}${{ matrix.ext }}
+
+      - name: SHA256 checksum
+        shell: bash
+        run: |
+          cd dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            certutil -hashfile ${{ matrix.artifact }}${{ matrix.ext }} SHA256 \
+              | grep -v "^SHA" | tr -d ' \r' \
+              > ${{ matrix.artifact }}${{ matrix.ext }}.sha256
+          else
+            shasum -a 256 ${{ matrix.artifact }}${{ matrix.ext }} \
+              > ${{ matrix.artifact }}${{ matrix.ext }}.sha256
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-22.04
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: List dist
+        run: ls -lh dist/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

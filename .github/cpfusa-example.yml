@@ -1,0 +1,76 @@
+# cpfusa-example.yml — Example GitHub Actions workflow integrating cpfusa
+# into a downstream C++ project.
+#
+# Copy this file into your own .github/workflows/ directory and adjust
+# the CPFUSA_VERSION and fusa-config inputs for your project.
+
+name: Safety Check (cpfusa)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CPFUSA_VERSION: "0.6.0"
+
+jobs:
+  safety-check:
+    name: cpfusa safety gate
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download cpfusa binary
+        run: |
+          curl -sSL \
+            "https://github.com/SoundMatt/cpp-FuSa/releases/download/v${CPFUSA_VERSION}/cpfusa-linux-x86_64" \
+            -o cpfusa
+          chmod +x cpfusa
+
+      - name: Verify checksum
+        run: |
+          curl -sSL \
+            "https://github.com/SoundMatt/cpp-FuSa/releases/download/v${CPFUSA_VERSION}/cpfusa-linux-x86_64.sha256" \
+            -o cpfusa.sha256
+          sha256sum --check cpfusa.sha256
+
+      - name: cpfusa version
+        run: ./cpfusa version
+
+      - name: Static analysis check
+        run: ./cpfusa check --dir . --strict
+
+      - name: MISRA / AUTOSAR lint
+        run: ./cpfusa lint --dir .
+
+      - name: Requirements traceability
+        run: ./cpfusa trace --dir . --req-coverage 80
+
+      - name: Cyber threat assessment
+        run: ./cpfusa cyber --dir . || true
+
+      - name: MISRA C++:2023 mapping report
+        run: ./cpfusa misra --output misra-report.json
+
+      - name: SLSA provenance check
+        run: ./cpfusa slsa --level L1 --dir .
+
+      - name: Generate SARIF report
+        run: ./cpfusa check --format sarif --output cpfusa.sarif --dir . || true
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cpfusa.sarif
+
+      - name: Upload evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-evidence
+          path: |
+            misra-report.json
+            cyber-report.json
+            cpfusa.sarif

@@ -12,6 +12,7 @@ namespace cpfusa::safety_case {
 
 constexpr std::string_view SafetyCaseJson    = "safety-case.json";
 constexpr std::string_view SafetyCaseMermaid = "safety-case.mermaid";
+constexpr std::string_view SafetyCaseMd      = "safety-case.md";
 
 struct GSNNode {
     std::string id;

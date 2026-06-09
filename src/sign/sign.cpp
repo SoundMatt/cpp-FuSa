@@ -134,7 +134,7 @@ std::string hmac_file(const fs::path& target, const uint8_t key[32]) {
     std::ifstream f(target, std::ios::binary);
     uint8_t buf[4096];
     while (f) {
-        f.read(reinterpret_cast<char*>(buf), sizeof(buf));
+        f.read(reinterpret_cast<char*>(buf), sizeof(buf)); // fusa:unsafe SHA-256 FIPS 180-4 binary read
         auto n = static_cast<size_t>(f.gcount());
         sha_update(h, buf, n);
     }
@@ -187,7 +187,7 @@ Result<std::monostate> sign_file(const fs::path& target, const fs::path& key_pat
     return std::monostate{};
 }
 
-//fusa:req REQ-SIGN003
+//fusa:req REQ-SIGN003 REQ-SIGN004 REQ-SIGN005
 Result<bool> verify_file(const fs::path& target, const fs::path& key_path) {
     if (!fs::exists(target))
         return std::string("sign: target not found: ") + target.string();

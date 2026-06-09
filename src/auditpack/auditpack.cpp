@@ -76,7 +76,7 @@ static std::string sha256_file(const fs::path& p) {
     std::ifstream f(p, std::ios::binary);
     uint8_t tmp2[4096];
     while (f) {
-        f.read(reinterpret_cast<char*>(tmp2), sizeof(tmp2));
+        f.read(reinterpret_cast<char*>(tmp2), sizeof(tmp2)); // fusa:unsafe SHA-256 FIPS 180-4 binary read
         auto n = static_cast<size_t>(f.gcount());
         for (size_t i=0;i<n;++i){ctx.buf[ctx.buflen++]=tmp2[i];if(ctx.buflen==64){a3_transform(ctx.state,ctx.buf);ctx.count+=512;ctx.buflen=0;}}
     }
@@ -95,8 +95,7 @@ static std::string sha256_file(const fs::path& p) {
 
 } // namespace
 
-//fusa:req REQ-AUDIT001
-//fusa:req REQ-AUDIT002
+//fusa:req REQ-AUDIT001 REQ-AUDIT002 REQ-AUDIT003 REQ-AUDIT004
 Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_path) {
     AuditManifest manifest;
     manifest.format       = "cpp-FuSa Audit Pack v1";

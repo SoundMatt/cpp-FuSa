@@ -1,0 +1,34 @@
+name: DCO
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dco-check:
+    name: DCO — Signed-off-by check
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check Signed-off-by trailer on all PR commits
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+          MISSING=0
+          while IFS= read -r commit; do
+            msg=$(git log -1 --format='%B' "$commit")
+            if ! echo "$msg" | grep -qE '^Signed-off-by: .+ <.+@.+>'; then
+              echo "::error::Commit $commit is missing Signed-off-by trailer"
+              MISSING=$((MISSING + 1))
+            fi
+          done < <(git rev-list "$BASE..$HEAD")
+          if [ "$MISSING" -gt 0 ]; then
+            echo "::error::$MISSING commit(s) missing 'Signed-off-by: Name <email>' trailer."
+            echo "Add with: git commit --amend --signoff"
+            exit 1
+          fi
+          echo "All commits have Signed-off-by. DCO check passed."

@@ -20,6 +20,7 @@ namespace cpfusa::runtime {
 //       wd.kick();
 //       process();
 //   }
+//fusa:req REQ-RT001 REQ-RT004
 class Watchdog {
 public:
     using Handler  = std::function<void()>;

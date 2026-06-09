@@ -1,0 +1,17 @@
+# Global owner — Matt Jones is required reviewer on every PR.
+*                  @SoundMatt
+
+# Safety-critical source — belt-and-suspenders for core modules.
+src/engine/        @SoundMatt
+src/lint/          @SoundMatt
+src/runtime/       @SoundMatt
+src/sign/          @SoundMatt
+src/verify/        @SoundMatt
+
+# CI and release pipelines — changes here affect all CI runs.
+.github/           @SoundMatt
+CMakeLists.txt     @SoundMatt
+cmake/             @SoundMatt
+
+# Requirements registry — any change must be reviewed.
+.fusa-reqs.json    @SoundMatt

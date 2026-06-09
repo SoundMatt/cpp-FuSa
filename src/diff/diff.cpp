@@ -47,7 +47,7 @@ Result<std::vector<DiffFinding>> load_findings(const std::filesystem::path& repo
     }
 }
 
-//fusa:req REQ-DIFF001
+//fusa:req REQ-DIFF001 REQ-DIFF004
 Diff compare(const std::vector<DiffFinding>& baseline,
              const std::vector<DiffFinding>& current) {
     std::unordered_map<std::string, DiffFinding> base_set, cur_set;

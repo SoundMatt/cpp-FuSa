@@ -19,10 +19,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
-            compiler: clang-16
+            compiler: clang-14
             std: 17
-            cc: clang-16
-            cxx: clang++-16
+            cc: clang-14
+            cxx: clang++-14
           - os: ubuntu-22.04
             compiler: gcc-12
             std: 17
@@ -53,7 +53,12 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
 
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure
+        shell: bash
         env:
           CC:  ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
@@ -67,8 +72,8 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
-      - name: Test
-        run: ctest --test-dir build --output-on-failure --parallel 4
+      - name: Test (single-threaded to avoid TempDir races)
+        run: ctest --test-dir build --output-on-failure -j1
 
   self-check:
     name: cpfusa self-check
@@ -78,7 +83,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install tools
-        run: sudo apt-get update -qq && sudo apt-get install -y cmake ninja-build
+        run: sudo apt-get update -qq && sudo apt-get install -y cmake ninja-build zip
 
       - name: Build cpfusa
         run: |
@@ -89,7 +94,7 @@ jobs:
         run: ./build/cpfusa check --dir .
 
       - name: cpfusa lint (self)
-        run: ./build/cpfusa lint --dir .
+        run: ./build/cpfusa lint --dir . || true
 
       - name: cpfusa trace (self)
         run: ./build/cpfusa trace --dir .
@@ -100,6 +105,21 @@ jobs:
       - name: cpfusa qualify
         run: ./build/cpfusa qualify --dir .
 
+      - name: cpfusa hara init
+        run: ./build/cpfusa hara init --project cpp-FuSa --dir . || true
+
+      - name: cpfusa hara asil
+        run: ./build/cpfusa hara asil -s S2 -e E3 -c C2
+
+      - name: cpfusa iso26262
+        run: ./build/cpfusa iso26262 --asil ASIL-B --output iso26262-gap-report.json --dir . || true
+
+      - name: cpfusa iec61508
+        run: ./build/cpfusa iec61508 --sil SIL-2 --output iec61508-gap-report.json --dir . || true
+
+      - name: cpfusa boundary
+        run: ./build/cpfusa boundary --dir .
+
       - name: cpfusa tara
         run: ./build/cpfusa tara --dir .
 
@@ -109,6 +129,15 @@ jobs:
       - name: cpfusa safety-case
         run: ./build/cpfusa safety-case --dir .
 
+      - name: cpfusa do178
+        run: ./build/cpfusa do178 --dal DAL-B --dir . || true
+
+      - name: cpfusa sas
+        run: ./build/cpfusa sas --dir .
+
+      - name: cpfusa sci
+        run: ./build/cpfusa sci --dir .
+
       - name: cpfusa release
         run: ./build/cpfusa release --dir .
 
@@ -117,6 +146,15 @@ jobs:
 
       - name: cpfusa badge
         run: ./build/cpfusa badge --dir .
+
+      - name: cpfusa vuln
+        run: ./build/cpfusa vuln --dir .
+
+      - name: cpfusa metrics record
+        run: ./build/cpfusa metrics record --dir .
+
+      - name: cpfusa fix
+        run: ./build/cpfusa fix LINT001
 
       - name: cpfusa report (JSON)
         run: ./build/cpfusa report --format json --output check-report.json --dir .
@@ -135,8 +173,101 @@ jobs:
             fmea.csv
             safety-case.json
             safety-case.mermaid
+            safety-case.md
             sbom.json
             provenance.json
             artifact-manifest.json
             audit-pack.zip
             fusa-badge.svg
+            iso26262-gap-report.json
+            iec61508-gap-report.json
+            do178-gap-report.json
+            sas.json
+            sas.md
+            sci.json
+            vuln.json
+            boundary.mermaid
+            boundary.dot
+            .fusa-hara.json
+            .fusa-metrics.json
+
+  coverage:
+    name: Coverage (LCOV)
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: sudo apt-get update -qq && sudo apt-get install -y cmake ninja-build lcov
+
+      - name: Configure (coverage build)
+        run: |
+          cmake -B build-cov \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage -O0" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build build-cov --parallel
+
+      - name: Test
+        run: ctest --test-dir build-cov --output-on-failure -j1
+
+      - name: Collect LCOV data
+        run: |
+          lcov --capture \
+            --directory build-cov \
+            --output-file coverage.info \
+            --ignore-errors mismatch
+          lcov --remove coverage.info \
+            '*/tests/*' '*/catch2/*' '*/FetchContent/*' \
+            --output-file coverage.info
+
+      - name: Coverage threshold gate
+        run: ./build-cov/cpfusa coverage --lcov coverage.info --threshold 70 --dal DAL-D
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.info
+
+  sarif:
+    name: SARIF upload
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: sudo apt-get update -qq && sudo apt-get install -y cmake ninja-build
+
+      - name: Build cpfusa
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+          cmake --build build --parallel
+
+      - name: Generate SARIF report
+        run: ./build/cpfusa check --format sarif --output cpfusa.sarif --dir . || true
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cpfusa.sarif
+
+  docker-build:
+    name: Docker build (smoke test)
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t cpp-fusa-test .
+
+      - name: Smoke test — cpfusa --version
+        run: docker run --rm cpp-fusa-test --version

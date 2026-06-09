@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cpfusa
-    VERSION 0.5.0
+    VERSION 0.6.0
     DESCRIPTION "C++ Functional Safety Toolkit"
     HOMEPAGE_URL "https://github.com/SoundMatt/cpp-FuSa"
     LANGUAGES CXX
@@ -53,6 +53,24 @@ add_library(cpfusa_lib STATIC
     src/tara/tara.cpp
     src/fmea/fmea.cpp
     src/safety_case/safety_case.cpp
+    src/hara/hara.cpp
+    src/iso26262/iso26262.cpp
+    src/iec61508/iec61508.cpp
+    src/boundary/boundary.cpp
+    src/metrics/metrics.cpp
+    src/vuln/vuln.cpp
+    src/coverage/coverage.cpp
+    src/disposition/disposition.cpp
+    src/impact/impact.cpp
+    src/do178/do178.cpp
+    src/sas/sas.cpp
+    src/sci/sci.cpp
+    src/pr/pr.cpp
+    src/fix/fix.cpp
+    src/misra/misra.cpp
+    src/coupling/coupling.cpp
+    src/iec62443/iec62443.cpp
+    src/slsa/slsa.cpp
     src/cmd/cli.cpp
 )
 

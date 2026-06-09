@@ -1,3 +1,4 @@
+//fusa:test REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005 REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004
 #include <catch2/catch_all.hpp>
 #include "engine/engine.hpp"
 #include "engine/rules.hpp"

@@ -18,6 +18,7 @@ constexpr std::string_view ReqsFile = ".fusa-reqs.json";
 
 } // namespace
 
+//fusa:req REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007
 Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
     auto path = dir / ReqsFile;
     if (!fs::exists(path)) {
@@ -47,8 +48,10 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
     std::vector<Annotation> out;
     if (!fs::exists(dir)) return out;
     static const std::regex ext_re(R"(\.(cpp|hpp|h|hxx|cxx|cc|c\+\+)$)");
-    static const std::regex req_re(R"(//\s*fusa:req\s+(\S+))");
-    static const std::regex test_re(R"(//\s*fusa:test\s+(\S+))");
+    // req_re / test_re: first match anchors to tag, then id_re finds each REQ-xxx token
+    static const std::regex req_tag_re(R"(//\s*fusa:req\s+)");
+    static const std::regex test_tag_re(R"(//\s*fusa:test\s+)");
+    static const std::regex id_re(R"(REQ-\S+)");
     for (const auto& entry : fs::recursive_directory_iterator(
              dir, fs::directory_options::skip_permission_denied)) {
         if (!entry.is_regular_file()) continue;
@@ -58,12 +61,13 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
         int n = 0;
         while (std::getline(f, line)) {
             ++n;
-            std::smatch m;
-            if (std::regex_search(line, m, req_re) && m.size() > 1) {
-                out.push_back({m[1].str(), entry.path().string(), n, false});
-            }
-            if (std::regex_search(line, m, test_re) && m.size() > 1) {
-                out.push_back({m[1].str(), entry.path().string(), n, true});
+            bool is_req  = std::regex_search(line, req_tag_re);
+            bool is_test = std::regex_search(line, test_tag_re);
+            if (!is_req && !is_test) continue;
+            // Collect all REQ-xxx tokens on this line.
+            for (std::sregex_iterator it(line.begin(), line.end(), id_re), end;
+                 it != end; ++it) {
+                out.push_back({(*it)[0].str(), entry.path().string(), n, is_test});
             }
         }
     }

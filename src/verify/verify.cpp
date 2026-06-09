@@ -77,7 +77,7 @@ std::vector<TestResult> parse_ctest_output(const std::string& output) {
 
 } // namespace
 
-//fusa:req REQ-VERIFY001
+//fusa:req REQ-VERIFY001 REQ-VERIFY003 REQ-VERIFY004 REQ-VERIFY005
 Result<EvidenceBundle> run_ctest(const fs::path& project_dir,
                                  const config::ProjectConfig& cfg) {
     auto build_dir = find_build_dir(project_dir);
@@ -125,7 +125,7 @@ Result<EvidenceBundle> run_ctest(const fs::path& project_dir,
     return bundle;
 }
 
-//fusa:req REQ-VERIFY002
+//fusa:req REQ-VERIFY002 REQ-VERIFY003
 Result<std::monostate> write_evidence(const fs::path& dir, const EvidenceBundle& bundle) {
     json j;
     j["generatedAt"]  = bundle.generated_at;

@@ -31,6 +31,7 @@ std::string severity_label(Severity s) {
 
 } // namespace
 
+//fusa:req REQ-RPT001 REQ-RPT002 REQ-RPT003 REQ-RPT004 REQ-RPT005
 std::string render_text(const std::vector<Finding>& findings,
                         const config::ProjectConfig& cfg) {
     std::ostringstream out;

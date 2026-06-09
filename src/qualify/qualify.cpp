@@ -114,7 +114,7 @@ static void sha256_final(SHA256Ctx& ctx, uint8_t digest[32]) {
 std::string sha256_hex(const std::string& data) {
     SHA256Ctx ctx;
     sha256_init(ctx);
-    sha256_update(ctx, reinterpret_cast<const uint8_t*>(data.data()), data.size());
+    sha256_update(ctx, reinterpret_cast<const uint8_t*>(data.data()), data.size()); // fusa:unsafe SHA-256 std::string→uint8_t* for FIPS 180-4 input
     uint8_t digest[32];
     sha256_final(ctx, digest);
     static const char hex[] = "0123456789abcdef";
@@ -213,7 +213,7 @@ CaseResult run_case(const Case& c) {
 
 } // namespace
 
-//fusa:req REQ-QUALIFY001
+//fusa:req REQ-QUALIFY001 REQ-QUALIFY002 REQ-QUALIFY004
 std::vector<Case> builtin_cases() {
     return {
         // FUSA001: .fusa.json must exist
@@ -292,7 +292,7 @@ std::vector<Case> builtin_cases() {
     };
 }
 
-//fusa:req REQ-QUALIFY003
+//fusa:req REQ-QUALIFY002 REQ-QUALIFY003
 Result<QualifyReport> run(const std::vector<Case>& cases) {
     QualifyReport report;
     report.generated_at = now_iso8601();

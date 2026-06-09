@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cpfusa/fusa.hpp"
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -10,17 +11,20 @@
 
 namespace cpfusa::testutil {
 
-// Creates a temporary directory for a test and removes it on destruction.
+// Creates a unique temporary directory for a test and removes it on destruction.
 class TempDir {
 public:
     TempDir() {
+        static std::atomic<unsigned> counter{0};
         path_ = std::filesystem::temp_directory_path()
-              / ("cpfusa_test_" + std::to_string(
-                     std::hash<std::thread::id>{}(std::this_thread::get_id())));
+              / ("cpfusa_test_"
+                 + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()))
+                 + "_" + std::to_string(counter.fetch_add(1, std::memory_order_relaxed)));
         std::filesystem::create_directories(path_);
     }
     ~TempDir() noexcept {
-        std::filesystem::remove_all(path_);
+        std::error_code ec;
+        std::filesystem::remove_all(path_, ec); // swallow errors; noexcept cannot propagate
     }
     [[nodiscard]] const std::filesystem::path& path() const { return path_; }
 

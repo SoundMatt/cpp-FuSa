@@ -38,6 +38,7 @@ bool source_contains(const fs::path& dir, const std::regex& pat) {
 } // anonymous namespace
 
 // FUSA001 – Project configuration file (.fusa.json) must exist.
+//fusa:req REQ-FUSA001
 Rule make_fusa001() {
     return Rule{
         RuleInfo{"FUSA001", "Project configuration",
@@ -53,6 +54,7 @@ Rule make_fusa001() {
 }
 
 // FUSA002 – At least one //fusa:req annotation must exist in source.
+//fusa:req REQ-FUSA002
 Rule make_fusa002() {
     return Rule{
         RuleInfo{"FUSA002", "Requirements annotations",
@@ -69,6 +71,7 @@ Rule make_fusa002() {
 }
 
 // FUSA003 – The project version field must be set (not empty / not "0.0.0").
+//fusa:req REQ-FUSA003
 Rule make_fusa003() {
     return Rule{
         RuleInfo{"FUSA003", "Safety version declared",
@@ -84,6 +87,7 @@ Rule make_fusa003() {
 }
 
 // FUSA004 – Test evidence file must exist.
+//fusa:req REQ-FUSA004
 Rule make_fusa004() {
     return Rule{
         RuleInfo{"FUSA004", "Test evidence",
@@ -99,6 +103,7 @@ Rule make_fusa004() {
 }
 
 // FUSA005 – CHANGELOG.md must exist and be non-empty.
+//fusa:req REQ-FUSA005
 Rule make_fusa005() {
     return Rule{
         RuleInfo{"FUSA005", "CHANGELOG present",

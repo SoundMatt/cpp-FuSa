@@ -7,6 +7,7 @@ namespace cpfusa::config {
 
 using json = nlohmann::json;
 
+//fusa:req REQ-CFG001 REQ-CFG002 REQ-CFG003 REQ-CFG004 REQ-CFG005 REQ-CFG006
 [[nodiscard]] ProjectConfig defaults(const std::filesystem::path& dir) {
     ProjectConfig cfg;
     cfg.project     = dir.filename().string();

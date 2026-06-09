@@ -18,10 +18,31 @@
 #include "../tara/tara.hpp"
 #include "../fmea/fmea.hpp"
 #include "../safety_case/safety_case.hpp"
+#include "../hara/hara.hpp"
+#include "../iso26262/iso26262.hpp"
+#include "../iec61508/iec61508.hpp"
+#include "../boundary/boundary.hpp"
+#include "../metrics/metrics.hpp"
+#include "../vuln/vuln.hpp"
+#include "../coverage/coverage.hpp"
+#include "../disposition/disposition.hpp"
+#include "../impact/impact.hpp"
+#include "../do178/do178.hpp"
+#include "../sas/sas.hpp"
+#include "../sci/sci.hpp"
+#include "../pr/pr.hpp"
+#include "../fix/fix.hpp"
+#include "../misra/misra.hpp"
+#include "../coupling/coupling.hpp"
+#include "../iec62443/iec62443.hpp"
+#include "../slsa/slsa.hpp"
 #include "cpfusa/fusa.hpp"
 
 #include <CLI/CLI.hpp>
+#include <chrono>
+#include <ctime>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -50,6 +71,7 @@ void print_err(const std::string& msg) { std::cerr << "[ERROR] " << msg << "\n";
 
 } // anonymous namespace
 
+//fusa:req REQ-CLI001 REQ-CLI002 REQ-CLI003 REQ-CLI004 REQ-CLI005 REQ-CLI006 REQ-CLI007 REQ-CLI008 REQ-CLI009 REQ-CLI010 REQ-NF001 REQ-NF002 REQ-NF003
 int run(int argc, char* argv[]) {
     CLI::App app{"cpfusa — C++ Functional Safety Toolkit v" + std::string(Version)};
     app.set_version_flag("--version", std::string(Version));
@@ -480,7 +502,379 @@ int run(int argc, char* argv[]) {
         const auto& sc = value_of(r);
         print_ok("safety-case.json written (" + std::to_string(sc.nodes.size()) + " nodes)");
         print_ok("safety-case.mermaid written");
+        print_ok("safety-case.md written");
         print_ok("Evidence collected: " + std::to_string(sc.evidence.size()) + " file(s)");
+    });
+
+    // ── hara ──────────────────────────────────────────────────────────────────
+    auto* hara_cmd    = app.add_subcommand("hara", "Hazard Analysis and Risk Assessment (.fusa-hara.json)");
+    auto* hara_show   = hara_cmd->add_subcommand("show", "Display HARA");
+    auto* hara_init   = hara_cmd->add_subcommand("init", "Create starter .fusa-hara.json");
+    auto* hara_asil   = hara_cmd->add_subcommand("asil", "Derive ASIL from S/E/C parameters");
+    std::string hara_project, hara_standard = "ISO 26262";
+    std::string asil_s, asil_e, asil_c;
+    hara_init->add_option("--project",  hara_project,  "Project name");
+    hara_init->add_option("--standard", hara_standard, "Safety standard");
+    hara_asil->add_option("-s", asil_s, "Severity: S0, S1, S2, S3")->required();
+    hara_asil->add_option("-e", asil_e, "Exposure: E0..E4")->required();
+    hara_asil->add_option("-c", asil_c, "Controllability: C0..C3")->required();
+    hara_show->callback([&]() -> void {
+        fs::path dir{dir_str};
+        hara::HARA h;
+        std::string err;
+        if (!hara::load(dir, h, err)) { print_err(err); std::exit(1); }
+        hara::render_text(h);
+    });
+    hara_init->callback([&]() -> void {
+        fs::path dir{dir_str};
+        std::string project = hara_project.empty() ? dir.filename().string() : hara_project;
+        std::string err;
+        if (!hara::init(dir, project, hara_standard, err)) { print_err(err); std::exit(1); }
+        print_ok("Created " + std::string(hara::HARA_FILE));
+        std::cout << "Edit " << hara::HARA_FILE << " to document hazards and safety goals.\n";
+    });
+    hara_asil->callback([&]() -> void {
+        auto s_val = hara::parse_severity(asil_s);
+        auto e_val = hara::parse_exposure(asil_e);
+        auto c_val = hara::parse_controllability(asil_c);
+        std::cout << "S=" << asil_s << "  E=" << asil_e << "  C=" << asil_c
+                  << "  →  " << hara::determine_asil(s_val, e_val, c_val) << "\n";
+    });
+    hara_cmd->callback([&]() -> void {
+        if (hara_cmd->get_subcommands().empty()) {
+            fs::path dir{dir_str};
+            hara::HARA h;
+            std::string err;
+            if (!hara::load(dir, h, err)) { print_err(err); std::exit(1); }
+            hara::render_text(h);
+        }
+    });
+
+    // ── iso26262 ──────────────────────────────────────────────────────────────
+    auto* iso_cmd = app.add_subcommand("iso26262", "Generate ISO 26262 Part 6 compliance gap report");
+    std::string iso_asil = "ASIL-B", iso_output;
+    bool iso_json = false;
+    iso_cmd->add_option("--asil",   iso_asil,   "ASIL-A|ASIL-B|ASIL-C|ASIL-D");
+    iso_cmd->add_option("--output", iso_output, "Write JSON report to file");
+    iso_cmd->add_flag("--json",     iso_json,   "Output JSON (instead of text)");
+    iso_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto asil_val = iso26262::parse_asil(iso_asil);
+        auto rep = iso26262::assess(dir, dir.filename().string(), asil_val);
+        if (!iso_output.empty()) {
+            iso26262::write_json(iso_output, rep);
+            print_ok("ISO 26262 gap report written to " + iso_output +
+                     " (" + std::to_string(rep.gap) + " gaps)");
+        }
+        if (iso_output.empty() || !iso_json) iso26262::render_text(rep);
+        if (rep.gap > 0) std::exit(1);
+    });
+
+    // ── iec61508 ──────────────────────────────────────────────────────────────
+    auto* iec_cmd = app.add_subcommand("iec61508", "Generate IEC 61508 compliance gap report");
+    std::string iec_sil = "SIL-2", iec_output;
+    bool iec_json = false;
+    iec_cmd->add_option("--sil",    iec_sil,    "SIL-1|SIL-2|SIL-3|SIL-4");
+    iec_cmd->add_option("--output", iec_output, "Write JSON report to file");
+    iec_cmd->add_flag("--json",     iec_json,   "Output JSON (instead of text)");
+    iec_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto sil_val = iec61508::parse_sil(iec_sil);
+        auto rep = iec61508::assess(dir, dir.filename().string(), sil_val);
+        if (!iec_output.empty()) {
+            iec61508::write_json(iec_output, rep);
+            print_ok("IEC 61508 gap report written to " + iec_output +
+                     " (" + std::to_string(rep.gap) + " gaps)");
+        }
+        if (iec_output.empty() || !iec_json) iec61508::render_text(rep);
+        if (rep.gap > 0) std::exit(1);
+    });
+
+    // ── boundary ──────────────────────────────────────────────────────────────
+    auto* boundary_cmd = app.add_subcommand("boundary", "Generate component boundary diagram");
+    std::string boundary_outdir;
+    boundary_cmd->add_option("--output-dir", boundary_outdir, "Output directory (default: project root)");
+    boundary_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        fs::path outdir = boundary_outdir.empty() ? dir : fs::path(boundary_outdir);
+        auto d = boundary::scan(dir);
+        boundary::write_mermaid(outdir / boundary::BOUNDARY_FILE, d);
+        boundary::write_dot(outdir / boundary::BOUNDARY_DOT_FILE, d);
+        print_ok("boundary.mermaid written");
+        print_ok("boundary.dot written");
+        std::cout << "Nodes: " << d.nodes.size() << "  Edges: " << d.edges.size() << "\n";
+    });
+
+    // ── metrics ───────────────────────────────────────────────────────────────
+    auto* metrics_cmd    = app.add_subcommand("metrics", "Track safety metrics over time");
+    auto* metrics_record = metrics_cmd->add_subcommand("record", "Collect and append a metrics snapshot");
+    auto* metrics_show   = metrics_cmd->add_subcommand("show",   "Display the metrics time series");
+    metrics_record->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto ts   = metrics::load(dir);
+        auto snap = metrics::collect(dir);
+        ts = metrics::append(ts, snap);
+        metrics::save(dir / metrics::METRICS_FILE, ts);
+        std::cout << "Metrics recorded: errors=" << snap.error_count
+                  << " warnings=" << snap.warning_count
+                  << " reqs=" << snap.total_requirements
+                  << " coverage=" << std::fixed << std::setprecision(1) << snap.coverage_pct << "%\n";
+        print_ok(".fusa-metrics.json updated (" + std::to_string(ts.snapshots.size()) + " snapshots)");
+    });
+    metrics_show->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto ts = metrics::load(dir);
+        metrics::render_text(ts);
+    });
+
+    // ── vuln ──────────────────────────────────────────────────────────────────
+    auto* vuln_cmd = app.add_subcommand("vuln", "Scan CMake dependencies for known vulnerabilities");
+    vuln_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto rep = vuln::scan(dir);
+        vuln::write_json(dir / vuln::VULN_FILE, rep);
+        print_ok("vuln.json written");
+        vuln::render_text(rep);
+    });
+
+    // ── coverage ──────────────────────────────────────────────────────────────
+    auto* cov_cmd = app.add_subcommand("coverage", "Parse LCOV coverage profile and report DO-178C compliance");
+    std::string cov_dal = "DAL-B", cov_profile, cov_out;
+    cov_cmd->add_option("--dal",     cov_dal,     "DAL-A|DAL-B|DAL-C|DAL-D");
+    cov_cmd->add_option("--profile", cov_profile, "LCOV coverage.info file (default: coverage.info)");
+    cov_cmd->add_option("--output",  cov_out,     "Write JSON report to file");
+    cov_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        fs::path profile = cov_profile.empty() ? dir / coverage::COVERAGE_FILE
+                                               : fs::path(cov_profile);
+        auto dal = coverage::parse_dal(cov_dal);
+        try {
+            auto rep = coverage::build_from_lcov(profile, dal);
+            auto json_out = cov_out.empty() ? dir / coverage::COVERAGE_REPORT_FILE
+                                            : fs::path(cov_out);
+            coverage::write_json(json_out, rep);
+            coverage::render_text(rep);
+            print_ok("coverage-report.json written");
+            if (!rep.meets_dal) std::exit(1);
+        } catch (const std::exception& ex) {
+            print_err(std::string(ex.what()));
+            std::cerr << "Tip: generate LCOV with: cmake --build build && lcov --capture "
+                         "--directory build --output-file coverage.info\n";
+            std::exit(1);
+        }
+    });
+
+    // ── disposition ───────────────────────────────────────────────────────────
+    auto* disp_cmd   = app.add_subcommand("disposition", "Manage finding dispositions");
+    auto* disp_add   = disp_cmd->add_subcommand("add",  "Add a disposition");
+    auto* disp_list  = disp_cmd->add_subcommand("list", "List dispositions");
+    auto* disp_show  = disp_cmd->add_subcommand("show", "Show disposition for a rule");
+    std::string disp_rule, disp_action = "accept", disp_reviewer, disp_rationale, disp_ref;
+    disp_add->add_option("--rule",      disp_rule,      "Rule ID")->required();
+    disp_add->add_option("--action",    disp_action,    "accept|fix");
+    disp_add->add_option("--reviewer",  disp_reviewer,  "Reviewer name")->required();
+    disp_add->add_option("--rationale", disp_rationale, "Rationale")->required();
+    disp_add->add_option("--ref",       disp_ref,       "Reference (ticket, issue)");
+    disp_show->add_option("--rule",     disp_rule,      "Rule ID")->required();
+    disp_add->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto log = disposition::load(dir);
+        auto now = std::chrono::system_clock::now();
+        auto t   = std::chrono::system_clock::to_time_t(now);
+        char buf[32];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::gmtime(&t));
+        disposition::Entry e{disp_rule, disp_rationale, disp_reviewer,
+                             std::string(buf),
+                             disposition::parse_action(disp_action), disp_ref};
+        log = disposition::add(log, e);
+        std::string err;
+        if (!disposition::save(dir / disposition::DISPOSITIONS_FILE, log, err)) {
+            print_err(err); std::exit(1);
+        }
+        print_ok("Disposition added: rule=" + disp_rule + " action=" + disp_action);
+    });
+    disp_list->callback([&]() -> void {
+        disposition::render_entries(disposition::load(fs::path(dir_str)));
+    });
+    disp_show->callback([&]() -> void {
+        auto log = disposition::load(fs::path(dir_str));
+        disposition::Entry e;
+        if (!disposition::find_by_rule(log, disp_rule, e)) {
+            print_err("No disposition for rule: " + disp_rule); std::exit(1);
+        }
+        std::cout << "Rule:      " << e.rule_id << "\n"
+                  << "Action:    " << disposition::action_str(e.action) << "\n"
+                  << "Reviewer:  " << e.reviewer << "\n"
+                  << "Date:      " << e.date << "\n"
+                  << "Rationale: " << e.rationale << "\n";
+        if (!e.reference.empty()) std::cout << "Reference: " << e.reference << "\n";
+    });
+
+    // ── impact ────────────────────────────────────────────────────────────────
+    auto* impact_cmd = app.add_subcommand("impact", "Analyse impact of source changes on requirements");
+    std::string impact_from, impact_to, impact_out, impact_fmt = "text";
+    impact_cmd->add_option("--from",   impact_from, "From git ref");
+    impact_cmd->add_option("--to",     impact_to,   "To git ref");
+    impact_cmd->add_option("--output", impact_out,  "Write JSON report to file");
+    impact_cmd->add_option("--format", impact_fmt,  "text|json");
+    impact_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto rep = impact::analyse(dir, impact_from, impact_to);
+        if (!impact_out.empty() || impact_fmt == "json") {
+            fs::path jout = impact_out.empty() ? dir / "impact-report.json" : fs::path(impact_out);
+            impact::render_json(jout, rep);
+            if (!impact_out.empty()) print_ok("impact-report.json written");
+        }
+        if (impact_fmt == "text") impact::render_text(rep);
+    });
+
+    // ── do178 ─────────────────────────────────────────────────────────────────
+    auto* do178_cmd = app.add_subcommand("do178", "Generate DO-178C objectives gap report");
+    std::string do178_dal = "DAL-B", do178_out;
+    do178_cmd->add_option("--dal",    do178_dal, "DAL-A|DAL-B|DAL-C|DAL-D");
+    do178_cmd->add_option("--output", do178_out, "Write JSON report to file");
+    do178_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto dal = do178::parse_dal(do178_dal);
+        auto rep = do178::assess(dir, dir.filename().string(), dal);
+        fs::path out = do178_out.empty() ? dir / do178::DO178_REPORT_FILE : fs::path(do178_out);
+        do178::write_json(out, rep);
+        do178::render_text(rep);
+        print_ok("do178-gap-report.json written (" + std::to_string(rep.gap) + " gaps)");
+        if (rep.gap > 0) std::exit(1);
+    });
+
+    // ── sas ───────────────────────────────────────────────────────────────────
+    auto* sas_cmd = app.add_subcommand("sas", "Generate Software Accomplishment Summary");
+    std::string sas_dal = "DAL-B";
+    sas_cmd->add_option("--dal", sas_dal, "DAL/ASIL/SIL level");
+    sas_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto cfg_opt = load_config(dir);
+        if (!cfg_opt) { std::exit(1); }
+        auto s = sas::build(dir, cfg_opt->project, cfg_opt->version, sas_dal);
+        sas::write_json(dir / sas::SAS_JSON_FILE, s);
+        sas::write_markdown(dir / sas::SAS_MD_FILE, s);
+        print_ok("sas.json written");
+        print_ok("sas.md written");
+        std::cout << "Evidence: " << s.complete << "/" << s.total << " items present\n";
+    });
+
+    // ── sci ───────────────────────────────────────────────────────────────────
+    auto* sci_cmd = app.add_subcommand("sci", "Generate Software Configuration Index");
+    sci_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto cfg_opt = load_config(dir);
+        if (!cfg_opt) { std::exit(1); }
+        auto s = sci::build(dir, cfg_opt->project, cfg_opt->version);
+        sci::write_json(dir / sci::SCI_FILE, s);
+        print_ok("sci.json written (" + std::to_string(s.items.size()) + " lifecycle items)");
+    });
+
+    // ── pr ────────────────────────────────────────────────────────────────────
+    auto* pr_cmd  = app.add_subcommand("pr", "Problem Report log management");
+    auto* pr_add  = pr_cmd->add_subcommand("add",  "Add a problem report");
+    auto* pr_list = pr_cmd->add_subcommand("list", "List problem reports");
+    std::string pr_title, pr_desc, pr_sev = "minor", pr_filter;
+    pr_add->add_option("--title",       pr_title, "Report title")->required();
+    pr_add->add_option("--description", pr_desc,  "Report description");
+    pr_add->add_option("--severity",    pr_sev,   "critical|major|minor");
+    pr_list->add_option("--status",     pr_filter,"Filter: open|in-progress|closed");
+    pr_add->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto log = pr::load(dir);
+        auto now = std::chrono::system_clock::now();
+        auto t   = std::chrono::system_clock::to_time_t(now);
+        char buf[32];
+        std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&t));
+        std::string new_id = "PR-" + std::to_string(log.reports.size() + 1);
+        pr::ProblemReport report{
+            new_id, pr_title, pr_desc, std::string(buf), "",
+            pr::parse_severity(pr_sev), pr::PRStatus::Open, "", ""
+        };
+        log = pr::add(log, report);
+        std::string err;
+        if (!pr::save(dir / pr::PR_FILE, log, err)) { print_err(err); std::exit(1); }
+        print_ok("Problem report " + new_id + " added");
+    });
+    pr_list->callback([&]() -> void {
+        pr::render(pr::load(fs::path(dir_str)), pr_filter);
+    });
+
+    // ── fix ───────────────────────────────────────────────────────────────────
+    auto* fix_cmd = app.add_subcommand("fix", "Show fix guidance for a rule ID");
+    std::string fix_rule;
+    fix_cmd->add_option("rule", fix_rule, "Rule ID (e.g. LINT001)");
+    fix_cmd->callback([&]() -> void {
+        if (fix_rule.empty()) fix::list_all();
+        else                  fix::show(fix_rule);
+    });
+
+    // ── version ───────────────────────────────────────────────────────────────
+    auto* ver_cmd = app.add_subcommand("version", "Print version and exit");
+    ver_cmd->callback([&]() -> void {
+        std::cout << "cpfusa version " << Version << "\n";
+    });
+
+    // ── misra ─────────────────────────────────────────────────────────────────
+    auto* misra_cmd = app.add_subcommand("misra", "Show MISRA C++:2023 → cpfusa rule mapping");
+    std::string misra_output;
+    bool misra_gaps = false;
+    misra_cmd->add_option("--output", misra_output, "Write JSON report to file");
+    misra_cmd->add_flag("--gaps",     misra_gaps,   "Show only manually-reviewed rules");
+    misra_cmd->callback([&]() -> void {
+        auto r = misra::build_report(misra_gaps);
+        if (!misra_output.empty()) {
+            misra::write_json(misra_output, r);
+            print_ok("MISRA report written to " + misra_output);
+        }
+        misra::render_text(r, misra_gaps);
+    });
+
+    // ── coupling ──────────────────────────────────────────────────────────────
+    auto* coupling_cmd = app.add_subcommand("coupling", "Analyse data and control coupling (DO-178C §6.4.4.3)");
+    std::string coupling_output;
+    coupling_cmd->add_option("--output", coupling_output, "Write JSON report to file");
+    coupling_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto r = coupling::analyse(dir);
+        if (!coupling_output.empty()) {
+            coupling::write_json(fs::path(coupling_output), r);
+            print_ok("coupling-report.json written");
+        }
+        coupling::render_text(r);
+    });
+
+    // ── iec62443 ──────────────────────────────────────────────────────────────
+    auto* iec62443_cmd = app.add_subcommand("iec62443", "IEC 62443 Security Level compliance checks");
+    std::string iec62443_sl = "SL-1", iec62443_output;
+    iec62443_cmd->add_option("--sl",     iec62443_sl,    "SL-1|SL-2|SL-3|SL-4");
+    iec62443_cmd->add_option("--output", iec62443_output,"Write JSON report to file");
+    iec62443_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto sl_val = iec62443::parse_sl(iec62443_sl);
+        auto rep = iec62443::assess(dir, dir.filename().string(), sl_val);
+        if (!iec62443_output.empty()) {
+            iec62443::write_json(fs::path(iec62443_output), rep);
+            print_ok("IEC 62443 report written to " + iec62443_output);
+        }
+        iec62443::render_text(rep);
+    });
+
+    // ── slsa ──────────────────────────────────────────────────────────────────
+    auto* slsa_cmd = app.add_subcommand("slsa", "SLSA L1/L2/L3 provenance compliance checks");
+    std::string slsa_level = "L1", slsa_output;
+    slsa_cmd->add_option("--level",  slsa_level,  "L1|L2|L3|L4");
+    slsa_cmd->add_option("--output", slsa_output, "Write JSON report to file");
+    slsa_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto lvl = slsa::parse_level(slsa_level);
+        auto rep = slsa::assess(dir, dir.filename().string(), lvl);
+        if (!slsa_output.empty()) {
+            slsa::write_json(fs::path(slsa_output), rep);
+            print_ok("SLSA report written to " + slsa_output);
+        }
+        slsa::render_text(rep);
     });
 
     CLI11_PARSE(app, argc, argv);

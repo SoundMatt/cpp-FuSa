@@ -1,40 +1,41 @@
 # cpp-FuSa
 
 A functional safety enablement toolkit for C++ projects. cpp-FuSa provides MISRA/AUTOSAR lint
-rules, static analysis passes, requirements traceability, CI evidence bundles, and runtime safety
-patterns to help teams build safety cases for ISO 26262, IEC 61508, ISO 21434, and DO-178C.
+rules, static analysis passes, requirements traceability, CI evidence bundles, runtime safety
+patterns, and compliance gap reports to help teams build safety cases for ISO 26262, IEC 61508,
+ISO 21434, and DO-178C.
 
 [![CI](https://github.com/SoundMatt/cpp-FuSa/actions/workflows/ci.yml/badge.svg)](https://github.com/SoundMatt/cpp-FuSa/actions/workflows/ci.yml)
 
 > **Not a certification product.** cpp-FuSa is an engineering accelerator that reduces
 > the cost of producing functional safety evidence throughout the SDLC.
 
-## Modules
+## Docker quick start
 
-| Module | Description |
-|---|---|
-| `include/cpfusa/` | Core types — `Finding`, `Severity`, `Result<T>`, `Version` |
-| `src/config/` | Project configuration (`.fusa.json`) |
-| `src/engine/` | Rule engine + FUSA001–005 built-in checks |
-| `src/report/` | Text, JSON, HTML, SARIF compliance report renderers |
-| `src/lint/` | MISRA/AUTOSAR coding rules — LINT001–010 |
-| `src/analyze/` | Static analysis — clang-tidy + cppcheck wrappers + own passes |
-| `src/trace/` | Requirements traceability engine — `//fusa:req` / `//fusa:test` |
-| `src/template/` | Safety plan, SVP, HARA, SCMP, SQAP document generators |
-| `src/runtime/` | RAII safety patterns — `Watchdog`, `SafeStateGuard`, `Heartbeat` |
-| `src/testutil/` | Test harness helpers (`TempDir`, `has_finding`) |
-
-## Build
-
-Requires: CMake ≥ 3.21, C++17 compiler, Ninja (optional). Dependencies fetched automatically.
+Zero-install: mount your C++ project at `/project`.
 
 ```bash
-# Configure and build
+# Pull the latest image
+docker pull ghcr.io/soundmatt/cpp-fusa:latest
+
+# Run a single command
+docker run --rm -v "$(pwd)":/project ghcr.io/soundmatt/cpp-fusa check
+docker run --rm -v "$(pwd)":/project ghcr.io/soundmatt/cpp-fusa lint
+docker run --rm -v "$(pwd)":/project ghcr.io/soundmatt/cpp-fusa trace
+docker run --rm -v "$(pwd)":/project ghcr.io/soundmatt/cpp-fusa release
+
+# Or run the full evidence-generation pipeline via Compose
+docker compose run --rm pipeline
+```
+
+## Build from source
+
+Requires: CMake ≥ 3.21, C++17 compiler, Ninja (optional). Dependencies fetched automatically via `FetchContent`.
+
+```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
 cmake --build build --parallel
-
-# Or with Make wrapper
-make build
+ctest --test-dir build --output-on-failure -j1
 ```
 
 ## Install
@@ -54,42 +55,140 @@ cpfusa init
 cpfusa check
 cpfusa check --strict
 
-# Run MISRA/AUTOSAR lint rules only
+# Run MISRA/AUTOSAR lint rules
 cpfusa lint
 
 # Run static analysis (clang-tidy + cppcheck + own passes)
 cpfusa analyze
 
-# Show requirements traceability matrix
+# Cybersecurity analysis — 20 CWE-mapped rules (ISO 21434)
+cpfusa cyber
+cpfusa cyber --write --strict
+
+# Requirements traceability matrix
 cpfusa trace
-
-# Show only unannotated/untested requirements
 cpfusa trace --gaps
+cpfusa trace --req-coverage 80   # CI gate: fail if < 80% annotated
 
-# CI gate: fail if annotation coverage < 80%
-cpfusa trace --req-coverage 80
+# Hazard Analysis and Risk Assessment
+cpfusa hara init
+cpfusa hara show
+cpfusa hara asil -s S2 -e E3 -c C2   # → ASIL-C
 
-# Show a specific requirement
-cpfusa req REQ-RT001
+# Standards gap reports
+cpfusa iso26262 --asil ASIL-B --output iso26262-gap-report.json
+cpfusa iec61508 --sil SIL-2   --output iec61508-gap-report.json
+cpfusa do178    --dal DAL-B   --output do178-gap-report.json
 
-# Generate safety document templates
-cpfusa template --type all         # SAFETY_PLAN.md, HARA.md, SVP.md, SCMP.md, SQAP.md
-cpfusa template --type safety-plan
+# Safety analysis artifacts
+cpfusa tara          # TARA per ISO 21434 Ch. 9 → tara.json + tara.md
+cpfusa fmea          # dFMEA from declarations  → fmea.json + fmea.csv
+cpfusa safety-case   # GSN safety case          → safety-case.{json,mermaid,md}
 
-# Generate full compliance report
+# Test evidence and tool qualification
+cpfusa verify        # run ctest → .fusa-evidence.json
+cpfusa qualify       # tool qualification suite → qualify-report.json
+
+# Release artifacts
+cpfusa release       # SPDX 3.0.1 SBOM → sbom.json + provenance.json + artifact-manifest.json
+cpfusa audit-pack    # ZIP evidence bundle → audit-pack.zip
+cpfusa badge         # Shields.io SVG → fusa-badge.svg
+
+# Software process artifacts (DO-178C)
+cpfusa sas           # Software Accomplishment Summary → sas.json + sas.md
+cpfusa sci           # Software Configuration Index   → sci.json
+
+# Impact and change management
+cpfusa impact                            # git diff + req mapping
+cpfusa diff baseline.json current.json   # regression gating (exit 1 on new findings)
+cpfusa disposition add --rule LINT001 --reviewer alice --rationale "test only"
+cpfusa pr add --title "Stack overflow in parser" --severity major
+cpfusa metrics record                    # snapshot errors/reqs/coverage trend
+
+# Security
+cpfusa vuln                    # scan CMake deps for known CVEs → vuln.json
+cpfusa sign --key key.hex file # HMAC-SHA256 artifact signing
+cpfusa sign --keygen key.hex   # generate signing key
+cpfusa hooks install           # git pre-commit hook
+
+# Visualisation
+cpfusa boundary    # component diagram → boundary.mermaid + boundary.dot
+cpfusa coverage --profile coverage.info --dal DAL-B   # LCOV → DO-178C report
+
+# Fix guidance
+cpfusa fix         # list all rules with fix guidance
+cpfusa fix LINT001 # show before/after fix for a specific rule
+
+# Full compliance report
 cpfusa report
-cpfusa report --format json --output report.json
-cpfusa report --format html --output report.html
+cpfusa report --format json  --output report.json
+cpfusa report --format html  --output report.html
 cpfusa report --format sarif --output results.sarif
 
-# Collect test evidence bundle (runs ctest)
-cpfusa verify
-
-# Run tool qualification suite
-cpfusa qualify
+# Safety document templates
+cpfusa template --type all    # SAFETY_PLAN.md, HARA.md, SVP.md, SCMP.md, SQAP.md
 ```
 
-## Lint rules (v0.2 — MISRA/AUTOSAR)
+## Modules
+
+| Module | Description |
+|---|---|
+| `include/cpfusa/` | Core types — `Finding`, `Severity`, `Result<T>`, `Version` |
+| `src/config/` | Project configuration (`.fusa.json`) |
+| `src/engine/` | Rule engine + FUSA001–005 built-in checks |
+| `src/report/` | Text, JSON, HTML, SARIF compliance report renderers |
+| `src/lint/` | MISRA/AUTOSAR coding rules — LINT001–010 |
+| `src/analyze/` | Static analysis — clang-tidy + cppcheck + own passes |
+| `src/trace/` | Requirements traceability — `//fusa:req` / `//fusa:test` |
+| `src/template/` | Safety document generators (SAFETY_PLAN, SVP, HARA, SCMP, SQAP) |
+| `src/runtime/` | RAII safety patterns — `Watchdog`, `SafeStateGuard`, `Heartbeat` |
+| `src/cyber/` | 20 CWE-mapped cybersecurity rules (ISO 21434) |
+| `src/hara/` | HARA management — ASIL determination (ISO 26262-3 Table 4) |
+| `src/iso26262/` | ISO 26262 Part 6 gap assessment |
+| `src/iec61508/` | IEC 61508 Parts 1-3 gap assessment |
+| `src/do178/` | DO-178C Annex A objectives gap report |
+| `src/tara/` | TARA — ISO 21434 Ch. 9 threat scenarios |
+| `src/fmea/` | dFMEA from source declarations with RPN scoring |
+| `src/safety_case/` | GSN safety case (JSON + Mermaid + Markdown) |
+| `src/verify/` | CTest integration → `.fusa-evidence.json` |
+| `src/qualify/` | Tool qualification suite → `qualify-report.json` (SHA-256) |
+| `src/release/` | SPDX 3.0.1 SBOM, provenance, artifact manifest |
+| `src/auditpack/` | ZIP audit evidence bundle |
+| `src/badge/` | Shields.io-style SVG badge |
+| `src/diff/` | Report diff for regression gating |
+| `src/sign/` | HMAC-SHA256 artifact signing |
+| `src/hooks/` | git pre-commit hook installer |
+| `src/boundary/` | Component boundary diagram (Mermaid + DOT) |
+| `src/metrics/` | Safety metrics time series |
+| `src/vuln/` | CMake dependency vulnerability scan |
+| `src/coverage/` | LCOV structural coverage report (DO-178C) |
+| `src/disposition/` | Finding disposition lifecycle management |
+| `src/impact/` | Change impact analysis (git diff + req mapping) |
+| `src/sas/` | Software Accomplishment Summary (DO-178C §11.20) |
+| `src/sci/` | Software Configuration Index with SHA-256 (DO-178C §11.16) |
+| `src/pr/` | Problem Report log (DO-178C §11.17) |
+| `src/fix/` | Fix guidance catalog with before/after code examples |
+| `src/testutil/` | Test harness helpers (`TempDir`, `has_finding`) |
+
+## Standards coverage
+
+| Standard | Scope | Gap report |
+|---|---|---|
+| ISO 26262 | Automotive functional safety (ASIL A–D) | `cpfusa iso26262` |
+| IEC 61508 | General functional safety (SIL 1–4) | `cpfusa iec61508` |
+| ISO 21434 | Automotive cybersecurity | `cpfusa tara`, `cpfusa cyber` |
+| DO-178C | Aerospace software (DAL A–D) | `cpfusa do178`, `cpfusa coverage` |
+| MISRA C++:2023 | C++ coding standard | `cpfusa lint` (LINT001–010) |
+| AUTOSAR C++14 | AUTOSAR coding guidelines | `cpfusa lint` (LINT005) |
+| JSF++ | Joint Strike Fighter C++ | `cpfusa lint` (LINT008) |
+
+## Tool qualification
+
+cpp-FuSa includes a built-in tool qualification suite per ISO 26262 Part 8 §11 and DO-178C §12.
+Run `cpfusa qualify` to execute 8 built-in positive/negative test cases and generate
+`qualify-report.json` with an SHA-256 integrity hash.
+
+## Lint rules (MISRA/AUTOSAR/JSF++)
 
 | Rule | Standard | Description |
 |---|---|---|
@@ -103,19 +202,6 @@ cpfusa qualify
 | LINT008 | JSF++ 119 | Recursive function — add `// fusa:recursive <max-depth>` |
 | LINT009 | — | `printf`/`scanf` family — prefer type-safe I/O |
 | LINT010 | — | Function with `throw` missing `noexcept` specification |
-
-## Static analysis passes (v0.3)
-
-| Pass | Description |
-|---|---|
-| ANAL000 | Tool availability check (clang-tidy, cppcheck) |
-| ANAL001 | clang-tidy findings (integrated) |
-| ANAL002 | cppcheck findings (integrated) |
-| ANAL003 | Unguarded write to global/shared variable |
-| ANAL004 | Raw pointer arithmetic |
-| ANAL005 | Potentially unbounded loop |
-| ANAL006 | Large stack allocation (> 4 KiB) |
-| ANAL007 | `memcpy`/`memset` on possibly non-trivial types |
 
 ## Runtime safety patterns (header-only)
 
@@ -150,23 +236,6 @@ cpfusa::runtime::Heartbeat hb(1s, [] { log("alive"); }, [] { raise_alarm(); });
 // fusa:bounded <max-iter>     — justifies an infinite-style loop
 // fusa:suppress LINT001       — suppresses a specific lint rule on this line
 ```
-
-## Standards coverage
-
-| Standard | Scope |
-|---|---|
-| ISO 26262 | Automotive functional safety (ASIL A–D) |
-| IEC 61508 | General functional safety (SIL 1–4) |
-| ISO 21434 | Automotive cybersecurity |
-| DO-178C | Aerospace software (process alignment) |
-| MISRA C++:2023 | C++ coding standard |
-| AUTOSAR C++14 | AUTOSAR adaptive platform coding guidelines |
-| JSF++ | Joint Strike Fighter C++ coding standards |
-
-## Requirements traceability
-
-Annotate source with `//fusa:req` and tests with `//fusa:test`, define requirements in
-`.fusa-reqs.json`, then run `cpfusa trace` to get a full coverage matrix.
 
 ## License
 

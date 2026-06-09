@@ -25,7 +25,7 @@ std::string now_iso8601() {
 
 } // namespace
 
-//fusa:req REQ-SAFETYCASE001
+//fusa:req REQ-SAFETYCASE001 REQ-SAFETYCASE003 REQ-SAFETYCASE004 REQ-SAFETYCASE005
 Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cfg) {
     SafetyCase sc;
     sc.generated_at = now_iso8601();
@@ -89,7 +89,7 @@ Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cf
     return sc;
 }
 
-//fusa:req REQ-SAFETYCASE002
+//fusa:req REQ-SAFETYCASE002 REQ-SAFETYCASE005
 Result<std::monostate> write(const fs::path& dir, const SafetyCase& sc) {
     try {
         // safety-case.json
@@ -132,6 +132,22 @@ Result<std::monostate> write(const fs::path& dir, const SafetyCase& sc) {
             }
             for (const auto& e : sc.edges)
                 out << "  " << e.from << " -->|\"" << e.label << "\"| " << e.to << "\n";
+        }
+        // safety-case.md
+        {
+            std::ofstream out(dir / SafetyCaseMd);
+            out << "# Safety Case — " << sc.project << "\n\n";
+            out << "**Standard:** " << sc.standard << "  \n";
+            out << "**Generated:** " << sc.generated_at << "  \n\n";
+            out << "## Goals\n\n";
+            out << "| ID | Type | Status | Description |\n";
+            out << "|----|------|--------|-------------|\n";
+            for (auto& n : sc.nodes)
+                out << "| " << n.id << " | " << n.type << " | " << n.status
+                    << " | " << n.text << " |\n";
+            out << "\n## Evidence (" << sc.evidence.size() << " files)\n\n";
+            for (auto& e : sc.evidence)
+                out << "- `" << e << "`\n";
         }
     } catch (const std::exception& e) {
         return std::string("safety-case: write: ") + e.what();

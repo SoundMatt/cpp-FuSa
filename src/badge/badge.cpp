@@ -4,7 +4,7 @@
 
 namespace cpfusa::badge {
 
-//fusa:req REQ-BADGE001
+//fusa:req REQ-BADGE001 REQ-BADGE003
 Badge from_findings(int errors, int warnings, const std::string& version) {
     Status s = Status::PASS;
     if (errors > 0)   s = Status::FAIL;

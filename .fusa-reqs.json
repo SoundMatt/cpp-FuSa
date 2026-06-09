@@ -1,254 +1,153 @@
 [
-  {
-    "id": "REQ-RT001",
-    "title": "Watchdog timer",
-    "description": "A RAII watchdog timer shall be provided to detect task hangs in safety-critical loops.",
-    "standard_ref": "ISO 26262-6 §7.4.10",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-RT002",
-    "title": "Safe-state transition",
-    "description": "The system shall provide a scope-guard mechanism to ensure safe-state is engaged on unexpected exit paths.",
-    "standard_ref": "ISO 26262-4 §7.4.3",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-RT003",
-    "title": "Heartbeat monitor",
-    "description": "A heartbeat monitor shall be provided to detect liveness failures in periodic tasks.",
-    "standard_ref": "IEC 61508-2 §7.4.2.3",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-LINT001",
-    "title": "No raw new/delete",
-    "description": "Smart pointers shall be used instead of raw new/delete to prevent memory leaks.",
-    "standard_ref": "MISRA C++:2023 A18-5-2",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-LINT002",
-    "title": "No goto",
-    "description": "goto statements are prohibited to maintain structured control flow.",
-    "standard_ref": "MISRA C++:2023 A6-6-1",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-LINT003",
-    "title": "reinterpret_cast justification",
-    "description": "All reinterpret_cast uses shall be justified with a fusa:unsafe annotation.",
-    "standard_ref": "MISRA C++:2023 A5-2-4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-LINT004",
-    "title": "Safe-state before abort",
-    "description": "abort()/exit() calls shall be preceded by a safe-state transition.",
-    "standard_ref": "MISRA C++:2023 A15-5-3",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-ANAL001",
-    "title": "Thread-safe global access",
-    "description": "All writes to shared global state shall be protected by a synchronisation primitive.",
-    "standard_ref": "AUTOSAR C++14 A3-3-2",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-ANAL002",
-    "title": "No unbounded loops",
-    "description": "All loops shall have a deterministic termination condition or a fusa:bounded annotation.",
-    "standard_ref": "JSF++ 197",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-CFG001",
-    "title": "Project configuration",
-    "description": "A .fusa.json configuration file shall exist at the project root.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-CYBER001",
-    "title": "Cybersecurity static analysis",
-    "description": "The tool shall scan C++ source for 20 CWE-mapped cybersecurity patterns per ISO 21434.",
-    "standard_ref": "ISO 21434:2021 §8",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-VERIFY001",
-    "title": "Test evidence collection",
-    "description": "The tool shall execute ctest and capture results into .fusa-evidence.json.",
-    "standard_ref": "ISO 26262-6 §9.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-VERIFY002",
-    "title": "Evidence bundle format",
-    "description": ".fusa-evidence.json shall include generatedAt, cppVersion, results[], and summary.",
-    "standard_ref": "ISO 26262-6 §9.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-QUALIFY001",
-    "title": "Qualification test cases",
-    "description": "The tool shall provide built-in positive and negative test cases for all engine rules.",
-    "standard_ref": "ISO 26262-8 §11.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-QUALIFY002",
-    "title": "Qualification report format",
-    "description": "qualify-report.json shall include total/passed/failed counts and a SHA-256 integrity hash.",
-    "standard_ref": "ISO 26262-8 §11.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-QUALIFY003",
-    "title": "Isolated test execution",
-    "description": "Each qualification test case shall run in its own isolated temporary directory.",
-    "standard_ref": "ISO 26262-8 §11.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-RELEASE003",
-    "title": "SBOM generation",
-    "description": "The tool shall generate an SBOM in SPDX 3.0.1 JSON-LD format from CMake dependencies.",
-    "standard_ref": "ISO 26262-8 §6",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-RELEASE005",
-    "title": "Build provenance",
-    "description": "The tool shall record build environment including VCS revision and platform.",
-    "standard_ref": "ISO 26262-8 §6",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-RELEASE006",
-    "title": "Artifact manifest",
-    "description": "The tool shall compute SHA-256 checksums for all evidence artifact files.",
-    "standard_ref": "ISO 26262-8 §6",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-AUDIT001",
-    "title": "Evidence bundle packaging",
-    "description": "The tool shall bundle all evidence files into audit-pack.zip with AUDIT-MANIFEST.json.",
-    "standard_ref": "ISO 26262-2 §6.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-AUDIT002",
-    "title": "Audit manifest format",
-    "description": "AUDIT-MANIFEST.json shall list each file with its SHA-256 digest and size.",
-    "standard_ref": "ISO 26262-2 §6.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-TARA001",
-    "title": "TARA generation",
-    "description": "The tool shall generate a Threat Analysis and Risk Assessment per ISO 21434 Chapter 9.",
-    "standard_ref": "ISO 21434:2021 Ch.9",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-TARA002",
-    "title": "TARA output format",
-    "description": "The TARA shall be written as tara.json and tara.md with risk ratings.",
-    "standard_ref": "ISO 21434:2021 Ch.9",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-FMEA001",
-    "title": "FMEA from source declarations",
-    "description": "The tool shall generate a dFMEA by scanning class and function declarations.",
-    "standard_ref": "ISO 26262-8 §8.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-FMEA002",
-    "title": "FMEA output format",
-    "description": "The FMEA shall be written as fmea.json and fmea.csv with RPN values.",
-    "standard_ref": "ISO 26262-8 §8.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-SAFETYCASE001",
-    "title": "GSN safety case generation",
-    "description": "The tool shall generate a Goal Structuring Notation safety case argument.",
-    "standard_ref": "ISO 26262-2 §6.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-SAFETYCASE002",
-    "title": "Safety case output format",
-    "description": "The safety case shall be written as safety-case.json and safety-case.mermaid.",
-    "standard_ref": "ISO 26262-2 §6.4",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-BADGE001",
-    "title": "SVG badge generation",
-    "description": "The tool shall generate a Shields.io-compatible SVG status badge.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-BADGE002",
-    "title": "Badge rendering",
-    "description": "The badge shall indicate pass/warn/fail status with error and warning counts.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-DIFF001",
-    "title": "Report comparison",
-    "description": "The tool shall compare two JSON reports and categorise findings as introduced/resolved/unchanged.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-DIFF002",
-    "title": "Report loading",
-    "description": "The tool shall load findings from JSON report files produced by cpfusa check.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-DIFF003",
-    "title": "Diff rendering",
-    "description": "The diff output shall show introduced, resolved, and unchanged findings.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-SIGN001",
-    "title": "Key generation",
-    "description": "The tool shall generate a 32-byte random HMAC key and write it as 64-char hex.",
-    "standard_ref": "ISO 26262-8 §6",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-SIGN002",
-    "title": "Artifact signing",
-    "description": "The tool shall sign artifacts with HMAC-SHA256 and write the signature to <file>.sig.",
-    "standard_ref": "ISO 26262-8 §6",
-    "severity": "info"
-  },
-  {
-    "id": "REQ-SIGN003",
-    "title": "Signature verification",
-    "description": "The tool shall verify HMAC-SHA256 signatures in constant time to prevent timing attacks.",
-    "standard_ref": "ISO 26262-8 §6",
-    "severity": "safety"
-  },
-  {
-    "id": "REQ-HOOKS001",
-    "title": "Git pre-commit hook",
-    "description": "The tool shall install a pre-commit hook that runs cpfusa check --strict.",
-    "standard_ref": "Internal",
-    "severity": "info"
-  }
+  {"id":"REQ-ENG001","title":"Rules execute in deterministic order","description":"Engine rules shall execute in deterministic ID-sorted order to produce reproducible reports.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-ENG002","title":"Rule errors collected without abort","description":"A rule execution error shall be recorded as a finding without aborting the remaining rule set.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-ENG003","title":"HasErrors reports true on ERROR severity","description":"The engine result shall report HasErrors true when any finding has ERROR severity.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-ENG004","title":"Default engine contains all five built-in rules","description":"make_default_engine() shall register exactly FUSA001 through FUSA005.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-FUSA001","title":"FUSA001 config presence check","description":"FUSA001 shall fire when .fusa.json is absent and pass when it is present.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-FUSA002","title":"FUSA002 annotation presence check","description":"FUSA002 shall fire when no //fusa:req annotation exists in source.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-FUSA003","title":"FUSA003 version field check","description":"FUSA003 shall fire when the project version is empty or 0.0.0.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-FUSA004","title":"FUSA004 test evidence presence","description":"FUSA004 shall fire when .fusa-evidence.json is absent from the project root.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+  {"id":"REQ-FUSA005","title":"FUSA005 changelog presence","description":"FUSA005 shall fire when CHANGELOG.md is absent or empty.","standard_ref":"ISO 26262 §6.6","severity":"safety"},
+
+  {"id":"REQ-CFG001","title":"Missing config returns error","description":"Loading a .fusa.json that does not exist shall return an error, not a zero-value struct.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CFG002","title":"Malformed config JSON returns error","description":"A .fusa.json with invalid JSON syntax shall return a parse error.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CFG003","title":"Default config has safe values","description":"config::defaults() shall return a valid config with non-empty project and version fields.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CFG004","title":"Config round-trips through JSON save and load","description":"A config saved to disk and reloaded shall equal the original.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CFG005","title":"Exclude patterns respected by analysis","description":"Findings from paths matching an exclude_pattern shall be suppressed.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CFG006","title":"Source dirs configurable","description":"source_dirs in .fusa.json shall restrict which directories are scanned.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+
+  {"id":"REQ-CLI001","title":"No-subcommand prints usage","description":"Invoking cpfusa with no subcommand shall print usage text and exit non-zero.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+  {"id":"REQ-CLI002","title":"--version prints version string","description":"cpfusa --version shall print the version string and exit zero.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+  {"id":"REQ-CLI003","title":"check exits zero on no ERRORs","description":"cpfusa check shall exit 0 when no ERROR-severity findings are present.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CLI004","title":"check exits one on any ERROR","description":"cpfusa check shall exit 1 when at least one ERROR-severity finding is present.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CLI005","title":"--strict exits non-zero on WARNING","description":"cpfusa check --strict shall exit non-zero when any WARNING finding is present.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CLI006","title":"qualify exits zero and writes report","description":"cpfusa qualify shall exit 0 and write qualify-report.json when all cases pass.","standard_ref":"ISO 26262-8 §11","severity":"safety"},
+  {"id":"REQ-CLI007","title":"lint subcommand available","description":"cpfusa lint shall be a registered subcommand that runs LINT001-010 rules.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CLI008","title":"trace subcommand available","description":"cpfusa trace shall be a registered subcommand that prints the traceability matrix.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-CLI009","title":"cyber subcommand available","description":"cpfusa cyber shall be a registered subcommand that runs CWE-mapped rules.","standard_ref":"ISO 21434 §8","severity":"safety"},
+  {"id":"REQ-CLI010","title":"release subcommand creates SBOM","description":"cpfusa release shall generate sbom.json, provenance.json, and artifact-manifest.json.","standard_ref":"ISO 26262-8 §6","severity":"info"},
+
+  {"id":"REQ-LINT001","title":"No raw new/delete","description":"Smart pointers shall be used instead of raw new/delete.","standard_ref":"MISRA C++:2023 A18-5-2","severity":"safety"},
+  {"id":"REQ-LINT002","title":"No goto","description":"goto statements are prohibited to maintain structured control flow.","standard_ref":"MISRA C++:2023 A6-6-1","severity":"safety"},
+  {"id":"REQ-LINT003","title":"reinterpret_cast justification","description":"All reinterpret_cast uses shall have a fusa:unsafe justification annotation.","standard_ref":"MISRA C++:2023 A5-2-4","severity":"safety"},
+  {"id":"REQ-LINT004","title":"Safe-state before abort","description":"abort()/exit() calls shall be preceded by a fusa:safe-state annotation.","standard_ref":"MISRA C++:2023 A15-5-3","severity":"safety"},
+  {"id":"REQ-LINT005","title":"Global mutable annotation","description":"Global mutable variables shall carry a fusa:shared annotation or be made const.","standard_ref":"AUTOSAR C++14 A3-3-2","severity":"safety"},
+  {"id":"REQ-LINT006","title":"No #define for constants","description":"Numeric and string constants shall use constexpr, not #define.","standard_ref":"MISRA C++:2023 A2-13-1","severity":"safety"},
+  {"id":"REQ-LINT007","title":"No C-style casts","description":"C-style casts are prohibited; named casts (static_cast etc.) shall be used.","standard_ref":"MISRA C++:2023 A5-2-2","severity":"safety"},
+  {"id":"REQ-LINT008","title":"Recursive function guard","description":"Recursive function calls shall carry a fusa:recursive depth-bound annotation.","standard_ref":"JSF++ 119","severity":"safety"},
+  {"id":"REQ-LINT009","title":"No printf/scanf family","description":"Type-unsafe I/O (printf/scanf) shall be replaced with std::ostream or std::format.","standard_ref":"JSF++ 173","severity":"warning"},
+  {"id":"REQ-LINT010","title":"Exception specification","description":"Functions that throw shall have their exception behaviour documented or use noexcept.","standard_ref":"MISRA C++:2023 A15-4-2","severity":"warning"},
+
+  {"id":"REQ-ANAL001","title":"Thread-safe global access","description":"Writes to shared global state shall be protected by a synchronisation primitive.","standard_ref":"AUTOSAR C++14 A3-3-2","severity":"safety"},
+  {"id":"REQ-ANAL002","title":"No raw pointer arithmetic","description":"Pointer arithmetic shall be replaced by indexed access, iterators, or std::span.","standard_ref":"JSF++ 176","severity":"safety"},
+  {"id":"REQ-ANAL003","title":"No unbounded loops","description":"Potentially infinite loops shall have a visible exit condition or fusa:bounded annotation.","standard_ref":"JSF++ 197","severity":"safety"},
+  {"id":"REQ-ANAL004","title":"No large stack allocations","description":"Stack allocations exceeding 4 KiB shall be moved to heap or static storage.","standard_ref":"JSF++ 143","severity":"warning"},
+  {"id":"REQ-ANAL005","title":"memcpy on trivial types only","description":"memcpy/memset shall only be applied to types verified as trivially copyable.","standard_ref":"MISRA C++:2023 A12-0-2","severity":"warning"},
+
+  {"id":"REQ-CYBER001","title":"Weak cryptographic hash detection","description":"Use of MD5 or SHA-1 for security purposes shall be flagged (CWE-327).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER002","title":"Weak symmetric cipher detection","description":"Use of DES, 3DES, or RC4 shall be flagged (CWE-327).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER003","title":"Insecure random detection","description":"Use of rand()/srand() for security-relevant randomness shall be flagged (CWE-330).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER004","title":"Unsafe reinterpret_cast detection","description":"reinterpret_cast without justification shall be flagged as CWE-242.","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER005","title":"Command injection detection","description":"Calls to system()/popen() with variable arguments shall be flagged (CWE-78).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER006","title":"Hardcoded credential detection","description":"Hard-coded passwords and API keys shall be flagged (CWE-798).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER007","title":"Unbounded input detection","description":"Calls to gets() or scanf() without width specifiers shall be flagged (CWE-120).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER008","title":"Unsafe string operation detection","description":"strcpy/strcat/sprintf shall be flagged as unsafe string operations (CWE-120).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER009","title":"Format string vulnerability detection","description":"printf(var) calls shall be flagged as format string vulnerabilities (CWE-134).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+  {"id":"REQ-CYBER010","title":"Null pointer dereference detection","description":"Dereference of potentially null pointers shall be flagged (CWE-476).","standard_ref":"ISO 21434:2021 §8","severity":"safety"},
+
+  {"id":"REQ-RPT001","title":"Text report includes rule ID and location","description":"Text report findings shall include rule ID, severity, file, and line number.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+  {"id":"REQ-RPT002","title":"Text report shows PASS or FAIL","description":"Text report shall include a PASS or FAIL result line based on ERROR count.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+  {"id":"REQ-RPT003","title":"Summary counts match finding severities","description":"Report summary error/warning/info counts shall accurately reflect the finding list.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-RPT004","title":"JSON report is valid parseable JSON","description":"JSON format output shall be parseable without error by a standard JSON parser.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-RPT005","title":"SARIF report conforms to SARIF 2.1.0","description":"SARIF format output shall include the required tool and results fields.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+
+  {"id":"REQ-TRACE001","title":"Requirements manifest presence check","description":"FUSA002 shall fire when no .fusa-reqs.json is found and requirements are unannotated.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-TRACE002","title":"Requirement implementation traceability","description":"The tool shall scan //fusa:req annotations and match them to registered requirements.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-TRACE003","title":"Requirement test traceability","description":"The tool shall scan //fusa:test annotations and report which requirements have tests.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-TRACE004","title":"Multi-ID annotation support","description":"A single //fusa:req or //fusa:test line may list multiple REQ-xxx IDs space-separated.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-TRACE005","title":"Coverage percentage calculation","description":"Annotated and tested percentages shall be computed as (count/total)*100.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-TRACE006","title":"CI gate for req coverage","description":"--req-coverage N shall exit non-zero when annotated percentage is below N.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-TRACE007","title":"Gap report lists unannotated requirements","description":"--gaps flag shall list only requirements missing an implementation or test annotation.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+
+  {"id":"REQ-VERIFY001","title":"Test evidence collection","description":"The tool shall execute ctest and capture results into .fusa-evidence.json.","standard_ref":"ISO 26262-6 §9.4","severity":"safety"},
+  {"id":"REQ-VERIFY002","title":"Evidence bundle JSON format","description":".fusa-evidence.json shall include generatedAt, cppVersion, results[], and summary.","standard_ref":"ISO 26262-6 §9.4","severity":"safety"},
+  {"id":"REQ-VERIFY003","title":"Test failure detection","description":"The evidence bundle shall record failed test names and set summary.failed accurately.","standard_ref":"ISO 26262-6 §9.4","severity":"safety"},
+  {"id":"REQ-VERIFY004","title":"Evidence bundle round-trip","description":"A bundle written to disk and read back shall have equal summary fields.","standard_ref":"ISO 26262-6 §9.4","severity":"safety"},
+  {"id":"REQ-VERIFY005","title":"Test result status values","description":"Each result in the evidence bundle shall have status of 'passed', 'failed', or 'skipped'.","standard_ref":"ISO 26262-6 §9.4","severity":"safety"},
+
+  {"id":"REQ-QUALIFY001","title":"Built-in positive and negative test cases","description":"The tool shall provide built-in positive and negative test cases for all engine rules.","standard_ref":"ISO 26262-8 §11.4","severity":"safety"},
+  {"id":"REQ-QUALIFY002","title":"Qualification report structure","description":"qualify-report.json shall include total, passed, failed, results[], and a SHA-256 hash.","standard_ref":"ISO 26262-8 §11.4","severity":"safety"},
+  {"id":"REQ-QUALIFY003","title":"Isolated test execution","description":"Each qualification case shall run in its own isolated temporary directory.","standard_ref":"ISO 26262-8 §11.4","severity":"safety"},
+  {"id":"REQ-QUALIFY004","title":"Qualification report integrity hash","description":"The SHA-256 hash in qualify-report.json shall be verifiable by re-computing it.","standard_ref":"ISO 26262-8 §11.4","severity":"safety"},
+
+  {"id":"REQ-RELEASE001","title":"SBOM presence check","description":"FUSA004/release check shall detect absence of sbom.json and report it.","standard_ref":"ISO 21434 §8","severity":"info"},
+  {"id":"REQ-RELEASE002","title":"Provenance presence check","description":"The tool shall detect absence of provenance.json and report it.","standard_ref":"ISO 21434 §8","severity":"info"},
+  {"id":"REQ-RELEASE003","title":"SBOM includes project and dependencies","description":"sbom.json shall include project name, cpp version, and detected CMake dependencies.","standard_ref":"ISO 21434 §8","severity":"info"},
+  {"id":"REQ-RELEASE004","title":"SBOM conforms to SPDX 3.0.1 JSON-LD","description":"sbom.json shall include @context and @graph fields per SPDX 3.0.1.","standard_ref":"ISO 21434 §8","severity":"info"},
+  {"id":"REQ-RELEASE005","title":"Provenance records build environment","description":"provenance.json shall include platform, VCS revision, and generated_at timestamp.","standard_ref":"ISO 21434 §8","severity":"info"},
+  {"id":"REQ-RELEASE006","title":"Artifact manifest SHA-256 checksums","description":"artifact-manifest.json shall record SHA-256 checksums for all evidence files.","standard_ref":"ISO 21434 §8","severity":"info"},
+  {"id":"REQ-RELEASE007","title":"SBOM and provenance are valid JSON","description":"sbom.json and provenance.json shall be parseable by a standard JSON parser.","standard_ref":"ISO 21434 §8","severity":"safety"},
+  {"id":"REQ-RELEASE008","title":"write_all creates all three artifacts","description":"release::write_all shall create sbom.json, provenance.json, and artifact-manifest.json.","standard_ref":"ISO 21434 §8","severity":"safety"},
+
+  {"id":"REQ-AUDIT001","title":"Evidence bundle packaging","description":"audit-pack.zip shall contain all evidence files from the project root.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-AUDIT002","title":"Audit manifest SHA-256 and size","description":"AUDIT-MANIFEST.json shall list each packed file with its SHA-256 digest and byte size.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-AUDIT003","title":"Audit pack is a valid ZIP archive","description":"audit-pack.zip shall be a valid ZIP file readable by standard tools.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-AUDIT004","title":"Empty project produces empty manifest","description":"Packing a project with no evidence files shall produce an empty but valid manifest.","standard_ref":"ISO 26262-2 §6.4","severity":"info"},
+
+  {"id":"REQ-TARA001","title":"TARA scenario generation","description":"The tool shall generate threat scenarios with id, threat, asset, and risk_value fields.","standard_ref":"ISO 21434:2021 Ch.9","severity":"safety"},
+  {"id":"REQ-TARA002","title":"TARA risk rating","description":"Each scenario shall have a risk_level of low/medium/high/critical from feasibility*impact.","standard_ref":"ISO 21434:2021 Ch.9","severity":"safety"},
+  {"id":"REQ-TARA003","title":"TARA JSON output","description":"tara.json shall be valid JSON containing a 'scenarios' array.","standard_ref":"ISO 21434:2021 Ch.9","severity":"safety"},
+  {"id":"REQ-TARA004","title":"TARA Markdown output","description":"tara.md shall be a Markdown document with a heading and scenario table.","standard_ref":"ISO 21434:2021 Ch.9","severity":"info"},
+  {"id":"REQ-TARA005","title":"TARA treatment field","description":"Each scenario shall specify a treatment action: accept, mitigate, transfer, or avoid.","standard_ref":"ISO 21434:2021 Ch.9","severity":"safety"},
+
+  {"id":"REQ-FMEA001","title":"FMEA from class declarations","description":"The tool shall generate FMEA entries from C++ class declarations found in source.","standard_ref":"ISO 26262-8 §8.4","severity":"safety"},
+  {"id":"REQ-FMEA002","title":"FMEA RPN calculation","description":"Each FMEA entry shall have rpn = severity * occurrence * detectability.","standard_ref":"ISO 26262-8 §8.4","severity":"safety"},
+  {"id":"REQ-FMEA003","title":"FMEA JSON output","description":"fmea.json shall be valid JSON with an 'entries' array.","standard_ref":"ISO 26262-8 §8.4","severity":"safety"},
+  {"id":"REQ-FMEA004","title":"FMEA CSV output","description":"fmea.csv shall have a header row and one data row per FMEA entry.","standard_ref":"ISO 26262-8 §8.4","severity":"info"},
+  {"id":"REQ-FMEA005","title":"FMEA non-zero RPN","description":"All generated FMEA entries shall have rpn > 0.","standard_ref":"ISO 26262-8 §8.4","severity":"safety"},
+  {"id":"REQ-FMEA006","title":"FMEA project field set","description":"The FMEA report shall include the project name from configuration.","standard_ref":"ISO 26262-8 §8.4","severity":"info"},
+
+  {"id":"REQ-SAFETYCASE001","title":"GSN safety case generation","description":"The tool shall generate a GSN safety case with Goal, Strategy, Solution, and Context nodes.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-SAFETYCASE002","title":"Safety case output format","description":"The safety case shall be written as safety-case.json, .mermaid, and .md.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-SAFETYCASE003","title":"Safety case evidence collection","description":"generate() shall list evidence artifacts present in the project root.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-SAFETYCASE004","title":"Safety case nodes have non-empty ids","description":"Every GSN node in the safety case shall have a non-empty id and type.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+  {"id":"REQ-SAFETYCASE005","title":"Safety case edges connect nodes","description":"Every GSN edge shall reference existing from and to node ids.","standard_ref":"ISO 26262-2 §6.4","severity":"safety"},
+
+  {"id":"REQ-BADGE001","title":"SVG badge status from finding counts","description":"Badge status shall be PASS (0 errors), WARN (warnings only), or FAIL (errors present).","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-BADGE002","title":"Badge render produces valid SVG","description":"render() shall produce a well-formed SVG containing the status label text.","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-BADGE003","title":"Badge written to fusa-badge.svg","description":"write_badge() shall write the SVG to dir/fusa-badge.svg.","standard_ref":"Internal","severity":"info"},
+
+  {"id":"REQ-DIFF001","title":"Report comparison categorises findings","description":"compare() shall categorise findings as introduced, resolved, or unchanged.","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-DIFF002","title":"Report loading from JSON","description":"load_findings() shall parse findings from a JSON report file produced by cpfusa check.","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-DIFF003","title":"Diff text rendering","description":"render_text() shall produce a human-readable summary of introduced and resolved findings.","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-DIFF004","title":"Empty diff on identical reports","description":"Comparing identical reports shall produce no introduced or resolved findings.","standard_ref":"Internal","severity":"safety"},
+
+  {"id":"REQ-SIGN001","title":"Key generation","description":"keygen() shall write a 64-char hex HMAC key using cryptographic randomness.","standard_ref":"ISO 26262-8 §6","severity":"safety"},
+  {"id":"REQ-SIGN002","title":"Artifact signing","description":"sign_file() shall create an HMAC-SHA256 signature file at <target>.sig.","standard_ref":"ISO 26262-8 §6","severity":"safety"},
+  {"id":"REQ-SIGN003","title":"Signature verification","description":"verify_file() shall verify the HMAC-SHA256 signature in constant time (REQ-SIGN003).","standard_ref":"ISO 26262-8 §6","severity":"safety"},
+  {"id":"REQ-SIGN004","title":"Tamper detection","description":"verify_file() shall return false when the target file has been modified after signing.","standard_ref":"ISO 26262-8 §6","severity":"safety"},
+  {"id":"REQ-SIGN005","title":"Wrong key fails verification","description":"verify_file() shall return false when the key does not match the signing key.","standard_ref":"ISO 26262-8 §6","severity":"safety"},
+
+  {"id":"REQ-HOOKS001","title":"Pre-commit hook installation","description":"install() shall write a cpfusa check --strict pre-commit hook to .git/hooks/pre-commit.","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-HOOKS002","title":"Hook removal","description":"remove() shall delete the pre-commit hook installed by cpfusa.","standard_ref":"Internal","severity":"info"},
+  {"id":"REQ-HOOKS003","title":"Hook script shebang","description":"The pre-commit hook script shall start with a #!/bin/sh shebang line.","standard_ref":"Internal","severity":"info"},
+
+  {"id":"REQ-RT001","title":"Watchdog timer","description":"A RAII watchdog timer shall detect task hangs in safety-critical loops.","standard_ref":"ISO 26262-6 §7.4.10","severity":"safety"},
+  {"id":"REQ-RT002","title":"Safe-state scope guard","description":"SafeStateGuard shall engage the safe-state handler on scope exit if not committed.","standard_ref":"ISO 26262-4 §7.4.3","severity":"safety"},
+  {"id":"REQ-RT003","title":"Heartbeat liveness monitor","description":"Heartbeat shall detect missed beats and call on_missed with configurable timeout.","standard_ref":"IEC 61508-2 §7.4.2.3","severity":"safety"},
+  {"id":"REQ-RT004","title":"Watchdog kick resets timer","description":"Calling Watchdog::kick() within the timeout period shall prevent the handler firing.","standard_ref":"ISO 26262-6 §7.4.10","severity":"safety"},
+  {"id":"REQ-RT005","title":"SafeStateGuard commit prevents handler","description":"Calling SafeStateGuard::commit() shall prevent the safe-state handler from firing.","standard_ref":"ISO 26262-4 §7.4.3","severity":"safety"},
+
+  {"id":"REQ-VULN001","title":"Dependency vulnerability scanning","description":"The tool shall scan CMake FetchContent declarations for known CVEs.","standard_ref":"ISO 21434 §8","severity":"safety"},
+  {"id":"REQ-VULN002","title":"Vulnerability JSON output","description":"vuln.json shall list each dependency with its version and any matching advisories.","standard_ref":"ISO 21434 §8","severity":"safety"},
+  {"id":"REQ-VULN003","title":"Clean dependency has no advisories","description":"A dependency not in the advisory database shall have an empty advisories list.","standard_ref":"ISO 21434 §8","severity":"safety"},
+  {"id":"REQ-VULN004","title":"Advisory includes CVE ID and severity","description":"Each advisory entry shall include a CVE id and severity string.","standard_ref":"ISO 21434 §8","severity":"safety"},
+
+  {"id":"REQ-BOUNDARY001","title":"Component boundary diagram generation","description":"boundary() shall produce a Mermaid diagram of component dependencies.","standard_ref":"ISO 26262-6 §7","severity":"info"},
+  {"id":"REQ-BOUNDARY002","title":"DOT graph output","description":"boundary() shall also produce a GraphViz DOT representation.","standard_ref":"ISO 26262-6 §7","severity":"info"},
+  {"id":"REQ-BOUNDARY003","title":"External dependency detection","description":"The boundary analysis shall distinguish internal components from external dependencies.","standard_ref":"ISO 26262-6 §7","severity":"info"},
+
+  {"id":"REQ-NF001","title":"No external runtime dependencies","description":"The cpfusa binary shall have no runtime dependencies beyond the system C++ standard library.","standard_ref":"ISO 21434 §8","severity":"safety"},
+  {"id":"REQ-NF002","title":"All timestamps use UTC","description":"All generatedAt timestamps shall be in ISO 8601 UTC format ending in 'Z'.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-NF003","title":"Recognised standard identifiers","description":"The tool shall recognise standard identifiers: iso26262, iec61508, iso21434, do178c.","standard_ref":"IEC 61508 §7.4","severity":"info"}
 ]

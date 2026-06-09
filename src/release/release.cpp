@@ -89,7 +89,7 @@ static std::string sha256_file(const fs::path& p) {
     std::ifstream f(p, std::ios::binary);
     uint8_t tmp[4096];
     while (f) {
-        f.read(reinterpret_cast<char*>(tmp), sizeof(tmp));
+        f.read(reinterpret_cast<char*>(tmp), sizeof(tmp)); // fusa:unsafe SHA-256 FIPS 180-4 binary read
         auto n = static_cast<size_t>(f.gcount());
         for (size_t i=0;i<n;++i){ctx.buf[ctx.buflen++]=tmp[i];if(ctx.buflen==64){r2_transform(ctx.state,ctx.buf);ctx.count+=512;ctx.buflen=0;}}
     }
@@ -137,7 +137,7 @@ std::vector<Component> parse_cmake_deps(const fs::path& cmake_file) {
 
 } // namespace
 
-//fusa:req REQ-RELEASE003
+//fusa:req REQ-RELEASE001 REQ-RELEASE002 REQ-RELEASE003 REQ-RELEASE004 REQ-RELEASE007 REQ-RELEASE008
 Result<SBOM> build_sbom(const fs::path& project_root, const config::ProjectConfig& cfg) {
     SBOM sbom;
     sbom.format       = "cpp-FuSa SBOM v1";
@@ -158,7 +158,7 @@ Result<SBOM> build_sbom(const fs::path& project_root, const config::ProjectConfi
     return sbom;
 }
 
-//fusa:req REQ-RELEASE005
+//fusa:req REQ-RELEASE005 REQ-RELEASE007
 Result<Provenance> build_provenance(const fs::path& project_root,
                                     const config::ProjectConfig& cfg) {
     Provenance prov;

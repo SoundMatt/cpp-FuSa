@@ -2,8 +2,8 @@
 #include <filesystem>
 #include <fstream>
 #include <regex>
-#include <sstream>
 #include <string>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -54,7 +54,7 @@ bool has_safe_state_above(const Lines& lines, int idx) {
 
 } // anonymous namespace
 
-// LINT001 – Raw new/delete usage (MISRA C++:2023 A18-5-2)
+// LINT001 – Raw new/delete usage (MISRA C++:2023 A18-5-2) //fusa:req REQ-LINT001
 std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
     std::vector<Finding> out;
     // Matches `new` or `delete` as standalone keywords (not part of identifiers).
@@ -78,16 +78,19 @@ std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
     return out;
 }
 
-// LINT002 – goto statement (MISRA C++:2023 A6-6-1)
+// LINT002 – goto statement (MISRA C++:2023 A6-6-1) //fusa:req REQ-LINT002
 std::vector<Finding> check_goto(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bgoto\b)");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT002")) continue;
+            // Skip comment lines.
+            auto trimmed = line.find_first_not_of(" \t");
+            if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT002", Severity::ERROR,
-                               "goto statement is prohibited (MISRA C++ A6-6-1)",
+                               "goto statement is prohibited (MISRA C++ A6-6-1)", // fusa:suppress LINT002
                                p.string(), n,
                                "Refactor control flow using structured constructs"});
             }
@@ -96,7 +99,7 @@ std::vector<Finding> check_goto(const fs::path& dir) {
     return out;
 }
 
-// LINT003 – reinterpret_cast without justification (MISRA C++:2023 A5-2-4)
+// LINT003 – reinterpret_cast without justification (MISRA C++:2023 A5-2-4) //fusa:req REQ-LINT003
 std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\breinterpret_cast\b)");
@@ -104,13 +107,16 @@ std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
         for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
             const auto& [n, line] = lines[i];
             if (suppressed(line, "LINT003")) continue;
+            // Skip comment lines.
+            auto trimmed = line.find_first_not_of(" \t");
+            if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             if (!std::regex_search(line, pat)) continue;
             // Require a justification comment on the same or previous line.
             bool justified = line.find("fusa:unsafe") != std::string::npos
                           || (i > 0 && lines[i-1].second.find("fusa:unsafe") != std::string::npos);
             if (!justified) {
                 out.push_back({"LINT003", Severity::WARNING,
-                               "reinterpret_cast without justification (MISRA A5-2-4)",
+                               "reinterpret_cast without justification (MISRA A5-2-4)", // fusa:suppress LINT003
                                p.string(), n,
                                "Add // fusa:unsafe <justification> comment above or inline"});
             }
@@ -119,7 +125,7 @@ std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
     return out;
 }
 
-// LINT004 – abort()/exit() without safe-state transition (MISRA C++:2023 A15-5-3)
+// LINT004 – abort()/exit() without safe-state transition (MISRA C++:2023 A15-5-3) //fusa:req REQ-LINT004
 std::vector<Finding> check_abort_exit(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(std::abort|::abort|abort|std::exit|::exit|exit|_Exit|quick_exit)\s*\()");
@@ -139,7 +145,7 @@ std::vector<Finding> check_abort_exit(const fs::path& dir) {
     return out;
 }
 
-// LINT005 – Global mutable variable without sync annotation (AUTOSAR A3-3-2)
+// LINT005 – Global mutable variable without sync annotation (AUTOSAR A3-3-2) //fusa:req REQ-LINT005
 std::vector<Finding> check_global_mutable(const fs::path& dir) {
     std::vector<Finding> out;
     // Heuristic: non-const, non-static-local variable at file scope.
@@ -162,7 +168,7 @@ std::vector<Finding> check_global_mutable(const fs::path& dir) {
     return out;
 }
 
-// LINT006 – #define used for numeric/string constant (MISRA C++:2023 A2-13-1)
+// LINT006 – #define used for numeric/string constant (MISRA C++:2023 A2-13-1) //fusa:req REQ-LINT006
 std::vector<Finding> check_define_constant(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(^\s*#\s*define\s+\w+\s+[\d"'.])");
@@ -180,7 +186,7 @@ std::vector<Finding> check_define_constant(const fs::path& dir) {
     return out;
 }
 
-// LINT007 – C-style cast (MISRA C++:2023 A5-2-2)
+// LINT007 – C-style cast (MISRA C++:2023 A5-2-2) //fusa:req REQ-LINT007
 std::vector<Finding> check_c_style_cast(const fs::path& dir) {
     std::vector<Finding> out;
     // Matches (type)expr patterns — avoids false-positives on function calls.
@@ -191,7 +197,7 @@ std::vector<Finding> check_c_style_cast(const fs::path& dir) {
             if (suppressed(line, "LINT007")) continue;
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT007", Severity::WARNING,
-                               "C-style cast detected — use static_cast/reinterpret_cast/const_cast (MISRA A5-2-2)",
+                               "C-style cast detected — use static_cast/reinterpret_cast/const_cast (MISRA A5-2-2)", // fusa:suppress LINT003
                                p.string(), n,
                                "Replace with appropriate named cast"});
             }
@@ -200,7 +206,7 @@ std::vector<Finding> check_c_style_cast(const fs::path& dir) {
     return out;
 }
 
-// LINT008 – Recursive function (MISRA C++:2023 A7-1-1 / JSF++ 119)
+// LINT008 – Recursive function (MISRA C++:2023 A7-1-1 / JSF++ 119) //fusa:req REQ-LINT008
 std::vector<Finding> check_recursion(const fs::path& dir) {
     std::vector<Finding> out;
     // Heuristic: find function definitions then check if they call themselves.
@@ -229,7 +235,7 @@ std::vector<Finding> check_recursion(const fs::path& dir) {
     return out;
 }
 
-// LINT009 – printf/scanf family usage (type-unsafe I/O)
+// LINT009 – printf/scanf family usage (type-unsafe I/O) //fusa:req REQ-LINT009
 std::vector<Finding> check_printf(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(
@@ -248,7 +254,7 @@ std::vector<Finding> check_printf(const fs::path& dir) {
     return out;
 }
 
-// LINT010 – Function throwing exceptions without noexcept or documented spec
+// LINT010 – Function throwing exceptions without noexcept or documented spec //fusa:req REQ-LINT010
 std::vector<Finding> check_exception_spec(const fs::path& dir) {
     std::vector<Finding> out;
     // Look for function definitions that might throw but have no noexcept.
@@ -296,6 +302,15 @@ std::vector<Finding> run(const fs::path& dir,
     append(check_recursion(dir));
     append(check_printf(dir));
     append(check_exception_spec(dir));
+
+    // Remove findings from paths that match any exclude pattern.
+    if (!cfg.exclude_patterns.empty()) {
+        all.erase(std::remove_if(all.begin(), all.end(), [&](const Finding& f) {
+            for (const auto& pat : cfg.exclude_patterns)
+                if (f.file.find(pat) != std::string::npos) return true;
+            return false;
+        }), all.end());
+    }
     return all;
 }
 

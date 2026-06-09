@@ -26,7 +26,7 @@ constexpr std::string_view HookMarker = "cpp-FuSa pre-commit hook";
 
 std::string show() { return std::string(HookScript); }
 
-//fusa:req REQ-HOOKS001
+//fusa:req REQ-HOOKS001 REQ-HOOKS003
 Result<std::monostate> install(const fs::path& project_root) {
     auto hooks_dir = project_root / ".git" / "hooks";
     if (!fs::exists(hooks_dir)) {
@@ -57,6 +57,7 @@ Result<std::monostate> install(const fs::path& project_root) {
     return std::monostate{};
 }
 
+//fusa:req REQ-HOOKS002
 Result<std::monostate> remove(const fs::path& project_root) {
     auto hook_path = project_root / ".git" / "hooks" / "pre-commit";
     if (!fs::exists(hook_path)) return std::monostate{};
