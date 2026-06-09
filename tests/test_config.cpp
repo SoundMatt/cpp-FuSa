@@ -46,6 +46,6 @@ TEST_CASE("config: exists() correctly reports presence", "[config]") {
     TempDir tmp;
     REQUIRE_FALSE(config::exists(tmp.path()));
     auto cfg = config::defaults(tmp.path());
-    config::save(tmp.path(), cfg);
+    REQUIRE(is_ok(config::save(tmp.path(), cfg)));
     REQUIRE(config::exists(tmp.path()));
 }

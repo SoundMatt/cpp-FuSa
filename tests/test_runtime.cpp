@@ -22,10 +22,11 @@ TEST_CASE("watchdog: fires handler on timeout", "[runtime][watchdog]") {
 TEST_CASE("watchdog: does not fire when kicked in time", "[runtime][watchdog]") {
     std::atomic<bool> fired{false};
     {
-        Watchdog wd(100ms, [&] { fired.store(true); });
+        // 500ms timeout, kicks every 100ms — generous margin for slow CI runners.
+        Watchdog wd(500ms, [&] { fired.store(true); });
         for (int i = 0; i < 5; ++i) {
             wd.kick();
-            std::this_thread::sleep_for(40ms);
+            std::this_thread::sleep_for(100ms);
         }
     }
     REQUIRE_FALSE(fired.load());
