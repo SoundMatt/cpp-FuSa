@@ -157,10 +157,12 @@ std::string render_sarif(const std::vector<Finding>& findings,
         r["level"]   = (f.severity == Severity::ERROR) ? "error"
                      : (f.severity == Severity::WARNING) ? "warning" : "note";
         r["message"]["text"] = f.message;
-        if (!f.file.empty()) {
+        // GitHub Code Scanning requires at least one location on every result.
+        {
+            std::string uri = f.file.empty() ? "." : f.file;
             r["locations"] = json::array({
                 {{"physicalLocation",
-                  {{"artifactLocation", {{"uri", f.file}}},
+                  {{"artifactLocation", {{"uri", uri}}},
                    {"region", {{"startLine", f.line > 0 ? f.line : 1}}}}}}
             });
         }

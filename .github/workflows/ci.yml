@@ -219,8 +219,7 @@ jobs:
         run: |
           lcov --capture \
             --directory build-cov \
-            --output-file coverage.info \
-            --ignore-errors mismatch
+            --output-file coverage.info
           lcov --remove coverage.info \
             '*/tests/*' '*/catch2/*' '*/FetchContent/*' \
             --output-file coverage.info
