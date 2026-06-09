@@ -8,6 +8,10 @@
 #include <cstdio>
 #include <stdexcept>
 #include <string>
+#ifdef _WIN32
+#  define popen  _popen
+#  define pclose _pclose
+#endif
 
 namespace fs = std::filesystem;
 using json   = nlohmann::json;

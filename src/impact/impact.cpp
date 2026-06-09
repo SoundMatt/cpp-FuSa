@@ -2,12 +2,17 @@
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <regex>
 #include <sstream>
 #include <nlohmann/json.hpp>
+#ifdef _WIN32
+#  define popen  _popen
+#  define pclose _pclose
+#endif
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;

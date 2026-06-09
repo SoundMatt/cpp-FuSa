@@ -8,6 +8,10 @@
 #include <ctime>
 #include <cstdio>
 #include <array>
+#ifdef _WIN32
+#  define popen  _popen
+#  define pclose _pclose
+#endif
 #include <regex>
 
 namespace fs = std::filesystem;

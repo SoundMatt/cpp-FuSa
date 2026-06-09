@@ -25,7 +25,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     )
 endif()
 if(MSVC)
-    add_compile_options(/W4 /WX)
+    add_compile_options(
+        /W4 /WX
+        /wd4100   # unreferenced formal parameter (matches -Wno-unused-parameter)
+        /wd4996   # deprecated CRT functions (gmtime safe for internal timestamps)
+    )
 endif()
 
 # ── Fetch dependencies ────────────────────────────────────────────────────────
