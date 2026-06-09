@@ -26,11 +26,28 @@
   - `//fusa:req` annotations on all LINT001–010 and ANAL001–002 implementations
   - `//fusa:test` annotations across all 6 test files (100% test file coverage)
 
+### Added (CI/CD hardening)
+- 17 new test files: 395 tests total covering all modules added in v0.5–0.6
+- `.github/workflows/codeql.yml` — CodeQL `security-extended` weekly scan
+- `.github/workflows/dco.yml` — DCO Signed-off-by enforcement on every PR commit
+- `.github/workflows/release.yml` — tag-triggered release pipeline; builds linux/macos/windows binaries with SHA-256 checksums
+- `.github/CODEOWNERS`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/` — community files
+- CI: coverage (LCOV), SARIF upload to GitHub Security tab, Docker smoke-test job
+- `Dockerfile` committed; Alpine runtime includes `libstdc++` for dynamic linking
+
 ### Fixed
 - `impact.cpp`: command injection (CYBER005 CWE-78) — git refs now allowlist-validated
 - `impact.cpp`: `goto next_req` (LINT002) — replaced with `matched` flag + `break`
 - SHA-256 `reinterpret_cast` sites annotated with `// fusa:unsafe` (sign, release, qualify, auditpack)
 - `safety-case` command now produces a third artifact: `safety-case.md` (Markdown GSN table)
+- `hooks::remove`: ifstream now scoped so handle closes before `fs::remove`; fixes Windows file-lock error
+- Windows/MSVC: `popen`/`pclose` → `_popen`/`_pclose` in 5 files; `/wd4996` for `gmtime`; `/wd4100` for unused params
+- SARIF renderer: always emits `locations` array (GitHub Code Scanning requirement); fallback uri `"."` for project-level findings
+- `TempDir`: atomic counter suffix prevents path collisions across test instances; destructor uses `error_code` overload (noexcept-safe)
+- Watchdog test timing: 500 ms / 100 ms kick interval is robust on slow CI runners
+- CI: switched clang-16 → clang-14 (only version present on ubuntu-22.04 runners)
+- CI: lcov `--ignore-errors mismatch` removed (lcov 1.x on ubuntu-22.04 doesn't support it)
+- CI coverage gate: corrected flag from `--lcov`/`--threshold` to `--profile`
 
 ## [0.5.0] — 2026-06-09
 
