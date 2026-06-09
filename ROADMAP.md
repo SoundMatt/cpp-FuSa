@@ -77,116 +77,62 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 
 ---
 
-## v0.5 — Test Evidence
+## v0.5 — Full Feature Parity with go-FuSa ✅
 
-**Goal:** Verification evidence generation.
+**Goal:** Achieve parity with go-FuSa across all major artifact categories.
 
-- CTest integration for evidence capture
-- `.fusa-evidence.json` bundle with run metadata
+- `cpfusa verify` — CTest integration, `.fusa-evidence.json` with generatedAt/cppVersion/results/summary
+- `cpfusa qualify` — 8 built-in test cases, `qualify-report.json` with SHA-256 integrity hash
+- `cpfusa cyber` — 20 CWE-mapped rules (CYBER001–020), `cyber-report.json`
+- `cpfusa tara` — ISO 21434 Ch.9 threat scenarios, `tara.json` + `tara.md`
+- `cpfusa fmea` — dFMEA from declarations, `fmea.json` + `fmea.csv` with RPN
+- `cpfusa safety-case` — GSN argument, `safety-case.json` + `safety-case.mermaid`
+- `cpfusa release` — SPDX 3.0.1 SBOM, `sbom.json` + `provenance.json` + `artifact-manifest.json`
+- `cpfusa audit-pack` — ZIP bundle with `AUDIT-MANIFEST.json`
+- `cpfusa badge` — Shields.io SVG, `fusa-badge.svg`
+- `cpfusa diff` — introduced/resolved/unchanged report comparison
+- `cpfusa sign` — HMAC-SHA256 artifact signing + verification
+- `cpfusa hooks` — git pre-commit hook installer/remover
+
+Artifacts match go-FuSa filenames exactly.
+
+---
+
+## v0.6 — Extended Coverage
+
+**Goal:** Deeper analysis and coverage tooling.
+
 - LCOV/gcov structural coverage parser (statement, branch, MC/DC)
 - `cpfusa coverage` — DO-178C §6.4.4 coverage report
+- `cpfusa vuln` — OSV API + CMake dependency vulnerability scan
+- `cpfusa boundary` — Component boundary diagram (Mermaid + DOT)
+- `cpfusa fix` — Auto-fix guidance with code patterns
 
-Deliverables: `cpfusa verify`, `cpfusa coverage`
-
----
-
-## v0.6 — Tool Qualification
-
-**Goal:** Self-qualification suite.
-
-- Engine self-tests against known-good/bad synthetic projects
-- SHA-256 hashed `qualify-report.json`
-- Qualification guidance for ISO 26262-8 / DO-178C TQL evidence
-
-Deliverables: `cpfusa qualify`
+Deliverables: `cpfusa coverage`, `cpfusa vuln`, `cpfusa boundary`, `cpfusa fix`
 
 ---
 
-## v0.7 — Release Evidence
-
-**Goal:** SBOM, build provenance, artifact signing.
-
-- SPDX 3.0.1 SBOM from CMake/Conan/vcpkg manifests
-- Build provenance (compiler, flags, git SHA, timestamp)
-- HMAC-SHA256 artifact signing (`cpfusa sign`)
-- Artifact manifest JSON
-
-Deliverables: `cpfusa release`, `cpfusa sign`
-
----
-
-## v0.8 — Safety Case
-
-**Goal:** Safety case assembly and evidence bundling.
-
-- GSN diagram (Mermaid)
-- Compliance mapping (standard ↔ evidence items)
-- `cpfusa safety-case` — assemble from collected evidence
-- `cpfusa audit-pack` — ZIP bundle for auditors
-
-Deliverables: `cpfusa safety-case`, `cpfusa audit-pack`
-
----
-
-## v0.9 — FMEA + Boundary
-
-**Goal:** Design-level safety artefacts.
-
-- dFMEA from class/function declarations (header parsing)
-- Component boundary diagram (Mermaid + DOT)
-- JSON + CSV FMEA export
-
-Deliverables: `cpfusa fmea`, `cpfusa boundary`
-
----
-
-## v0.10 — Cybersecurity
-
-**Goal:** ISO 21434 cybersecurity analysis.
-
-- CWE-mapped MISRA/CERT-C++ rules for cybersecurity
-- TARA generation (STRIDE threat model, risk matrix, Markdown export)
-- IEC 62443 Security Level compliance checks
-- SLSA L2/L3 supply-chain checks
-
-Deliverables: `cpfusa cyber`, `cpfusa tara`, `cpfusa iec62443`, `cpfusa slsa`
-
----
-
-## v0.11 — Vulnerability Scanning
-
-**Goal:** Dependency vulnerability management.
-
-- OSV API integration for Conan/vcpkg/CMake deps
-- `cpfusa vuln` — vulnerability report
-
-Deliverables: `cpfusa vuln`
-
----
-
-## v0.12 — DO-178C Toolset
+## v0.7 — DO-178C + SAS + SCI
 
 **Goal:** Complete DO-178C process support.
 
 - Annex A gap report (38 objectives, Tables A-1 to A-11)
-- Software Accomplishment Summary (20 evidence items)
-- Software Configuration Index (SHA-256 lifecycle data)
+- Software Accomplishment Summary (SAS) — 20 evidence items
+- Software Configuration Index (SCI) — SHA-256 lifecycle data
 - Problem Report log (CRUD + PR001 engine rule)
 
 Deliverables: `cpfusa do178`, `cpfusa sas`, `cpfusa sci`, `cpfusa pr`
 
 ---
 
-## v0.13 — Report Tooling
+## v0.8 — IEC 62443 + SLSA
 
-**Goal:** Diff, badge, and enhanced reporting.
+**Goal:** Industrial and supply-chain security.
 
-- Report diff engine (introduced/resolved/unchanged findings)
-- SVG badge generator (Shields.io-style)
-- Enhanced HTML report with charts
-- Fix suggestions (`cpfusa fix`)
+- IEC 62443 Security Level compliance checks
+- SLSA L2/L3 supply-chain provenance checks
 
-Deliverables: `cpfusa diff`, `cpfusa badge`, `cpfusa fix`
+Deliverables: `cpfusa iec62443`, `cpfusa slsa`
 
 ---
 
@@ -203,7 +149,6 @@ Deliverables: `cpfusa diff`, `cpfusa badge`, `cpfusa fix`
 
 ## Future
 
-- `cpfusa hooks` — git pre-commit hook installer
 - libclang integration for deeper AST analysis
 - MISRA C++:2023 full rule set (300+ rules)
 - QNX / FreeRTOS / Zephyr RTOS integration

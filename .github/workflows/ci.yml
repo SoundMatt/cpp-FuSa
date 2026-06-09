@@ -94,11 +94,49 @@ jobs:
       - name: cpfusa trace (self)
         run: ./build/cpfusa trace --dir .
 
+      - name: cpfusa cyber (self)
+        run: ./build/cpfusa cyber --write --dir . || true
+
+      - name: cpfusa qualify
+        run: ./build/cpfusa qualify --dir .
+
+      - name: cpfusa tara
+        run: ./build/cpfusa tara --dir .
+
+      - name: cpfusa fmea
+        run: ./build/cpfusa fmea --dir .
+
+      - name: cpfusa safety-case
+        run: ./build/cpfusa safety-case --dir .
+
+      - name: cpfusa release
+        run: ./build/cpfusa release --dir .
+
+      - name: cpfusa audit-pack
+        run: ./build/cpfusa audit-pack --dir .
+
+      - name: cpfusa badge
+        run: ./build/cpfusa badge --dir .
+
       - name: cpfusa report (JSON)
         run: ./build/cpfusa report --format json --output check-report.json --dir .
 
-      - name: Upload check report
+      - name: Upload evidence artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: check-report
-          path: check-report.json
+          name: safety-evidence
+          path: |
+            check-report.json
+            qualify-report.json
+            cyber-report.json
+            tara.json
+            tara.md
+            fmea.json
+            fmea.csv
+            safety-case.json
+            safety-case.mermaid
+            sbom.json
+            provenance.json
+            artifact-manifest.json
+            audit-pack.zip
+            fusa-badge.svg

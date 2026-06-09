@@ -68,5 +68,187 @@
     "description": "A .fusa.json configuration file shall exist at the project root.",
     "standard_ref": "Internal",
     "severity": "info"
+  },
+  {
+    "id": "REQ-CYBER001",
+    "title": "Cybersecurity static analysis",
+    "description": "The tool shall scan C++ source for 20 CWE-mapped cybersecurity patterns per ISO 21434.",
+    "standard_ref": "ISO 21434:2021 §8",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-VERIFY001",
+    "title": "Test evidence collection",
+    "description": "The tool shall execute ctest and capture results into .fusa-evidence.json.",
+    "standard_ref": "ISO 26262-6 §9.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-VERIFY002",
+    "title": "Evidence bundle format",
+    "description": ".fusa-evidence.json shall include generatedAt, cppVersion, results[], and summary.",
+    "standard_ref": "ISO 26262-6 §9.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-QUALIFY001",
+    "title": "Qualification test cases",
+    "description": "The tool shall provide built-in positive and negative test cases for all engine rules.",
+    "standard_ref": "ISO 26262-8 §11.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-QUALIFY002",
+    "title": "Qualification report format",
+    "description": "qualify-report.json shall include total/passed/failed counts and a SHA-256 integrity hash.",
+    "standard_ref": "ISO 26262-8 §11.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-QUALIFY003",
+    "title": "Isolated test execution",
+    "description": "Each qualification test case shall run in its own isolated temporary directory.",
+    "standard_ref": "ISO 26262-8 §11.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-RELEASE003",
+    "title": "SBOM generation",
+    "description": "The tool shall generate an SBOM in SPDX 3.0.1 JSON-LD format from CMake dependencies.",
+    "standard_ref": "ISO 26262-8 §6",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-RELEASE005",
+    "title": "Build provenance",
+    "description": "The tool shall record build environment including VCS revision and platform.",
+    "standard_ref": "ISO 26262-8 §6",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-RELEASE006",
+    "title": "Artifact manifest",
+    "description": "The tool shall compute SHA-256 checksums for all evidence artifact files.",
+    "standard_ref": "ISO 26262-8 §6",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-AUDIT001",
+    "title": "Evidence bundle packaging",
+    "description": "The tool shall bundle all evidence files into audit-pack.zip with AUDIT-MANIFEST.json.",
+    "standard_ref": "ISO 26262-2 §6.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-AUDIT002",
+    "title": "Audit manifest format",
+    "description": "AUDIT-MANIFEST.json shall list each file with its SHA-256 digest and size.",
+    "standard_ref": "ISO 26262-2 §6.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-TARA001",
+    "title": "TARA generation",
+    "description": "The tool shall generate a Threat Analysis and Risk Assessment per ISO 21434 Chapter 9.",
+    "standard_ref": "ISO 21434:2021 Ch.9",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-TARA002",
+    "title": "TARA output format",
+    "description": "The TARA shall be written as tara.json and tara.md with risk ratings.",
+    "standard_ref": "ISO 21434:2021 Ch.9",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-FMEA001",
+    "title": "FMEA from source declarations",
+    "description": "The tool shall generate a dFMEA by scanning class and function declarations.",
+    "standard_ref": "ISO 26262-8 §8.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-FMEA002",
+    "title": "FMEA output format",
+    "description": "The FMEA shall be written as fmea.json and fmea.csv with RPN values.",
+    "standard_ref": "ISO 26262-8 §8.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-SAFETYCASE001",
+    "title": "GSN safety case generation",
+    "description": "The tool shall generate a Goal Structuring Notation safety case argument.",
+    "standard_ref": "ISO 26262-2 §6.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-SAFETYCASE002",
+    "title": "Safety case output format",
+    "description": "The safety case shall be written as safety-case.json and safety-case.mermaid.",
+    "standard_ref": "ISO 26262-2 §6.4",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-BADGE001",
+    "title": "SVG badge generation",
+    "description": "The tool shall generate a Shields.io-compatible SVG status badge.",
+    "standard_ref": "Internal",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-BADGE002",
+    "title": "Badge rendering",
+    "description": "The badge shall indicate pass/warn/fail status with error and warning counts.",
+    "standard_ref": "Internal",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-DIFF001",
+    "title": "Report comparison",
+    "description": "The tool shall compare two JSON reports and categorise findings as introduced/resolved/unchanged.",
+    "standard_ref": "Internal",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-DIFF002",
+    "title": "Report loading",
+    "description": "The tool shall load findings from JSON report files produced by cpfusa check.",
+    "standard_ref": "Internal",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-DIFF003",
+    "title": "Diff rendering",
+    "description": "The diff output shall show introduced, resolved, and unchanged findings.",
+    "standard_ref": "Internal",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-SIGN001",
+    "title": "Key generation",
+    "description": "The tool shall generate a 32-byte random HMAC key and write it as 64-char hex.",
+    "standard_ref": "ISO 26262-8 §6",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-SIGN002",
+    "title": "Artifact signing",
+    "description": "The tool shall sign artifacts with HMAC-SHA256 and write the signature to <file>.sig.",
+    "standard_ref": "ISO 26262-8 §6",
+    "severity": "info"
+  },
+  {
+    "id": "REQ-SIGN003",
+    "title": "Signature verification",
+    "description": "The tool shall verify HMAC-SHA256 signatures in constant time to prevent timing attacks.",
+    "standard_ref": "ISO 26262-8 §6",
+    "severity": "safety"
+  },
+  {
+    "id": "REQ-HOOKS001",
+    "title": "Git pre-commit hook",
+    "description": "The tool shall install a pre-commit hook that runs cpfusa check --strict.",
+    "standard_ref": "Internal",
+    "severity": "info"
   }
 ]

@@ -14,8 +14,7 @@ namespace cpfusa::trace {
 
 namespace {
 
-constexpr std::string_view ReqsFile     = ".fusa-reqs.json";
-constexpr std::string_view EvidenceFile = ".fusa-evidence.json";
+constexpr std::string_view ReqsFile = ".fusa-reqs.json";
 
 } // namespace
 
