@@ -61,12 +61,18 @@ Result<std::monostate> install(const fs::path& project_root) {
 Result<std::monostate> remove(const fs::path& project_root) {
     auto hook_path = project_root / ".git" / "hooks" / "pre-commit";
     if (!fs::exists(hook_path)) return std::monostate{};
-    std::ifstream f(hook_path);
-    std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    if (content.find(HookMarker) == std::string::npos) {
-        return std::string("hooks: pre-commit hook was not installed by cpfusa — not removing");
+    {
+        // Scope the ifstream so the handle is closed before removal.
+        // On Windows, deleting an open file is an error.
+        std::ifstream f(hook_path);
+        std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        if (content.find(HookMarker) == std::string::npos) {
+            return std::string("hooks: pre-commit hook was not installed by cpfusa — not removing");
+        }
     }
-    fs::remove(hook_path);
+    std::error_code ec;
+    fs::remove(hook_path, ec);
+    if (ec) return std::string("hooks: remove failed: ") + ec.message();
     return std::monostate{};
 }
 
