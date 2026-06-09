@@ -40,7 +40,8 @@ RUN cmake -B build \
 FROM alpine:3.20
 
 # git for impact/provenance; zip for audit-pack; ca-certificates for TLS.
-RUN apk add --no-cache git zip ca-certificates
+# libstdc++ is required because cpfusa is dynamically linked against libstdc++.
+RUN apk add --no-cache git zip ca-certificates libstdc++
 
 COPY --from=builder /build/build/cpfusa /usr/local/bin/cpfusa
 
