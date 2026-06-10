@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cpfusa
-    VERSION 0.6.0
+    VERSION 0.7.0
     DESCRIPTION "C++ Functional Safety Toolkit"
     HOMEPAGE_URL "https://github.com/SoundMatt/cpp-FuSa"
     LANGUAGES CXX
@@ -105,6 +105,45 @@ if(CPFUSA_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+# ── CPack packaging ───────────────────────────────────────────────────────────
+set(CPACK_PACKAGE_NAME              "cpfusa")
+set(CPACK_PACKAGE_VENDOR            "SoundMatt")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++ Functional Safety Enablement Toolkit")
+set(CPACK_PACKAGE_VERSION           ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR     ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR     ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH     ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_HOMEPAGE_URL      "https://github.com/SoundMatt/cpp-FuSa")
+set(CPACK_RESOURCE_FILE_LICENSE     "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "cpp-FuSa")
+set(CPACK_STRIP_FILES               ON)
+
+# NSIS — Windows installer
+set(CPACK_NSIS_DISPLAY_NAME    "cpp-FuSa ${PROJECT_VERSION}")
+set(CPACK_NSIS_PACKAGE_NAME    "cpp-FuSa")
+set(CPACK_NSIS_URL_INFO_ABOUT  "https://github.com/SoundMatt/cpp-FuSa")
+set(CPACK_NSIS_CONTACT         "https://github.com/SoundMatt/cpp-FuSa/issues")
+set(CPACK_NSIS_MODIFY_PATH     ON)
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+
+# WiX — Windows MSI (alternative to NSIS)
+set(CPACK_WIX_UPGRADE_GUID "3F8A2B1C-4D5E-6F70-89AB-CDEF01234567")
+set(CPACK_WIX_PRODUCT_NAME "cpp-FuSa ${PROJECT_VERSION}")
+
+# DEB — Debian/Ubuntu
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "SoundMatt <https://github.com/SoundMatt>")
+set(CPACK_DEBIAN_PACKAGE_SECTION    "devel")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS    "libc6 (>= 2.17), libstdc++6 (>= 10)")
+set(CPACK_DEBIAN_FILE_NAME          DEB-DEFAULT)
+
+# RPM — Fedora/RHEL
+set(CPACK_RPM_PACKAGE_LICENSE   "MPL-2.0")
+set(CPACK_RPM_PACKAGE_GROUP     "Development/Tools")
+set(CPACK_RPM_PACKAGE_URL       "https://github.com/SoundMatt/cpp-FuSa")
+set(CPACK_RPM_FILE_NAME         RPM-DEFAULT)
+
+include(CPack)
 
 # ── Package info ──────────────────────────────────────────────────────────────
 message(STATUS "cpfusa v${PROJECT_VERSION} — C++${CMAKE_CXX_STANDARD} / ${CMAKE_BUILD_TYPE}")

@@ -81,12 +81,12 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 
 **Goal:** Achieve parity with go-FuSa across all major artifact categories.
 
-- `cpfusa verify` — CTest integration, `.fusa-evidence.json` with generatedAt/cppVersion/results/summary
-- `cpfusa qualify` — 8 built-in test cases, `qualify-report.json` with SHA-256 integrity hash
+- `cpfusa verify` — CTest integration, `.fusa-evidence.json`
+- `cpfusa qualify` — 8 built-in test cases, `qualify-report.json` with SHA-256 hash
 - `cpfusa cyber` — 20 CWE-mapped rules (CYBER001–020), `cyber-report.json`
 - `cpfusa tara` — ISO 21434 Ch.9 threat scenarios, `tara.json` + `tara.md`
 - `cpfusa fmea` — dFMEA from declarations, `fmea.json` + `fmea.csv` with RPN
-- `cpfusa safety-case` — GSN argument, `safety-case.json` + `safety-case.mermaid`
+- `cpfusa safety-case` — GSN argument, `safety-case.json` + `safety-case.mermaid` + `safety-case.md`
 - `cpfusa release` — SPDX 3.0.1 SBOM, `sbom.json` + `provenance.json` + `artifact-manifest.json`
 - `cpfusa audit-pack` — ZIP bundle with `AUDIT-MANIFEST.json`
 - `cpfusa badge` — Shields.io SVG, `fusa-badge.svg`
@@ -94,62 +94,50 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 - `cpfusa sign` — HMAC-SHA256 artifact signing + verification
 - `cpfusa hooks` — git pre-commit hook installer/remover
 
-Artifacts match go-FuSa filenames exactly.
-
 ---
 
 ## v0.6 — Full Go-FuSa v0.21 Parity ✅
 
 **Goal:** Feature parity with go-FuSa v0.21 across all major categories.
 
-- `cpfusa hara` — HARA management (show/init/asil), ISO 26262-3 Table 4 ASIL determination → `.fusa-hara.json`
-- `cpfusa iso26262` — ISO 26262 Part 6 gap assessment → `iso26262-gap-report.json`
-- `cpfusa iec61508` — IEC 61508 Parts 1-3 gap assessment → `iec61508-gap-report.json`
+- `cpfusa hara` — HARA management (show/init/asil), ISO 26262-3 Table 4 ASIL determination
+- `cpfusa iso26262` — ISO 26262 Part 6 gap assessment, summary keys `satisfied`/`gaps` (§9.3)
+- `cpfusa iec61508` — IEC 61508 Parts 1-3 gap assessment
 - `cpfusa boundary` — Component boundary diagram → `boundary.mermaid` + `boundary.dot`
 - `cpfusa metrics` — Safety metrics time series → `.fusa-metrics.json`
 - `cpfusa vuln` — CMake dependency vulnerability scan → `vuln.json`
 - `cpfusa coverage` — LCOV structural coverage (DO-178C) → `coverage-report.json`
-- `cpfusa disposition` — Finding disposition lifecycle (add/list/show) → `.fusa-dispositions.json`
+- `cpfusa disposition` — Finding disposition lifecycle → `.fusa-dispositions.json`
 - `cpfusa impact` — git diff + req mapping impact analysis
-- `cpfusa do178` — DO-178C Annex A objectives → `do178-gap-report.json`
+- `cpfusa do178` — DO-178C Annex A objectives (41 checks, Tables A-1–A-11) → `do178-gap-report.json`
 - `cpfusa sas` — Software Accomplishment Summary → `sas.json` + `sas.md`
 - `cpfusa sci` — Software Configuration Index with SHA-256 → `sci.json`
 - `cpfusa pr` — Problem Report log → `.fusa-problems.json`
 - `cpfusa fix` — Fix guidance catalog with before/after code examples
-- `safety-case.md` added as third safety-case artifact
 - Docker image + `docker-compose.yml` + `docker-publish.yml` workflow
+- x-FuSa spec v1.8 conformance: §3.1 envelope, §4 finding schema, §5 trace JSON, §9.3 summary keys, §2.3 exit codes, §10 capabilities
+- 463 tests, 129 requirements at 100% annotated and tested coverage
 
 ---
 
-## v0.7 — DO-178C + IEC 62443 + SLSA
+## v0.7 — Industrial Security + Supply Chain ✅
 
-**Goal:** Deeper process and supply-chain security coverage.
+**Goal:** IEC 62443 industrial security and SLSA supply-chain provenance.
 
-- Full DO-178C Annex A — all 38 objectives (Tables A-1 to A-11)
-- IEC 62443 Security Level compliance checks
-- SLSA L2/L3 supply-chain provenance checks
-
----
-
-## v0.8 — IEC 62443 + SLSA
-
-**Goal:** Industrial and supply-chain security.
-
-- IEC 62443 Security Level compliance checks
-- SLSA L2/L3 supply-chain provenance checks
-
-Deliverables: `cpfusa iec62443`, `cpfusa slsa`
+- `cpfusa iec62443` — IEC 62443 Security Level compliance checks → `iec62443-report.json`
+- `cpfusa slsa` — SLSA L2/L3 supply-chain provenance checks → `slsa-report.json`
 
 ---
 
-## v1.0 — Docker + Distribution
+## v0.8 — Distribution ✅ *(in progress → tagged v0.7.0)*
 
-**Goal:** Zero-install workflow.
+**Goal:** Zero-install and package manager distribution.
 
-- Docker image (ghcr.io/soundmatt/cpp-fusa)
-- GitHub Actions composite action
-- Homebrew formula
-- Windows installer (NSIS/WiX)
+- ✅ Docker image (`ghcr.io/soundmatt/cpp-fusa`) — shipped in v0.6
+- ✅ GitHub Actions release pipeline (tag-triggered, linux/macOS/Windows binaries) — shipped in v0.6
+- Homebrew formula (`Formula/cpp-fusa.rb`) — builds from source via GitHub archive
+- GitHub Actions composite action (`.github/action.yml`) — `uses: SoundMatt/cpp-FuSa@v0.7.0`
+- CPack packaging — NSIS (Windows installer) + DEB/RPM (Linux packages)
 
 ---
 
@@ -158,4 +146,5 @@ Deliverables: `cpfusa iec62443`, `cpfusa slsa`
 - libclang integration for deeper AST analysis
 - MISRA C++:2023 full rule set (300+ rules)
 - QNX / FreeRTOS / Zephyr RTOS integration
-- AUTOSAR Adaptive Platform AUTOSAR-AP compliance checks
+- AUTOSAR Adaptive Platform compliance checks
+- Homebrew tap (`homebrew-soundmatt`) for binary distribution

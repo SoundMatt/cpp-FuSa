@@ -1,0 +1,59 @@
+name: 'cpp-FuSa'
+description: 'Functional safety checks for C++ projects (ISO 26262, IEC 61508, ISO 21434, DO-178C)'
+author: 'SoundMatt'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  command:
+    description: >
+      cpfusa subcommand to run.
+      One of: check, lint, analyze, trace, verify, qualify, release,
+      audit-pack, cyber, tara, fmea, safety-case, iso26262, iec61508,
+      do178, iec62443, slsa, sas, sci, boundary, vuln, badge, sign.
+    required: false
+    default: 'check'
+
+  args:
+    description: 'Additional flags passed verbatim to cpfusa (e.g. "--strict --format json")'
+    required: false
+    default: ''
+
+  version:
+    description: 'cpp-FuSa image tag to pull from ghcr.io/soundmatt/cpp-fusa'
+    required: false
+    default: 'latest'
+
+  working-directory:
+    description: 'Project root to mount into the container (default: repo root)'
+    required: false
+    default: '.'
+
+outputs:
+  exit-code:
+    description: 'Exit code returned by cpfusa (0=pass, 1=gate failure, 2=usage error, 3=runtime error)'
+    value: ${{ steps.run.outputs.exit-code }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run cpfusa
+      id: run
+      shell: bash
+      env:
+        CPFUSA_IMAGE: ghcr.io/soundmatt/cpp-fusa:${{ inputs.version }}
+        CPFUSA_CMD:   ${{ inputs.command }}
+        CPFUSA_ARGS:  ${{ inputs.args }}
+        CPFUSA_DIR:   ${{ inputs.working-directory }}
+      run: |
+        set +e
+        docker run --rm \
+          -v "$(realpath "$CPFUSA_DIR"):/project" \
+          -w /project \
+          "$CPFUSA_IMAGE" \
+          $CPFUSA_CMD $CPFUSA_ARGS
+        CODE=$?
+        echo "exit-code=$CODE" >> "$GITHUB_OUTPUT"
+        exit $CODE

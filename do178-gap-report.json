@@ -1,6 +1,6 @@
 {
   "dal": "DAL-B",
-  "generatedAt": "2026-06-10T19:14:34Z",
+  "generatedAt": "2026-06-10T19:39:50Z",
   "objectives": [
     {
       "description": "Software Development Plan",
@@ -251,9 +251,9 @@
   ],
   "project": "cpp-FuSa",
   "summary": {
-    "addressed": 1,
-    "gap": 34,
+    "gaps": 34,
     "partial": 6,
+    "satisfied": 1,
     "total": 41
   }
 }

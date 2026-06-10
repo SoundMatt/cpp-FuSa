@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0] — 2026-06-10
+
+### Added
+- Homebrew formula (`Formula/cpp-fusa.rb`) — builds `cpfusa` from source via GitHub archive; `brew install` and `brew test` supported
+- GitHub Actions composite action (`.github/action.yml`) — `uses: SoundMatt/cpp-FuSa@v0.7.0` mounts the project into the Docker image and runs any `cpfusa` subcommand; exposes `exit-code` output
+- CPack packaging in `CMakeLists.txt` — NSIS (Windows installer with PATH modification), WiX (Windows MSI), DEB (Debian/Ubuntu), RPM (Fedora/RHEL); build with `cmake --build build --target package`
+- ROADMAP.md updated to reflect reality: v0.7 (IEC 62443, SLSA) and v0.8 (distribution) marked complete
+
 ## [0.6.1] — 2026-06-10
 
 ### Added
