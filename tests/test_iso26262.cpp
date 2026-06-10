@@ -95,7 +95,7 @@ TEST_CASE("iso26262: JSON objectives have id field", "[iso26262][iso26262003]") 
         REQUIRE(o.contains("id"));
 }
 
-TEST_CASE("iso26262: JSON summary uses satisfied and gaps keys (§9.3)", "[iso26262][iso26262003]") {
+TEST_CASE("iso26262: JSON summary uses satisfied and gaps keys (spec 9.3)", "[iso26262][iso26262003]") {
     TempDir tmp;
     auto r = iso26262::assess(tmp.path(), "p", iso26262::ASIL::B);
     iso26262::write_json(tmp.path() / iso26262::ISO26262_REPORT_FILE, r);

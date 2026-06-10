@@ -85,7 +85,7 @@ TEST_CASE("iec61508: JSON summary total matches report", "[iec61508][iec61508003
     REQUIRE(j["summary"]["total"].get<int>() == r.total);
 }
 
-TEST_CASE("iec61508: JSON summary uses satisfied and gaps keys (§9.3)", "[iec61508][iec61508003]") {
+TEST_CASE("iec61508: JSON summary uses satisfied and gaps keys (spec 9.3)", "[iec61508][iec61508003]") {
     TempDir tmp;
     auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
     iec61508::write_json(tmp.path() / iec61508::IEC61508_REPORT_FILE, r);
