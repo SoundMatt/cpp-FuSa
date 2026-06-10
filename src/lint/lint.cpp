@@ -45,6 +45,15 @@ bool suppressed(const std::string& line, const std::string& rule_id) {
         || line.find("// NOLINT") != std::string::npos;
 }
 
+// Checks if the file has a file-level suppression for a rule (scans first 20 lines).
+bool file_suppressed(const Lines& lines, const std::string& rule_id) {
+    int limit = std::min(static_cast<int>(lines.size()), 20);
+    for (int i = 0; i < limit; ++i)
+        if (lines[i].second.find("// fusa:file-suppress " + rule_id) != std::string::npos)
+            return true;
+    return false;
+}
+
 // Checks if the previous line is a fusa:safe-state annotation.
 bool has_safe_state_above(const Lines& lines, int idx) {
     if (idx <= 0) return false;
@@ -59,8 +68,8 @@ std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
     std::vector<Finding> out;
     // Matches `new` or `delete` as standalone keywords (not part of identifiers).
     static const std::regex pat(R"(\bnew\b|\bdelete\b)");
-    // Allowlist: placement new, operator new/delete declarations are fine.
-    static const std::regex allow(R"((operator\s+(new|delete)|//\s*fusa:unsafe))");
+    // Allowlist: placement new, operator new/delete, deleted functions (= delete), string literals.
+    static const std::regex allow(R"((operator\s+(new|delete)|=\s*delete|"[^"]*\b(new|delete)\b[^"]*"|//\s*fusa:unsafe))");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT001")) continue;
@@ -82,12 +91,14 @@ std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
 std::vector<Finding> check_goto(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bgoto\b)");
+    static const std::regex allow_str(R"("[^"]*\bgoto\b[^"]*")");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT002")) continue;
-            // Skip comment lines.
+            // Skip comment lines and string literals containing 'goto'.
             auto trimmed = line.find_first_not_of(" \t");
             if (trimmed != std::string::npos && line[trimmed] == '/') continue;
+            if (std::regex_search(line, allow_str)) continue;
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT002", Severity::ERROR,
                                "goto statement is prohibited (MISRA C++ A6-6-1)", // fusa:suppress LINT002
@@ -103,10 +114,12 @@ std::vector<Finding> check_goto(const fs::path& dir) {
 std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\breinterpret_cast\b)");
+    static const std::regex allow_str(R"("[^"]*\breinterpret_cast\b[^"]*")");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
             const auto& [n, line] = lines[i];
             if (suppressed(line, "LINT003")) continue;
+            if (std::regex_search(line, allow_str)) continue;
             // Skip comment lines.
             auto trimmed = line.find_first_not_of(" \t");
             if (trimmed != std::string::npos && line[trimmed] == '/') continue;
@@ -129,10 +142,16 @@ std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
 std::vector<Finding> check_abort_exit(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(std::abort|::abort|abort|std::exit|::exit|exit|_Exit|quick_exit)\s*\()");
+    static const std::regex in_str(R"("[^"]*\b(abort|exit)\s*\([^"]*")");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
+        if (file_suppressed(lines, "LINT004")) return;
         for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
             const auto& [n, line] = lines[i];
             if (suppressed(line, "LINT004")) continue;
+            if (std::regex_search(line, in_str)) continue;
+            // Skip comment lines.
+            auto trimmed = line.find_first_not_of(" \t");
+            if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             if (!std::regex_search(line, pat)) continue;
             if (!has_safe_state_above(lines, i)) {
                 out.push_back({"LINT004", Severity::ERROR,
@@ -192,9 +211,11 @@ std::vector<Finding> check_c_style_cast(const fs::path& dir) {
     // Matches (type)expr patterns — avoids false-positives on function calls.
     static const std::regex pat(
         R"(\((\s*)(int|long|short|char|bool|float|double|unsigned|void\s*\*|size_t)\s*\)\s*\w)");
+    static const std::regex in_str(R"("[^"]*\([^")]*\)[^"]*")");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT007")) continue;
+            if (std::regex_search(line, in_str)) continue;
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT007", Severity::WARNING,
                                "C-style cast detected — use static_cast/reinterpret_cast/const_cast (MISRA A5-2-2)", // fusa:suppress LINT003
@@ -213,22 +234,44 @@ std::vector<Finding> check_recursion(const fs::path& dir) {
     static const std::regex fn_def(R"(^(\w[\w\s\*\&:<>]*)\s+(\w+)\s*\([^)]*\)\s*(const)?\s*\{?)");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         std::string current_fn;
+        int depth = 0;
+        int fn_entry_depth = -1; // brace depth just before the function's own '{'
         for (const auto& [n, line] : lines) {
+            // Match function definition BEFORE counting braces so fn_entry_depth
+            // records the depth at which the function's opening '{' sits.
             std::smatch m;
             if (std::regex_search(line, m, fn_def) && m.size() > 2) {
                 current_fn = m[2].str();
+                fn_entry_depth = depth;
+            }
+            // Track brace depth; when we return to fn_entry_depth the body has closed.
+            for (char c : line) {
+                if (c == '{') ++depth;
+                else if (c == '}' && depth > 0) {
+                    --depth;
+                    if (!current_fn.empty() && depth == fn_entry_depth) {
+                        current_fn.clear();
+                        fn_entry_depth = -1;
+                    }
+                }
             }
             if (suppressed(line, "LINT008")) continue;
             if (current_fn.empty()) continue;
             if (line.find("fusa:recursive") != std::string::npos) continue;
-            // Simple self-call detection.
+            // Simple self-call detection — skip the definition line itself.
+            // Exclude member access (foo.fn()) and qualified calls (ns::fn()).
             std::regex self_call("\\b" + current_fn + "\\s*\\(");
-            if (std::regex_search(line, self_call)
+            std::smatch sc_match;
+            if (std::regex_search(line, sc_match, self_call)
                     && !std::regex_search(line, fn_def)) {
-                out.push_back({"LINT008", Severity::WARNING,
-                               "Recursive call to '" + current_fn + "' — add depth-bound guard (JSF++ 119)",
-                               p.string(), n,
-                               "Add // fusa:recursive <max-depth> annotation or refactor iteratively"});
+                auto pos = sc_match.position();
+                bool qualified = pos >= 1 && (line[pos-1] == '.' || line[pos-1] == ':');
+                if (!qualified) {
+                    out.push_back({"LINT008", Severity::WARNING,
+                                   "Recursive call to '" + current_fn + "' — add depth-bound guard (JSF++ 119)",
+                                   p.string(), n,
+                                   "Add // fusa:recursive <max-depth> annotation or refactor iteratively"});
+                }
             }
         }
     });
@@ -240,9 +283,14 @@ std::vector<Finding> check_printf(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(
         R"(\b(printf|fprintf|sprintf|snprintf|scanf|fscanf|sscanf|vprintf|vsprintf|vsnprintf)\s*\()");
+    static const std::regex in_str(R"("[^"]*\b(printf|fprintf|sprintf|snprintf|scanf|fscanf|sscanf|vprintf|vsprintf|vsnprintf)\b[^"]*")");
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT009")) continue;
+            if (std::regex_search(line, in_str)) continue;
+            // Skip comment lines.
+            auto trimmed = line.find_first_not_of(" \t");
+            if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT009", Severity::INFO,
                                "printf/scanf family — prefer type-safe I/O (std::format, std::ostream)",

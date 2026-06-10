@@ -1,3 +1,4 @@
+// fusa:file-suppress LINT004 — CLI dispatcher; std::exit() is the intended error-path mechanism
 #include "cli.hpp"
 #include "../config/config.hpp"
 #include "../engine/engine.hpp"

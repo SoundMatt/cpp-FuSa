@@ -6,5 +6,5 @@
   "language": "cpp17",
   "strict": false,
   "source_dirs": ["src", "include"],
-  "exclude_patterns": ["build/", "_deps/"]
+  "exclude_patterns": ["build/", "build-cov/", "_deps/"]
 }
