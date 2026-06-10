@@ -129,7 +129,7 @@ TEST_CASE("release: write_all creates sbom.json, provenance.json, artifact-manif
     REQUIRE(std::filesystem::exists(tmp.path() / release::ManifestFile));
 }
 
-TEST_CASE("release: sbom.json conforms to x-FuSa §7 format", "[release]") {
+TEST_CASE("release: sbom.json conforms to x-FuSa spec-7 format", "[release]") {
     TempDir tmp;
     config::ProjectConfig cfg;
     auto sbom = value_of(release::build_sbom(tmp.path(), cfg));

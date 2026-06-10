@@ -874,8 +874,14 @@ int run(int argc, char* argv[]) {
         j["language"]      = "cpp";
         {
             auto t = std::time(nullptr);
+            std::tm tm_buf{};
+#ifdef _WIN32
+            gmtime_s(&tm_buf, &t);
+#else
+            gmtime_r(&t, &tm_buf);
+#endif
             std::ostringstream ss;
-            ss << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%SZ");
+            ss << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
             j["generatedAt"] = ss.str();
         }
         j["specVersion"] = std::string(SpecVersion);
