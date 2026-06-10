@@ -32,6 +32,7 @@ RUN cmake -B build \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_STANDARD=17 \
       -DCPFUSA_BUILD_TESTS=OFF \
+      -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
       -G Ninja \
     && cmake --build build --parallel \
     && strip build/cpfusa
@@ -40,8 +41,8 @@ RUN cmake -B build \
 FROM alpine:3.20
 
 # git for impact/provenance; zip for audit-pack; ca-certificates for TLS.
-# libstdc++ is required because cpfusa is dynamically linked against libstdc++.
-RUN apk add --no-cache git zip ca-certificates libstdc++
+# libstdc++ is statically linked into the binary, so not needed at runtime.
+RUN apk add --no-cache git zip ca-certificates
 
 COPY --from=builder /build/build/cpfusa /usr/local/bin/cpfusa
 
