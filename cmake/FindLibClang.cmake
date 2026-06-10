@@ -12,10 +12,14 @@
 #   apt install libclang-dev → /usr/lib/llvm-XX/
 
 # ── Prefer LLVM cmake package if available ────────────────────────────────────
-find_package(LLVM QUIET CONFIG)
-if(LLVM_FOUND)
-    set(_llvm_inc ${LLVM_INCLUDE_DIRS})
-    set(_llvm_lib ${LLVM_LIBRARY_DIRS})
+# Skip LLVM config-mode search: LLVMConfig.cmake runs CheckCSourceCompiles which
+# requires LANGUAGES C. Our project is CXX-only, so fall through to path search.
+if(FALSE)
+    find_package(LLVM QUIET CONFIG)
+    if(LLVM_FOUND)
+        set(_llvm_inc ${LLVM_INCLUDE_DIRS})
+        set(_llvm_lib ${LLVM_LIBRARY_DIRS})
+    endif()
 endif()
 
 # ── Header search ─────────────────────────────────────────────────────────────

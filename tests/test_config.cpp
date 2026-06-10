@@ -35,7 +35,10 @@ TEST_CASE("config: defaults set project_root to absolute path", "[config][cfg001
     TempDir tmp;
     auto cfg = config::defaults(tmp.path());
     REQUIRE_FALSE(cfg.project_root.empty());
-    REQUIRE(cfg.project_root.find('/') != std::string::npos);
+    // Accept both POSIX '/' and Windows '\' path separators.
+    const bool has_sep = cfg.project_root.find('/') != std::string::npos
+                      || cfg.project_root.find('\\') != std::string::npos;
+    REQUIRE(has_sep);
 }
 
 // ─── save / load round-trip ───────────────────────────────────────────────────
