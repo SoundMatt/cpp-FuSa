@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
@@ -283,6 +284,83 @@ std::string render_req(const Requirement& req,
     out << "\nTest annotations (" << tests.size() << "):\n";
     for (const auto* a : tests) out << "  " << a->file << ":" << a->line << "\n";
     return out.str();
+}
+
+
+//fusa:req REQ-REQ001 REQ-REQ002 REQ-REQ003
+Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
+    std::ifstream f(file);
+    if (!f) return std::string("cannot open: ") + file.string();
+
+    // Build set of existing ids to skip duplicates.
+    std::set<std::string> existing;
+    for (const auto& r : reqs) existing.insert(r.id);
+
+    std::string line;
+    std::getline(f, line); // skip header: id,title,description,standard_ref,severity
+    int added = 0;
+    while (std::getline(f, line)) {
+        if (line.empty()) continue;
+        // Minimal CSV parse: split on first 4 commas, rest is description.
+        std::istringstream ss(line);
+        std::string id, title, desc, std_ref, sev;
+        std::getline(ss, id,      ',');
+        std::getline(ss, title,   ',');
+        std::getline(ss, desc,    ',');
+        std::getline(ss, std_ref, ',');
+        std::getline(ss, sev);
+        if (id.empty()) continue;
+        if (existing.count(id)) continue;
+        Requirement r;
+        r.id           = id;
+        r.title        = title;
+        r.description  = desc;
+        r.standard_ref = std_ref;
+        r.severity     = sev.empty() ? "safety" : sev;
+        reqs.push_back(std::move(r));
+        existing.insert(id);
+        ++added;
+    }
+    return added;
+}
+
+std::string export_csv(const std::vector<Requirement>& reqs) {
+    std::ostringstream out;
+    out << "id,title,description,standard_ref,severity\n";
+    for (const auto& r : reqs) {
+        // Minimal escaping: replace comma in fields with semicolon.
+        auto esc = [](const std::string& s) {
+            std::string res;
+            for (char c : s) res += (c == ',') ? ';' : c;
+            return res;
+        };
+        out << esc(r.id)           << ','
+            << esc(r.title)        << ','
+            << esc(r.description)  << ','
+            << esc(r.standard_ref) << ','
+            << esc(r.severity)     << '\n';
+    }
+    return out.str();
+}
+
+bool save_requirements(const fs::path& dir, const std::vector<Requirement>& reqs) {
+    auto path = dir / ".fusa-reqs.json";
+    json arr  = json::array();
+    for (const auto& r : reqs) {
+        arr.push_back({
+            {"id",           r.id},
+            {"title",        r.title},
+            {"description",  r.description},
+            {"standard_ref", r.standard_ref},
+            {"severity",     r.severity}
+        });
+    }
+    json doc;
+    doc["requirements"] = arr;
+    std::ofstream f(path);
+    if (!f) return false;
+    f << doc.dump(2) << "\n";
+    return true;
 }
 
 } // namespace cpfusa::trace

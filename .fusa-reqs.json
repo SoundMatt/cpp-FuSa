@@ -176,5 +176,21 @@
   {"id":"REQ-AST002","title":"Variable shadowing (AST check)","description":"Local variables shall not shadow outer-scope identifiers.","standard_ref":"AUTOSAR A2-10-1","severity":"warning"},
   {"id":"REQ-AST003","title":"Raw pointer return without nodiscard (AST check)","description":"Functions returning raw pointers shall be annotated [[nodiscard]].","standard_ref":"AUTOSAR A7-1-7","severity":"warning"},
   {"id":"REQ-AST004","title":"libclang integration","description":"The tool shall optionally link libclang to provide AST-level analysis beyond regex checks.","standard_ref":"ISO 26262-6 §7.4.2","severity":"info"},
-  {"id":"REQ-AST005","title":"AST stub mode","description":"When libclang is unavailable, the ast subcommand shall return an INFO finding (AST000) and exit 0.","standard_ref":"ISO 26262-6 §7.4.2","severity":"info"}
+  {"id":"REQ-AST005","title":"AST stub mode","description":"When libclang is unavailable, the ast subcommand shall return an INFO finding (AST000) and exit 0.","standard_ref":"ISO 26262-6 §7.4.2","severity":"info"},
+
+  {"id":"REQ-ISO21434-001","title":"CAL parsing","description":"parse_cal() shall accept CAL-1 through CAL-4 (with or without hyphen) and cal_str() shall return the canonical form.","standard_ref":"ISO 21434:2021 §14","severity":"safety"},
+  {"id":"REQ-ISO21434-002","title":"CAL-scoped objective assessment","description":"assess() shall evaluate all applicable objectives for the specified CAL level and return a Report with non-empty objectives.","standard_ref":"ISO 21434:2021 §14","severity":"safety"},
+  {"id":"REQ-ISO21434-003","title":"Evidence file detection","description":"assess() shall check for tara.json, vuln.json, .fusa-reqs.json, cyber-report.json, sbom.json, provenance.json, safety-case.json, and .fusa.json and adjust objective status accordingly.","standard_ref":"ISO 21434:2021 §14","severity":"safety"},
+  {"id":"REQ-ISO21434-004","title":"ISO 21434 gap report JSON","description":"write_json() shall emit a spec §3.1 envelope with schemaVersion 1.9, kind gap-report, standard iso21434, and §9.3-conformant summary keys satisfied/partial/gaps.","standard_ref":"ISO 21434:2021 §14","severity":"safety"},
+  {"id":"REQ-ISO21434-005","title":"Objective status values","description":"Each objective in the JSON report shall have status ∈ {satisfied, partial, gap}.","standard_ref":"ISO 21434:2021 §14","severity":"safety"},
+
+  {"id":"REQ-UNECE-001","title":"UNECE R155 threat assessment","description":"assess_r155() shall evaluate all nine R155 threat categories (TC-1 through TC-9) and return a Report with non-empty threats.","standard_ref":"UNECE R155 Annex 5","severity":"safety"},
+  {"id":"REQ-UNECE-002","title":"R155 evidence detection","description":"assess_r155() shall check for tara.json, vuln.json, cyber-report.json, sbom.json to determine coverage of automatable threat categories.","standard_ref":"UNECE R155 Annex 5","severity":"safety"},
+  {"id":"REQ-UNECE-003","title":"UNECE R156 SUMS assessment","description":"assess_r156() shall evaluate all six R156 software update requirements (SU-1 through SU-6) and return a Report with regulation UNECE-R156.","standard_ref":"UNECE R156 Annex 1","severity":"safety"},
+  {"id":"REQ-UNECE-004","title":"UNECE gap report JSON","description":"write_json() shall emit a spec §3.1 envelope with schemaVersion 1.9, kind gap-report, standard unece-r155 or unece-r156, and §9.3-conformant summary keys.","standard_ref":"UNECE R155/R156","severity":"safety"},
+  {"id":"REQ-UNECE-005","title":"UNECE objective status values","description":"Each objective in the UNECE JSON report shall have status ∈ {satisfied, partial, gap}.","standard_ref":"UNECE R155/R156","severity":"safety"},
+
+  {"id":"REQ-REQ001","title":"CSV import with duplicate skipping","description":"import_csv() shall parse id,title,description,standard_ref,severity rows and skip any IDs already present in the target vector.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-REQ002","title":"CSV export with comma escaping","description":"export_csv() shall write a header row followed by one row per requirement, replacing commas inside field values with semicolons.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+  {"id":"REQ-REQ003","title":"Canonical requirements save","description":"save_requirements() shall write {requirements:[...]} in the canonical §1.2.2 format, and load_requirements() shall read it back correctly.","standard_ref":"IEC 61508 §7.4","severity":"safety"}
 ]

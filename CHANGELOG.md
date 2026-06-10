@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.9.0] — 2026-06-10
+
+### Added
+- `cpfusa iso21434` — ISO 21434:2021 cybersecurity assurance level (CAL) gap assessment
+  - 21 objectives across clauses 5–15 and Annex A; CAL-1 to CAL-4 scoping
+  - Automatable objectives check evidence files: `.fusa.json`, `tara.json`, `vuln.json`, `cyber-report.json`, `sbom.json`, `provenance.json`, `safety-case.json`, `.fusa-reqs.json`
+  - Writes `iso21434-gap-report.json` with spec §3.1 envelope + §9.3 summary keys
+  - `--cal CAL-1|CAL-2|CAL-3|CAL-4`, `--output <file>`
+- `cpfusa unece` — UNECE R155/R156 automotive cybersecurity compliance gap reports
+  - R155: 9 threat categories (TC-1 communication, TC-2 update, TC-3 physical, TC-4 connectivity, TC-5 supply chain, TC-6 storage, TC-7 key mgmt, TC-8 privacy, TC-9 incident)
+  - R156: 6 SUMS requirements (SU-1 authorization, SU-2 impact, SU-3 validation, SU-4 rollback, SU-5 supply chain, SU-6 campaign monitoring)
+  - Writes `unece-r155-gap-report.json` / `unece-r156-gap-report.json` with spec §3.1 envelope
+  - `--regulation r155|r156|both`, `--output <file>`
+- `cpfusa req` — full requirement import/export subcommand structure
+  - `req show [<REQ-ID>]` — show all requirements or a single one (backward-compatible with old `cpfusa req <ID>` form)
+  - `req import --file <csv> --format csv` — import from CSV, skipping duplicate IDs
+  - `req export --output <file> --format csv` — export all requirements to CSV
+  - CSV format: `id,title,description,standard_ref,severity`; commas in values escaped as semicolons
+  - `save_requirements()` writes canonical `{"requirements":[...]}` format per spec §1.2.2
+- 13 new requirements in `.fusa-reqs.json`: REQ-ISO21434-001–005, REQ-UNECE-001–005, REQ-REQ001–003 (total: 192)
+- 45 new tests in `test_iso21434.cpp`, `test_unece.cpp`, `test_req.cpp` (total: 545)
+
+### Fixed
+- `iso26262`, `iec61508`, `do178` objective-level `status` field now emits `"satisfied"` (was `"addressed"`) — spec §9.3 requires `satisfied|partial|gap`
+
 ## [0.8.0] — 2026-06-10
 
 ### Added

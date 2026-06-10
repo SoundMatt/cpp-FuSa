@@ -1,11 +1,11 @@
 # cpp-FuSa Tool Safety Manual
 
-**Version:** 0.6.1  
+**Version:** 0.9.0  
 **Binary:** `cpfusa`  
 **Repository:** `github.com/SoundMatt/cpp-FuSa`  
 **License:** Mozilla Public License 2.0  
-**Standards addressed:** ISO 26262, IEC 61508, ISO 21434, DO-178C  
-**Spec conformance:** x-FuSa specification v1.8
+**Standards addressed:** ISO 26262, IEC 61508, ISO 21434, UNECE R155/R156, DO-178C  
+**Spec conformance:** x-FuSa specification v1.9
 
 ---
 
@@ -31,12 +31,16 @@ Capabilities:
 | MISRA/AUTOSAR/JSF++ coding standard analysis | LINT001–010 | `cpfusa lint` |
 | Static analysis (clang-tidy, cppcheck, own passes) | ANAL001–007 | `cpfusa analyze` |
 | Requirements traceability and coverage | — | `cpfusa trace` |
+| Requirements import/export (CSV) | — | `cpfusa req import|export` |
 | Test evidence collection (CTest) | — | `cpfusa verify` |
 | Cybersecurity analysis — 20 CWE-mapped rules | CYBER001–020 | `cpfusa cyber` |
 | Hazard Analysis and Risk Assessment | HARA001–005 | `cpfusa hara` |
 | ISO 26262 Part 6 gap assessment | — | `cpfusa iso26262` |
 | IEC 61508 Parts 1-3 gap assessment | — | `cpfusa iec61508` |
 | DO-178C Annex A gap assessment | — | `cpfusa do178` |
+| ISO 21434:2021 CAL-scoped gap assessment | — | `cpfusa iso21434` |
+| UNECE R155 threat category gap assessment | — | `cpfusa unece --regulation r155` |
+| UNECE R156 SUMS gap assessment | — | `cpfusa unece --regulation r156` |
 | Threat Analysis and Risk Assessment (ISO 21434) | — | `cpfusa tara` |
 | dFMEA generation from source declarations | — | `cpfusa fmea` |
 | GSN Safety case assembly | — | `cpfusa safety-case` |

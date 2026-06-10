@@ -107,7 +107,7 @@ Status detect_status(const std::string& obj_id, const fs::path& dir) {
 
 std::string status_str(Status s) {
     switch (s) {
-        case Status::Addressed: return "addressed";
+        case Status::Addressed: return "satisfied";
         case Status::Partial:   return "partial";
         default:                return "gap";
     }

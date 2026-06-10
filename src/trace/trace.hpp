@@ -64,4 +64,18 @@ struct TraceOptions {
 [[nodiscard]] std::string render_req(const Requirement& req,
                                      const std::vector<Annotation>& annotations);
 
+// Import requirements from CSV (id,title,description,standard_ref,severity).
+// Returns count of newly added requirements (duplicates are skipped).
+[[nodiscard]] Result<int> import_csv(
+    const std::filesystem::path& file,
+    std::vector<Requirement>& reqs);
+
+// Export requirements to CSV format.
+[[nodiscard]] std::string export_csv(const std::vector<Requirement>& reqs);
+
+// Save requirements back to .fusa-reqs.json in the canonical {requirements:[]} format.
+[[nodiscard]] bool save_requirements(
+    const std::filesystem::path& dir,
+    const std::vector<Requirement>& reqs);
+
 } // namespace cpfusa::trace

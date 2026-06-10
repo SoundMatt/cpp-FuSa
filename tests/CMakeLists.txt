@@ -41,6 +41,9 @@ add_executable(cpfusa_tests
     test_iec62443.cpp
     test_slsa.cpp
     test_ast.cpp
+    test_iso21434.cpp
+    test_unece.cpp
+    test_req.cpp
 )
 
 target_include_directories(cpfusa_tests

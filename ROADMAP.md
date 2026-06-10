@@ -157,6 +157,18 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 
 ---
 
+## v0.10 — ISO 21434 + UNECE + Req Import/Export ✅
+
+**Goal:** Full automotive cybersecurity standard coverage and requirements lifecycle management.
+
+- ✅ `cpfusa iso21434` — ISO 21434:2021 CAL-scoped gap assessment (21 objectives, CAL-1 to CAL-4)
+- ✅ `cpfusa unece` — UNECE R155 (9 threat categories) + R156 (6 SUMS requirements) gap reports
+- ✅ `cpfusa req show|import|export` — requirements lifecycle: CSV import/export with duplicate skip, canonical `{"requirements":[]}` save
+- ✅ Spec §9.3 objective status fix: `iso26262`, `iec61508`, `do178` now emit `"satisfied"` (not `"addressed"`)
+- ✅ 192 requirements, 545 tests
+
+---
+
 ## Future
 
 - QNX / FreeRTOS / Zephyr RTOS integration

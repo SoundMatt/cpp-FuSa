@@ -37,6 +37,8 @@
 #include "../coupling/coupling.hpp"
 #include "../iec62443/iec62443.hpp"
 #include "../slsa/slsa.hpp"
+#include "../iso21434/iso21434.hpp"
+#include "../unece/unece.hpp"
 #include "../ast/ast.hpp"
 #include "cpfusa/fusa.hpp"
 
@@ -255,21 +257,75 @@ int run(int argc, char* argv[]) {
     });
 
     // ── req ───────────────────────────────────────────────────────────────────
-    auto* req_cmd = app.add_subcommand("req", "Show a specific requirement and its annotations");
+    auto* req_cmd = app.add_subcommand("req", "Requirement lookup, import, and export");
+    req_cmd->require_subcommand(0, 1);
+
+    // req show [REQ-ID ...]
+    auto* req_show = req_cmd->add_subcommand("show", "Show requirement(s) and their annotations");
     std::string req_id_arg;
-    req_cmd->add_option("id", req_id_arg, "Requirement ID (e.g. REQ-001)")->required();
-    req_cmd->callback([&]() -> void {
+    req_show->add_option("id", req_id_arg, "Requirement ID (show all if omitted)");
+    auto req_show_cb = [&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
         auto reqs_r = trace::load_requirements(dir);
         if (!is_ok(reqs_r)) { print_err(error_of(reqs_r)); std::exit(1); }
         const auto& reqs = value_of(reqs_r);
-        auto it = std::find_if(reqs.begin(), reqs.end(),
-                               [&](const trace::Requirement& r){ return r.id == req_id_arg; });
-        if (it == reqs.end()) { print_err("Requirement not found: " + req_id_arg); std::exit(1); }
         auto anns = trace::scan_annotations(dir);
-        std::cout << trace::render_req(*it, anns);
+        if (req_id_arg.empty()) {
+            for (const auto& r : reqs) std::cout << trace::render_req(r, anns);
+        } else {
+            auto it = std::find_if(reqs.begin(), reqs.end(),
+                                   [&](const trace::Requirement& r){ return r.id == req_id_arg; });
+            if (it == reqs.end()) { print_err("Requirement not found: " + req_id_arg); std::exit(1); }
+            std::cout << trace::render_req(*it, anns);
+        }
+    };
+    req_show->callback(req_show_cb);
+
+    // req import --file <csv>
+    auto* req_import = req_cmd->add_subcommand("import", "Import requirements from CSV file");
+    std::string req_import_file, req_import_fmt = "csv";
+    req_import->add_option("--file",   req_import_file, "Input file path")->required();
+    req_import->add_option("--format", req_import_fmt,  "csv (default)");
+    req_import->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto reqs_r = trace::load_requirements(dir);
+        if (!is_ok(reqs_r)) { print_err(error_of(reqs_r)); std::exit(1); }
+        auto reqs = value_of(reqs_r);
+        auto result = trace::import_csv(fs::path(req_import_file), reqs);
+        if (!is_ok(result)) { print_err(error_of(result)); std::exit(1); }
+        int added = value_of(result);
+        if (!trace::save_requirements(dir, reqs)) {
+            print_err("Failed to write .fusa-reqs.json"); std::exit(3);
+        }
+        print_ok("Imported " + std::to_string(added) + " requirement(s) from " + req_import_file);
+    });
+
+    // req export [--format csv] [--output file]
+    auto* req_export = req_cmd->add_subcommand("export", "Export requirements to CSV");
+    std::string req_export_file, req_export_fmt = "csv";
+    req_export->add_option("--output", req_export_file, "Output file (default: stdout)");
+    req_export->add_option("--format", req_export_fmt,  "csv (default)");
+    req_export->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto reqs_r = trace::load_requirements(dir);
+        if (!is_ok(reqs_r)) { print_err(error_of(reqs_r)); std::exit(1); }
+        const auto& reqs = value_of(reqs_r);
+        std::string csv = trace::export_csv(reqs);
+        if (req_export_file.empty()) {
+            std::cout << csv;
+        } else {
+            std::ofstream f(req_export_file);
+            if (!f) { print_err("Cannot write: " + req_export_file); std::exit(3); }
+            f << csv;
+            print_ok("Exported " + std::to_string(reqs.size()) + " requirement(s) to " + req_export_file);
+        }
+    });
+
+    // req (no subcommand) — default to show with positional ID for backward compat
+    req_cmd->callback([&]() -> void {
+        if (req_cmd->get_subcommands().empty()) req_show_cb();
     });
 
     // ── template ──────────────────────────────────────────────────────────────
@@ -639,6 +695,63 @@ int run(int argc, char* argv[]) {
         if (rep.gap > 0) std::exit(1);
     });
 
+    // ── iso21434 ──────────────────────────────────────────────────────────────
+    auto* iso21434_cmd = app.add_subcommand("iso21434",
+        "Generate ISO 21434 cybersecurity compliance gap report");
+    std::string iso21434_cal = "CAL-2", iso21434_output;
+    iso21434_cmd->add_option("--cal",    iso21434_cal,   "CAL-1|CAL-2|CAL-3|CAL-4");
+    iso21434_cmd->add_option("--output", iso21434_output, "Write JSON report to file");
+    iso21434_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto cfg_opt = load_config(dir);
+        if (!cfg_opt) { std::exit(3); }
+        auto cal = iso21434::parse_cal(iso21434_cal);
+        auto rep = iso21434::assess(dir, cfg_opt->project, cal);
+        fs::path out = iso21434_output.empty()
+                       ? dir / iso21434::ISO21434_REPORT_FILE
+                       : fs::path(iso21434_output);
+        iso21434::write_json(out, rep);
+        iso21434::render_text(rep);
+        print_ok("iso21434-gap-report.json written (" + std::to_string(rep.gap) + " gaps)");
+        if (rep.gap > 0) std::exit(1);
+    });
+
+    // ── unece ─────────────────────────────────────────────────────────────────
+    auto* unece_cmd = app.add_subcommand("unece",
+        "Generate UNECE R155/R156 cybersecurity compliance gap report");
+    std::string unece_reg = "r155", unece_output;
+    unece_cmd->add_option("--regulation", unece_reg,    "r155|r156|both (default: r155)");
+    unece_cmd->add_option("--output",     unece_output, "Write JSON report to file");
+    unece_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto cfg_opt = load_config(dir);
+        if (!cfg_opt) { std::exit(3); }
+        bool do_r155 = (unece_reg != "r156");
+        bool do_r156 = (unece_reg == "r156" || unece_reg == "both");
+        if (do_r155) {
+            auto rep = unece::assess_r155(dir, cfg_opt->project);
+            fs::path out = unece_output.empty()
+                           ? dir / unece::UNECE_R155_FILE
+                           : fs::path(unece_output);
+            unece::write_json(out, rep);
+            unece::render_text(rep);
+            print_ok("unece-r155-gap-report.json written (" +
+                     std::to_string(rep.gap) + " gaps)");
+            if (rep.gap > 0) std::exit(1);
+        }
+        if (do_r156) {
+            auto rep = unece::assess_r156(dir, cfg_opt->project);
+            fs::path out = unece_output.empty()
+                           ? dir / unece::UNECE_R156_FILE
+                           : fs::path(unece_output);
+            unece::write_json(out, rep);
+            unece::render_text(rep);
+            print_ok("unece-r156-gap-report.json written (" +
+                     std::to_string(rep.gap) + " gaps)");
+            if (rep.gap > 0) std::exit(1);
+        }
+    });
+
     // ── boundary ──────────────────────────────────────────────────────────────
     auto* boundary_cmd = app.add_subcommand("boundary", "Generate component boundary diagram");
     std::string boundary_outdir;
@@ -905,9 +1018,10 @@ int run(int argc, char* argv[]) {
                                                    "init","version","capabilities","cyber","verify",
                                                    "qualify","release","audit-pack","badge","diff",
                                                    "sign","hooks","tara","fmea","safety-case","hara",
-                                                   "iso26262","iec61508","boundary","metrics","vuln",
-                                                   "coverage","disposition","impact","do178","sas",
-                                                   "sci","pr","fix","misra","coupling","iec62443","slsa"});
+                                                   "iso26262","iec61508","iso21434","unece","boundary",
+                                                   "metrics","vuln","coverage","disposition","impact",
+                                                   "do178","sas","sci","pr","fix","misra","coupling",
+                                                   "iec62443","slsa","req","ast"});
         nlohmann::json fmts;
         fmts["check"]   = {"text","json","html","sarif"};
         fmts["report"]  = {"text","json","html","sarif"};
@@ -915,7 +1029,8 @@ int run(int argc, char* argv[]) {
         fmts["diff"]    = {"text","json"};
         fmts["version"] = {"text","json"};
         j["formats"]    = fmts;
-        j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c","iec62443"});
+        j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c",
+                                                   "iec62443","unece-r155","unece-r156"});
         std::cout << j.dump(2) << "\n";
     });
 
