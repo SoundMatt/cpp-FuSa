@@ -48,8 +48,8 @@ Rule make_fusa001() {
             if (fs::exists(dir / ".fusa.json")) return {};
             return {Finding{"FUSA001", Severity::ERROR,
                             ".fusa.json not found — run 'cpfusa init'",
-                            (dir / ".fusa.json").string(), 0,
-                            "cpfusa init"}};
+                            ".fusa.json", 0,
+                            "cpfusa init", "config"}};
         }};
 }
 
@@ -66,7 +66,8 @@ Rule make_fusa002() {
             return {Finding{"FUSA002", Severity::WARNING,
                             "No //fusa:req annotations found — traceability cannot be established",
                             "", 0,
-                            "Add //fusa:req REQ-XXX comments above safety-critical functions"}};
+                            "Add //fusa:req REQ-XXX comments above safety-critical functions",
+                            "requirement"}};
         }};
 }
 
@@ -82,7 +83,7 @@ Rule make_fusa003() {
             return {Finding{"FUSA003", Severity::WARNING,
                             "Safety version is not declared in .fusa.json",
                             ".fusa.json", 0,
-                            "Set the \"version\" field in .fusa.json"}};
+                            "Set the \"version\" field in .fusa.json", "config"}};
         }};
 }
 
@@ -98,7 +99,7 @@ Rule make_fusa004() {
             return {Finding{"FUSA004", Severity::WARNING,
                             ".fusa-evidence.json not found — run 'cpfusa verify' after tests pass",
                             "", 0,
-                            "cpfusa verify"}};
+                            "cpfusa verify", "safety"}};
         }};
 }
 
@@ -115,7 +116,7 @@ Rule make_fusa005() {
             return {Finding{"FUSA005", Severity::INFO,
                             "CHANGELOG.md missing or empty — add a release history",
                             "CHANGELOG.md", 0,
-                            "Create CHANGELOG.md with at least one version entry"}};
+                            "Create CHANGELOG.md with at least one version entry", "config"}};
         }};
 }
 

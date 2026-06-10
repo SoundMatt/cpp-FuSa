@@ -13,6 +13,7 @@ constexpr std::string_view Version      = "0.6.0";
 constexpr std::string_view VersionMajor = "0";
 constexpr std::string_view VersionMinor = "6";
 constexpr std::string_view VersionPatch = "0";
+constexpr std::string_view SpecVersion  = "1.8";
 
 enum class Severity { INFO, WARNING, ERROR };
 
@@ -27,11 +28,24 @@ enum class Severity { INFO, WARNING, ERROR };
 
 struct Finding {
     std::string rule_id;
-    Severity    severity;
+    Severity    severity{Severity::INFO};
     std::string message;
-    std::string file;
+    std::string file;          // project-relative, / separators (§4)
     int         line{0};
-    std::string fix;
+    std::string remediation;   // actionable hint (spec key: NOT "fix")
+    std::string category;      // lint|safety|security|coverage|requirement|…
+    std::string standard_id;   // canonical standard id (§2.4.1)
+    std::string clause;
+    int         column{0};
+    std::string fingerprint;   // sha256:… (§4.2)
+
+    Finding() = default;
+    Finding(std::string rid, Severity sev, std::string msg,
+            std::string f = {}, int ln = 0, std::string rem = {},
+            std::string cat = {})
+        : rule_id(std::move(rid)), severity(sev), message(std::move(msg)),
+          file(std::move(f)), line(ln), remediation(std::move(rem)),
+          category(std::move(cat)) {}
 };
 
 // Lightweight result type — avoids exceptions in safety-critical paths.

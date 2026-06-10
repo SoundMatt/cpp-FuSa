@@ -268,5 +268,5 @@ jobs:
       - name: Build Docker image
         run: docker build -t cpp-fusa-test .
 
-      - name: Smoke test — cpfusa --version
-        run: docker run --rm cpp-fusa-test --version
+      - name: Smoke test — cpfusa version
+        run: docker run --rm cpp-fusa-test version

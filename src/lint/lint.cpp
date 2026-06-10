@@ -80,8 +80,8 @@ std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
             if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             out.push_back({"LINT001", Severity::WARNING,
                            "Raw new/delete usage — prefer std::make_unique / std::make_shared",
-                           p.string(), n,
-                           "Replace with smart pointer factory or container"});
+                           fs::relative(p, dir).generic_string(), n,
+                           "Replace with smart pointer factory or container", "lint"});
         }
     });
     return out;
@@ -102,8 +102,8 @@ std::vector<Finding> check_goto(const fs::path& dir) {
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT002", Severity::ERROR,
                                "goto statement is prohibited (MISRA C++ A6-6-1)", // fusa:suppress LINT002
-                               p.string(), n,
-                               "Refactor control flow using structured constructs"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Refactor control flow using structured constructs", "lint"});
             }
         }
     });
@@ -130,8 +130,8 @@ std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
             if (!justified) {
                 out.push_back({"LINT003", Severity::WARNING,
                                "reinterpret_cast without justification (MISRA A5-2-4)", // fusa:suppress LINT003
-                               p.string(), n,
-                               "Add // fusa:unsafe <justification> comment above or inline"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Add // fusa:unsafe <justification> comment above or inline", "lint"});
             }
         }
     });
@@ -156,8 +156,8 @@ std::vector<Finding> check_abort_exit(const fs::path& dir) {
             if (!has_safe_state_above(lines, i)) {
                 out.push_back({"LINT004", Severity::ERROR,
                                "abort()/exit() without preceding safe-state transition",
-                               p.string(), n,
-                               "Add // fusa:safe-state comment and call safe-state handler before abort"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Add // fusa:safe-state comment and call safe-state handler before abort", "lint"});
             }
         }
     });
@@ -180,8 +180,8 @@ std::vector<Finding> check_global_mutable(const fs::path& dir) {
             if (line.find("fusa:shared") != std::string::npos) continue;
             out.push_back({"LINT005", Severity::WARNING,
                            "Global mutable variable without synchronisation annotation (AUTOSAR A3-3-2)",
-                           p.string(), n,
-                           "Mark with // fusa:shared or make const/constexpr/thread_local"});
+                           fs::relative(p, dir).generic_string(), n,
+                           "Mark with // fusa:shared or make const/constexpr/thread_local", "lint"});
         }
     });
     return out;
@@ -197,8 +197,8 @@ std::vector<Finding> check_define_constant(const fs::path& dir) {
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT006", Severity::WARNING,
                                "#define used for constant — prefer constexpr (MISRA A2-13-1)",
-                               p.string(), n,
-                               "Replace #define with constexpr variable"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Replace #define with constexpr variable", "lint"});
             }
         }
     });
@@ -219,8 +219,8 @@ std::vector<Finding> check_c_style_cast(const fs::path& dir) {
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT007", Severity::WARNING,
                                "C-style cast detected — use static_cast/reinterpret_cast/const_cast (MISRA A5-2-2)", // fusa:suppress LINT003
-                               p.string(), n,
-                               "Replace with appropriate named cast"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Replace with appropriate named cast", "lint"});
             }
         }
     });
@@ -269,8 +269,8 @@ std::vector<Finding> check_recursion(const fs::path& dir) {
                 if (!qualified) {
                     out.push_back({"LINT008", Severity::WARNING,
                                    "Recursive call to '" + current_fn + "' — add depth-bound guard (JSF++ 119)",
-                                   p.string(), n,
-                                   "Add // fusa:recursive <max-depth> annotation or refactor iteratively"});
+                                   fs::relative(p, dir).generic_string(), n,
+                                   "Add // fusa:recursive <max-depth> annotation or refactor iteratively", "lint"});
                 }
             }
         }
@@ -294,8 +294,8 @@ std::vector<Finding> check_printf(const fs::path& dir) {
             if (std::regex_search(line, pat)) {
                 out.push_back({"LINT009", Severity::INFO,
                                "printf/scanf family — prefer type-safe I/O (std::format, std::ostream)",
-                               p.string(), n,
-                               "Replace with std::format (C++20) or std::ostringstream"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Replace with std::format (C++20) or std::ostringstream", "lint"});
             }
         }
     });
@@ -325,8 +325,8 @@ std::vector<Finding> check_exception_spec(const fs::path& dir) {
             if (has_throw) {
                 out.push_back({"LINT010", Severity::INFO,
                                "Function uses throw without noexcept specification",
-                               p.string(), n,
-                               "Mark non-throwing functions noexcept; document throwing ones"});
+                               fs::relative(p, dir).generic_string(), n,
+                               "Mark non-throwing functions noexcept; document throwing ones", "lint"});
             }
         }
     });

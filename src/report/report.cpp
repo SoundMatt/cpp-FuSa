@@ -1,4 +1,5 @@
 #include "report.hpp"
+#include "cpfusa/fusa.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
@@ -29,6 +30,32 @@ std::string severity_label(Severity s) {
     return "UNKNOWN";
 }
 
+// §3.1 common header — on every document.
+json make_header(std::string_view kind) {
+    json h;
+    h["schemaVersion"] = std::string(SpecVersion);
+    h["kind"]          = std::string(kind);
+    h["tool"]          = "cpp-FuSa";
+    h["toolVersion"]   = std::string(Version);
+    h["language"]      = "cpp";
+    h["generatedAt"]   = now_iso8601();
+    return h;
+}
+
+// §3.2 report envelope (report documents add these fields to the §3.1 header).
+void add_report_envelope(json& j, const config::ProjectConfig& cfg) {
+    j["projectRoot"] = cfg.project_root;
+    if (!cfg.project.empty())  j["project"]  = cfg.project;
+    if (!cfg.standard.empty()) j["standard"]  = cfg.standard;
+    if (!cfg.asil.empty()) {
+        // emit only the relevant integrity key (§1.2.1 / §3.2)
+        const auto& a = cfg.asil;
+        if (a.rfind("SIL", 0) == 0)      j["sil"] = a;
+        else if (a.rfind("DAL", 0) == 0) j["dal"] = a;
+        else                              j["asil"] = a;
+    }
+}
+
 } // namespace
 
 //fusa:req REQ-RPT001 REQ-RPT002 REQ-RPT003 REQ-RPT004 REQ-RPT005
@@ -51,8 +78,8 @@ std::string render_text(const std::vector<Finding>& findings,
         if (f.line > 0) loc += ":" + std::to_string(f.line);
         out << "[" << severity_label(f.severity) << "] "
             << f.rule_id << ": " << f.message << "\n";
-        if (!loc.empty()) out << "  at " << loc << "\n";
-        if (!f.fix.empty()) out << "  fix: " << f.fix << "\n";
+        if (!loc.empty())         out << "  at " << loc << "\n";
+        if (!f.remediation.empty()) out << "  remediation: " << f.remediation << "\n";
         out << "\n";
         switch (f.severity) {
             case Severity::ERROR:   ++errors;   break;
@@ -67,32 +94,40 @@ std::string render_text(const std::vector<Finding>& findings,
     return out.str();
 }
 
+// §4 check-report JSON — spec v1.8 canonical shape.
 std::string render_json(const std::vector<Finding>& findings,
                         const config::ProjectConfig& cfg) {
-    json j;
-    j["project"]   = cfg.project;
-    j["version"]   = cfg.version;
-    j["standard"]  = cfg.standard;
-    j["asil"]      = cfg.asil;
-    j["generated"] = now_iso8601();
-    j["findings"]  = json::array();
+    json j = make_header("check-report");
+    add_report_envelope(j, cfg);
+
+    json farr = json::array();
+    int errors = 0, warnings = 0, infos = 0;
     for (const auto& f : findings) {
         json item;
-        item["rule_id"]  = f.rule_id;
+        item["ruleId"]   = f.rule_id;                 // §4: camelCase key
         item["severity"] = severity_label(f.severity);
         item["message"]  = f.message;
-        if (!f.file.empty()) item["file"] = f.file;
-        if (f.line > 0)      item["line"] = f.line;
-        if (!f.fix.empty())  item["fix"]  = f.fix;
-        j["findings"].push_back(item);
+        // §4: location MUST be an object, not flat file/line
+        json loc;
+        loc["file"] = f.file;                          // project-relative (§4)
+        if (f.line > 0)   loc["line"]   = f.line;
+        if (f.column > 0) loc["column"] = f.column;
+        item["location"] = loc;
+        if (!f.category.empty())     item["category"]    = f.category;
+        if (!f.standard_id.empty())  item["standard"]    = f.standard_id;
+        if (!f.clause.empty())       item["clause"]      = f.clause;
+        if (!f.remediation.empty())  item["remediation"] = f.remediation; // §4: NOT "fix"
+        if (!f.fingerprint.empty())  item["fingerprint"] = f.fingerprint;
+        farr.push_back(item);
+        switch (f.severity) {
+            case Severity::ERROR:   ++errors;   break;
+            case Severity::WARNING: ++warnings; break;
+            case Severity::INFO:    ++infos;    break;
+        }
     }
-    int errors = 0, warnings = 0;
-    for (const auto& f : findings) {
-        if (f.severity == Severity::ERROR)   ++errors;
-        if (f.severity == Severity::WARNING) ++warnings;
-    }
-    j["summary"] = {{"errors", errors}, {"warnings", warnings},
-                    {"infos", static_cast<int>(findings.size()) - errors - warnings}};
+    j["findings"] = farr;
+    j["summary"]  = {{"total", static_cast<int>(findings.size())},
+                     {"errors", errors}, {"warnings", warnings}, {"infos", infos}};
     return j.dump(2);
 }
 
@@ -109,7 +144,7 @@ h1{color:#1a1a2e}
 .WARNING{border-color:#f39c12;background:#fefbf0}
 .INFO{border-color:#3498db;background:#f0f8ff}
 .rule{font-weight:bold;color:#2c3e50}
-.fix{color:#27ae60;font-style:italic}
+.remediation{color:#27ae60;font-style:italic}
 </style></head><body>
 <h1>cpfusa Compliance Report</h1>
 <p><b>Project:</b> )" << cfg.project
@@ -130,8 +165,8 @@ h1{color:#1a1a2e}
                 if (f.line > 0) out << ":" << f.line;
                 out << "</small>";
             }
-            if (!f.fix.empty())
-                out << "<br><span class=\"fix\">fix: " << f.fix << "</span>";
+            if (!f.remediation.empty())
+                out << "<br><span class=\"remediation\">remediation: " << f.remediation << "</span>";
             out << "</div>\n";
         }
     }
@@ -139,6 +174,7 @@ h1{color:#1a1a2e}
     return out.str();
 }
 
+// §2.9 / §4: SARIF 2.1.0 with physicalLocation on every result.
 std::string render_sarif(const std::vector<Finding>& findings,
                          const config::ProjectConfig& cfg) {
     json sarif;
@@ -146,25 +182,50 @@ std::string render_sarif(const std::vector<Finding>& findings,
     sarif["$schema"] = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
 
     json run;
-    run["tool"]["driver"]["name"]            = "cpfusa";
-    run["tool"]["driver"]["version"]         = std::string(Version);
-    run["tool"]["driver"]["informationUri"]  = "https://github.com/SoundMatt/cpp-FuSa";
+    // §2.9: tool.driver.name = canonical human name from §1.1 registry
+    run["tool"]["driver"]["name"]           = "cpp-FuSa";
+    run["tool"]["driver"]["version"]        = std::string(Version);
+    run["tool"]["driver"]["informationUri"] = "https://github.com/SoundMatt/cpp-FuSa";
+
+    // Collect unique rules for tool.driver.rules[]
+    json rules_arr = json::array();
+    std::vector<std::string> seen_rules;
+    for (const auto& f : findings) {
+        if (std::find(seen_rules.begin(), seen_rules.end(), f.rule_id) == seen_rules.end()) {
+            json r;
+            r["id"] = f.rule_id;
+            if (!f.category.empty() || !f.standard_id.empty()) {
+                json props;
+                if (!f.category.empty())    props["category"] = f.category;
+                if (!f.standard_id.empty()) props["standard"] = f.standard_id;
+                if (!f.clause.empty())      props["clause"]   = f.clause;
+                r["properties"] = props;
+            }
+            rules_arr.push_back(r);
+            seen_rules.push_back(f.rule_id);
+        }
+    }
+    run["tool"]["driver"]["rules"] = rules_arr;
 
     json results = json::array();
     for (const auto& f : findings) {
         json r;
-        r["ruleId"]  = f.rule_id;
-        r["level"]   = (f.severity == Severity::ERROR) ? "error"
-                     : (f.severity == Severity::WARNING) ? "warning" : "note";
+        r["ruleId"] = f.rule_id;  // §2.9: same id in every format
+        r["level"]  = (f.severity == Severity::ERROR)   ? "error"
+                    : (f.severity == Severity::WARNING)  ? "warning" : "note";
         r["message"]["text"] = f.message;
-        // GitHub Code Scanning requires at least one location on every result.
-        {
-            std::string uri = f.file.empty() ? "." : f.file;
-            r["locations"] = json::array({
-                {{"physicalLocation",
-                  {{"artifactLocation", {{"uri", uri}}},
-                   {"region", {{"startLine", f.line > 0 ? f.line : 1}}}}}}
-            });
+        // §4: physicalLocation MUST be on every result (GitHub Code Scanning)
+        std::string uri = f.file.empty() ? "." : f.file; // already project-relative
+        r["locations"] = json::array({
+            {{"physicalLocation",
+              {{"artifactLocation", {{"uri", uri}}},
+               {"region", {{"startLine", f.line > 0 ? f.line : 1}}}}}}
+        });
+        if (!cfg.project.empty()) {
+            json props;
+            if (!f.category.empty())    props["category"] = f.category;
+            if (!f.standard_id.empty()) props["standard"] = f.standard_id;
+            r["properties"] = props;
         }
         results.push_back(r);
     }
@@ -185,9 +246,11 @@ Result<std::monostate> write_report(const std::vector<Finding>& findings,
     }
 
     if (opts.output.empty()) {
+        // §2.2: when --output is absent, write to stdout
         std::cout << content;
         return std::monostate{};
     }
+    // §2.2 MUST: when --output is given, write to file and MUST NOT also write to stdout
     std::ofstream f(opts.output);
     if (!f) return std::string("failed to open ") + opts.output;
     f << content;

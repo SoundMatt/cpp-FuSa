@@ -12,8 +12,9 @@ enum class Format { TEXT, JSON, HTML, SARIF };
 
 struct ReportOptions {
     Format      format{Format::TEXT};
-    std::string output;  // empty = stdout
+    std::string output;        // empty = stdout
     bool        strict{false};
+    bool        no_color{false};
 };
 
 [[nodiscard]] std::string render_text(const std::vector<Finding>& findings,
