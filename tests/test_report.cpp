@@ -61,11 +61,11 @@ TEST_CASE("report: render_text summary counts are correct", "[report][rpt001]") 
     REQUIRE(txt.find("1 info(s)") != std::string::npos);
 }
 
-// ─── render_json — spec v1.8 envelope and finding schema ─────────────────────
+// ─── render_json — spec v1.9 envelope and finding schema ─────────────────────
 
-TEST_CASE("render_json: schemaVersion is 1.8", "[report][rpt002]") {
+TEST_CASE("render_json: schemaVersion is 1.9", "[report][rpt002]") {
     auto j = json::parse(report::render_json({}, make_cfg()));
-    REQUIRE(j["schemaVersion"] == "1.8");
+    REQUIRE(j["schemaVersion"] == "1.9");
 }
 
 TEST_CASE("render_json: kind is check-report", "[report][rpt002]") {

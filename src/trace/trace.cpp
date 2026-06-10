@@ -28,8 +28,11 @@ Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
     if (!f) return std::string("cannot open ") + path.string();
     try {
         json j = json::parse(f);
+        // §1.2.2: canonical format is {"requirements": [...]};
+        // also accept legacy flat array for backward compatibility.
+        const json& arr = j.is_array() ? j : j.at("requirements");
         std::vector<Requirement> reqs;
-        for (const auto& item : j) {
+        for (const auto& item : arr) {
             Requirement r;
             r.id           = item.value("id", "");
             r.title        = item.value("title", "");
@@ -212,7 +215,7 @@ std::string render_json(const TraceResult& result,
     };
 
     json j;
-    j["schemaVersion"] = "1.8";
+    j["schemaVersion"] = std::string(SpecVersion);
     j["kind"]          = "trace-report";
     j["tool"]          = "cpp-FuSa";
     j["toolVersion"]   = std::string(Version);

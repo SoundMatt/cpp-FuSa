@@ -15,6 +15,11 @@
   - M17-0-5 C library headers, M16-0-3 #undef, A7-4-1 inline asm, A2-13-4 magic numbers, M16-2-1 include guard
 - 37 new requirements: REQ-LINT011–030 and REQ-AST001–005 added to `.fusa-reqs.json` (total: 179)
 - 37 new tests: LINT011–030 positive + negative tests in `test_lint.cpp`; `test_ast.cpp` covering stub and libclang paths
+- x-FuSa spec v1.9 conformance
+  - `SpecVersion` bumped to "1.9"; all `schemaVersion` fields now emit "1.9"
+  - `.fusa-reqs.json` canonical format: `init` now writes `{"requirements":[]}` per §1.2.2; `load_requirements` reads `.requirements` key with flat-array backward-compat
+  - `version --format json` and `capabilities` both emit `"specVersion":"1.9"`
+  - `category`, `remediation`, `fingerprint` (promoted to MUST in v1.9) were already implemented; now documented as conformant
 - Test suite: 500 tests passing
 
 ## [0.7.0] — 2026-06-10
