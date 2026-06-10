@@ -193,7 +193,7 @@ TEST_CASE("req: import_csv default severity is safety when field missing", "[req
 
 // ─── save + import round-trip ─────────────────────────────────────────────────
 
-TEST_CASE("req: full round-trip save→export→import→load", "[req][req001][req002][req003]") {
+TEST_CASE("req: full round-trip save to export to import to load", "[req][req001][req002][req003]") {
     TempDir tmp;
     std::vector<trace::Requirement> original;
     original.push_back({"REQ-RT1", "Round-trip one", "Desc 1", "ISO 26262", "safety"});
