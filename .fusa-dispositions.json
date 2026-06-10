@@ -1,0 +1,12 @@
+{
+  "entries": [
+    {
+      "action": "accept",
+      "date": "2026-06-09",
+      "rationale": "Test files use new for test fixtures",
+      "reference": "test-only",
+      "reviewer": "Matt Jones",
+      "ruleId": "LINT001"
+    }
+  ]
+}

@@ -121,7 +121,7 @@ int run(int argc, char* argv[]) {
         if (!fs::exists(reqs_path) || init_force) {
             std::ofstream rf(reqs_path);
             if (!rf) { print_err("failed to write .fusa-reqs.json"); std::exit(3); }
-            rf << "{\n  \"requirements\": []\n}\n";
+            rf << "[]\n";
             print_ok("Created .fusa-reqs.json");
             wrote_any = true;
         } else {

@@ -1,0 +1,15 @@
+{
+  "project": "",
+  "snapshots": [
+    {
+      "coveragePct": 0.0,
+      "cyberFindings": 25,
+      "errorCount": 0,
+      "infoCount": 1,
+      "timestamp": "2026-06-09T17:10:30Z",
+      "totalRequirements": 0,
+      "tracedRequirements": 0,
+      "warningCount": 0
+    }
+  ]
+}

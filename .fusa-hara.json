@@ -1,0 +1,40 @@
+{
+  "createdAt": "2026-06-09T00:00:00Z",
+  "hazards": [
+    {
+      "description": "Example hazard — replace with project-specific hazard",
+      "id": "H-001",
+      "risk": {
+        "asil": "ASIL-C",
+        "controllability": "C2",
+        "exposure": "E3",
+        "severity": "S2"
+      },
+      "safetyGoals": [
+        "SG-001"
+      ],
+      "situations": [
+        "OS-001"
+      ]
+    }
+  ],
+  "project": "cpp-FuSa",
+  "safetyGoals": [
+    {
+      "asil": "ASIL-C",
+      "description": "Example safety goal — replace with project-specific goal",
+      "hazardIds": [
+        "H-001"
+      ],
+      "id": "SG-001",
+      "safeState": "safe state description"
+    }
+  ],
+  "situations": [
+    {
+      "description": "Normal operation",
+      "id": "OS-001"
+    }
+  ],
+  "standard": "ISO 26262"
+}

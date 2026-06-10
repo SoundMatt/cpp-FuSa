@@ -9,10 +9,10 @@
 
 namespace cpfusa {
 
-constexpr std::string_view Version      = "0.6.0";
+constexpr std::string_view Version      = "0.6.1";
 constexpr std::string_view VersionMajor = "0";
 constexpr std::string_view VersionMinor = "6";
-constexpr std::string_view VersionPatch = "0";
+constexpr std::string_view VersionPatch = "1";
 constexpr std::string_view SpecVersion  = "1.8";
 
 enum class Severity { INFO, WARNING, ERROR };

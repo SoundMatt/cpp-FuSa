@@ -1,0 +1,87 @@
+{
+  "artifacts": [
+    {
+      "path": ".fusa.json",
+      "sha256": "06ff989ad583d12c6aae7c7821be6167b06d9b235dd216d6dff9ca5c3ce75ca9"
+    },
+    {
+      "path": ".fusa-reqs.json",
+      "sha256": "14f8d4254eb89c0dd933d6ed1848b0f064c7a8e4fade796d7c18b0f4155da154"
+    },
+    {
+      "path": ".fusa-evidence.json",
+      "sha256": "29214ee688507630657204977fe74e12b4b32b26a8a5e9fd408901af42e1a6ce"
+    },
+    {
+      "path": "check-report.json",
+      "sha256": "0d2137f853b6f6ae8aeea4da40d908ea9a97b6d60abedf0067d9ce2d8c92ce4e"
+    },
+    {
+      "path": "cyber-report.json",
+      "sha256": "dd11a104de7c3f605c7347979b53f351dd43db3a00a6d15f68c44c066496e3e8"
+    },
+    {
+      "path": "fmea.json",
+      "sha256": "81948e5c2753c0277e52b2f90cf356990e5190a00236798ee265f42369f0b9a6"
+    },
+    {
+      "path": "fmea.csv",
+      "sha256": "5a72bdf2291b6f9d35c8d008cf1aecb6f02ee24313dcfaa696b8058c34f6a615"
+    },
+    {
+      "path": "boundary.mermaid",
+      "sha256": "5f4888dea659f5b1b18f9acbc616d56a093656d299d5e40b79483e8b7950b28e"
+    },
+    {
+      "path": "boundary.dot",
+      "sha256": "7658507b2a825a113dddf35c9c3a3e0c23af64fcaa1dd11340930d337231aa41"
+    },
+    {
+      "path": "safety-case.json",
+      "sha256": "0cb37ac90425ffa653cd73ae22b0119b2f3fcc2a18f85d4c11450cf4801463ec"
+    },
+    {
+      "path": "safety-case.md",
+      "sha256": "9bade5547a55ce47c602991e960eaf5f5aac6489b9ad65883cdcf4d8b6a58f20"
+    },
+    {
+      "path": "safety-case.mermaid",
+      "sha256": "61fe9b0d7f8ca83508a9d13ef6ce19a27c59b192db2c64216be1b8907d2fa1c6"
+    },
+    {
+      "path": "sbom.json",
+      "sha256": "3ae5595c2986a7f5f70057477b0e34c642b55893ed3f7edb0deecfe159741c3b"
+    },
+    {
+      "path": "provenance.json",
+      "sha256": "8601fd107cd1dd32b9301451bee6698accb1edea0fc12f754e4141feddb1d15f"
+    },
+    {
+      "path": "artifact-manifest.json",
+      "sha256": "06436517553d166d3f3fe5d343641c84a4760d55ae540c30b7108dfaccf1dbd2"
+    },
+    {
+      "path": "qualify-report.json",
+      "sha256": "dc09797b9a57956db968a649e014092da3a79e05ff355845e792abf772a86e17"
+    },
+    {
+      "path": "vuln.json",
+      "sha256": "88f97dad92b3762abcf204b123a3503cb09b193ca9146b1cf76f06977ec7bf3e"
+    },
+    {
+      "path": "tara.json",
+      "sha256": "b1247e828c0ab125916235c0cebd4572f3218d8208f9e1dfb54cf017b688851e"
+    },
+    {
+      "path": "tara.md",
+      "sha256": "206f5d5a406c8753fd83abaa6d0a323282b75ba5da41fdea9b26c13167ad959d"
+    }
+  ],
+  "format": "x-FuSa manifest v1",
+  "generatedAt": "2026-06-10T19:14:28Z",
+  "kind": "artifact-manifest",
+  "language": "cpp",
+  "schemaVersion": "1.8",
+  "tool": "cpp-FuSa",
+  "toolVersion": "0.6.1"
+}

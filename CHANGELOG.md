@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.6.1] — 2026-06-10
+
+### Added
+- x-FuSa spec v1.8 conformance
+  - All JSON documents carry §3.1 common header: `schemaVersion`, `kind`, `tool`, `toolVersion`, `language`, `generatedAt`
+  - Finding schema §4: `ruleId` (camelCase), nested `location:{file,line,column}`, `remediation` (was `fix`), `category`, `standard`, `clause`, `fingerprint`
+  - Exit codes §2.3: 0=success, 1=gate failure, 2=usage error, 3=runtime error
+  - `cpfusa capabilities` — §10 capabilities endpoint: `{commands, formats, standards, specVersion}` for FuSaOps discovery
+  - `cpfusa version --format json` — returns `{tool,version,specVersion}` machine-readable version
+  - `.fusa.json` v1.8 schema: `configVersion`, nested `project:{name,version}`, camelCase `sourceDirs`/`excludePatterns`
+- Expanded test suite: 454 tests covering all modules
+  - test_report.cpp: 27 tests for spec v1.8 JSON envelope and finding schema
+  - test_config.cpp: 19 tests including legacy round-trip, SIL/DAL/ASIL key routing
+  - test_engine.cpp: 20 tests including per-finding category assertions
+  - test_trace.cpp: 15 tests including flat-array requirements loading
+  - test_verify.cpp: 10 tests for evidence bundle JSON structure
+  - test_impact.cpp: 12 tests including ref round-trip and text render
+- 153-requirement `.fusa-reqs.json` covering all modules (CFG, ENG, FUSA, LINT, ANAL, CYBER, RPT, TRACE, VERIFY, QUALIFY, RELEASE, AUDIT, TARA, FMEA, SAFETYCASE, BADGE, DIFF, SIGN, HOOKS, RT, VULN, BOUNDARY, NF)
+
+### Fixed
+- `cpfusa init` writes `.fusa-reqs.json` as flat JSON array `[]` (compatible with `trace::load_requirements`)
+- `cpfusa version` subcommand matches §9.1 format `^(\S+) (\d+\.\d+\.\d+)$`
+- `--no-color` propagated to all `ReportOptions` objects; colour suppressed when non-TTY or `NO_COLOR` env set
+- `std::gmtime` (CWE-676 thread-unsafe) replaced with `gmtime_r`/`gmtime_s` platform conditional in `capabilities` command
+- SARIF renderer: `locations` array always emitted; `uri` defaults to `"."` for project-level findings
+
 ## [0.6.0] — 2026-06-09
 
 ### Added

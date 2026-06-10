@@ -1,3 +1,4 @@
+//fusa:req REQ-CFG001 REQ-CFG002 REQ-CFG003 REQ-CFG004 REQ-CFG005 REQ-CFG006
 #pragma once
 
 #include "cpfusa/fusa.hpp"

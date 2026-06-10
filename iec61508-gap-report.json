@@ -1,0 +1,132 @@
+{
+  "generatedAt": "2026-06-10T19:14:34Z",
+  "objectives": [
+    {
+      "clause": "§7.1",
+      "description": "Safety lifecycle",
+      "id": "1-7.1",
+      "part": "Part 1",
+      "status": "gap"
+    },
+    {
+      "clause": "§7.2",
+      "description": "Hazard and risk analysis",
+      "id": "1-7.2",
+      "part": "Part 1",
+      "status": "gap"
+    },
+    {
+      "clause": "§8.1",
+      "description": "Safety requirements specification",
+      "id": "1-8.1",
+      "part": "Part 1",
+      "status": "gap"
+    },
+    {
+      "clause": "§8.2",
+      "description": "Safety requirements allocation",
+      "id": "1-8.2",
+      "part": "Part 1",
+      "status": "gap"
+    },
+    {
+      "clause": "§7.1",
+      "description": "Software safety requirements specification",
+      "id": "3-7.1",
+      "part": "Part 3",
+      "status": "partial"
+    },
+    {
+      "clause": "§7.2",
+      "description": "Software architecture design",
+      "id": "3-7.2",
+      "part": "Part 3",
+      "status": "gap"
+    },
+    {
+      "clause": "§7.3",
+      "description": "Software design & development",
+      "id": "3-7.3",
+      "part": "Part 3",
+      "status": "partial"
+    },
+    {
+      "clause": "§7.4",
+      "description": "Software module testing",
+      "id": "3-7.4",
+      "part": "Part 3",
+      "status": "partial"
+    },
+    {
+      "clause": "§7.5",
+      "description": "Software integration testing",
+      "id": "3-7.5",
+      "part": "Part 3",
+      "status": "partial"
+    },
+    {
+      "clause": "§7.6",
+      "description": "Software validation testing",
+      "id": "3-7.6",
+      "part": "Part 3",
+      "status": "gap"
+    },
+    {
+      "clause": "§7.7",
+      "description": "Software modification",
+      "id": "3-7.7",
+      "part": "Part 3",
+      "status": "gap"
+    },
+    {
+      "clause": "§7.8",
+      "description": "Software verification",
+      "id": "3-7.8",
+      "part": "Part 3",
+      "status": "gap"
+    },
+    {
+      "clause": "Annex B",
+      "description": "Language subset / coding standard",
+      "id": "3-B.1",
+      "part": "Part 3",
+      "status": "partial"
+    },
+    {
+      "clause": "Annex B",
+      "description": "Static analysis",
+      "id": "3-B.2",
+      "part": "Part 3",
+      "status": "partial"
+    },
+    {
+      "clause": "Annex B",
+      "description": "Requirements traceability",
+      "id": "3-B.4",
+      "part": "Part 3",
+      "status": "addressed"
+    },
+    {
+      "clause": "§7.1",
+      "description": "Hardware safety requirements",
+      "id": "2-7.1",
+      "part": "Part 2",
+      "status": "gap"
+    },
+    {
+      "clause": "§8.1",
+      "description": "Safety case",
+      "id": "2-8.1",
+      "part": "Part 2",
+      "status": "partial"
+    }
+  ],
+  "project": "cpp-FuSa",
+  "sil": "SIL-2",
+  "summary": {
+    "addressed": 1,
+    "gap": 9,
+    "partial": 7,
+    "total": 17
+  }
+}

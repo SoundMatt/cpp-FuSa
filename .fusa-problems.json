@@ -1,0 +1,16 @@
+{
+  "project": "",
+  "reports": [
+    {
+      "assignee": "",
+      "closedAt": "",
+      "createdAt": "2026-06-09T17:14:18Z",
+      "description": "Raw new in catch2 tests",
+      "id": "PR-1",
+      "resolution": "",
+      "severity": "minor",
+      "status": "open",
+      "title": "LINT001 in test files"
+    }
+  ]
+}

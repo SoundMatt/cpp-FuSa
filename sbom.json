@@ -1,0 +1,27 @@
+{
+  "components": [
+    {
+      "hash": "",
+      "name": "nlohmann_json",
+      "version": "3.11.3"
+    },
+    {
+      "hash": "",
+      "name": "CLI11",
+      "version": "2.4.2"
+    },
+    {
+      "hash": "",
+      "name": "Catch2",
+      "version": "3.6.0"
+    }
+  ],
+  "format": "x-FuSa SBOM v1",
+  "generatedAt": "2026-06-10T19:14:28Z",
+  "kind": "sbom",
+  "language": "cpp",
+  "module": "github.com/SoundMatt/cpp-FuSa",
+  "schemaVersion": "1.8",
+  "tool": "cpp-FuSa",
+  "toolVersion": "0.6.1"
+}

@@ -1,0 +1,132 @@
+{
+  "dal": "DAL-B",
+  "evidence": [
+    {
+      "artifact": ".fusa.json",
+      "id": "SAS-01",
+      "present": true,
+      "title": "Project configuration"
+    },
+    {
+      "artifact": ".fusa-reqs.json",
+      "id": "SAS-02",
+      "present": true,
+      "title": "Requirements registry"
+    },
+    {
+      "artifact": ".fusa-evidence.json",
+      "id": "SAS-03",
+      "present": true,
+      "title": "Test evidence"
+    },
+    {
+      "artifact": "check-report.json",
+      "id": "SAS-04",
+      "present": true,
+      "title": "Check report"
+    },
+    {
+      "artifact": "cyber-report.json",
+      "id": "SAS-05",
+      "present": true,
+      "title": "Cybersecurity analysis"
+    },
+    {
+      "artifact": "fmea.json",
+      "id": "SAS-06",
+      "present": true,
+      "title": "FMEA"
+    },
+    {
+      "artifact": "tara.json",
+      "id": "SAS-07",
+      "present": true,
+      "title": "TARA"
+    },
+    {
+      "artifact": "safety-case.json",
+      "id": "SAS-08",
+      "present": true,
+      "title": "Safety case"
+    },
+    {
+      "artifact": "qualify-report.json",
+      "id": "SAS-09",
+      "present": true,
+      "title": "Qualification report"
+    },
+    {
+      "artifact": "sbom.json",
+      "id": "SAS-10",
+      "present": true,
+      "title": "SBOM"
+    },
+    {
+      "artifact": "provenance.json",
+      "id": "SAS-11",
+      "present": true,
+      "title": "Provenance"
+    },
+    {
+      "artifact": "artifact-manifest.json",
+      "id": "SAS-12",
+      "present": true,
+      "title": "Artifact manifest"
+    },
+    {
+      "artifact": "audit-pack.zip",
+      "id": "SAS-13",
+      "present": true,
+      "title": "Audit pack"
+    },
+    {
+      "artifact": "fusa-badge.svg",
+      "id": "SAS-14",
+      "present": true,
+      "title": "Badge"
+    },
+    {
+      "artifact": "iso26262-gap-report.json",
+      "id": "SAS-15",
+      "present": true,
+      "title": "ISO 26262 gap report"
+    },
+    {
+      "artifact": "iec61508-gap-report.json",
+      "id": "SAS-16",
+      "present": true,
+      "title": "IEC 61508 gap report"
+    },
+    {
+      "artifact": "do178-gap-report.json",
+      "id": "SAS-17",
+      "present": true,
+      "title": "DO-178C gap report"
+    },
+    {
+      "artifact": "vuln.json",
+      "id": "SAS-18",
+      "present": true,
+      "title": "Vulnerability report"
+    },
+    {
+      "artifact": ".fusa-hara.json",
+      "id": "SAS-19",
+      "present": true,
+      "title": "HARA"
+    },
+    {
+      "artifact": ".fusa-dispositions.json",
+      "id": "SAS-20",
+      "present": true,
+      "title": "Dispositions"
+    }
+  ],
+  "generatedAt": "2026-06-10T19:14:28Z",
+  "project": "cpp-FuSa",
+  "summary": {
+    "complete": 20,
+    "total": 20
+  },
+  "version": "0.6.1"
+}

@@ -1,3 +1,4 @@
+//fusa:req REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005
 #pragma once
 
 #include "engine.hpp"

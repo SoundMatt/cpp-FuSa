@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-06-10T19:14:28Z",
+  "items": [
+    {
+      "artifact": ".fusa-reqs.json",
+      "category": "Requirements",
+      "present": true,
+      "sha256": "14f8d4254eb89c0dd933d6ed1848b0f064c7a8e4fade796d7c18b0f4155da154"
+    },
+    {
+      "artifact": ".fusa.json",
+      "category": "Configuration",
+      "present": true,
+      "sha256": "06ff989ad583d12c6aae7c7821be6167b06d9b235dd216d6dff9ca5c3ce75ca9"
+    },
+    {
+      "artifact": ".fusa-evidence.json",
+      "category": "Test Evidence",
+      "present": true,
+      "sha256": "29214ee688507630657204977fe74e12b4b32b26a8a5e9fd408901af42e1a6ce"
+    },
+    {
+      "artifact": "check-report.json",
+      "category": "Analysis",
+      "present": true,
+      "sha256": "0d2137f853b6f6ae8aeea4da40d908ea9a97b6d60abedf0067d9ce2d8c92ce4e"
+    },
+    {
+      "artifact": "cyber-report.json",
+      "category": "Analysis",
+      "present": true,
+      "sha256": "dd11a104de7c3f605c7347979b53f351dd43db3a00a6d15f68c44c066496e3e8"
+    },
+    {
+      "artifact": "fmea.json",
+      "category": "Safety",
+      "present": true,
+      "sha256": "81948e5c2753c0277e52b2f90cf356990e5190a00236798ee265f42369f0b9a6"
+    },
+    {
+      "artifact": "tara.json",
+      "category": "Safety",
+      "present": true,
+      "sha256": "b1247e828c0ab125916235c0cebd4572f3218d8208f9e1dfb54cf017b688851e"
+    },
+    {
+      "artifact": "safety-case.json",
+      "category": "Safety",
+      "present": true,
+      "sha256": "0cb37ac90425ffa653cd73ae22b0119b2f3fcc2a18f85d4c11450cf4801463ec"
+    },
+    {
+      "artifact": "qualify-report.json",
+      "category": "Qualification",
+      "present": true,
+      "sha256": "dc09797b9a57956db968a649e014092da3a79e05ff355845e792abf772a86e17"
+    },
+    {
+      "artifact": "sbom.json",
+      "category": "Release",
+      "present": true,
+      "sha256": "35e621dc60b80300884f867bb1abce8d3ee4874b9043e731f26834cfc136618e"
+    },
+    {
+      "artifact": "provenance.json",
+      "category": "Release",
+      "present": true,
+      "sha256": "45164360d0a2cffeef71f99a18b9b7eb6302b055e7cb2c4819e79d7b5df210e2"
+    },
+    {
+      "artifact": "artifact-manifest.json",
+      "category": "Release",
+      "present": true,
+      "sha256": "a10553c026e1fa73d033a3a7ed0e68973f88e6d6a129e730a9a50ee04f68190a"
+    },
+    {
+      "artifact": "audit-pack.zip",
+      "category": "Audit",
+      "present": true,
+      "sha256": "873167646805caf6430103527dc6b8889468b1a857fb59ed26bfd0b8df82eb9e"
+    },
+    {
+      "artifact": "iso26262-gap-report.json",
+      "category": "Gap Analysis",
+      "present": true,
+      "sha256": "7eafaac9cd9e11c5348d59ffc794d3ed7229f2561d66b0763c539cf980d421fa"
+    },
+    {
+      "artifact": "iec61508-gap-report.json",
+      "category": "Gap Analysis",
+      "present": true,
+      "sha256": "5b92134ae242a4ef97709c04a51ab7349e0b50d6c2b12cb04874a60cae8bb524"
+    },
+    {
+      "artifact": "do178-gap-report.json",
+      "category": "Gap Analysis",
+      "present": true,
+      "sha256": "132cc45b7a52d69c79905c654ade63d1a25005ec4e1fba5e695333a23150ace6"
+    },
+    {
+      "artifact": "sas.json",
+      "category": "Summary",
+      "present": true,
+      "sha256": "03c1b2c3d8529b72d3fbaf335ffb53551ae7c9a4359cf7fd383cd34db7701e87"
+    }
+  ],
+  "project": "cpp-FuSa",
+  "version": "0.6.1"
+}

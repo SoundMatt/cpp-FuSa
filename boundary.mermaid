@@ -1,0 +1,87 @@
+graph TD
+    subgraph external["External Dependencies"]
+    std::filesystem["std::filesystem"]
+    end
+
+    subgraph internal["cpp-FuSa Modules"]
+    disposition["disposition"]
+    iec62443["iec62443"]
+    metrics["metrics"]
+    cmd["cmd"]
+    vuln["vuln"]
+    qualify["qualify"]
+    lint["lint"]
+    cyber["cyber"]
+    trace["trace"]
+    do178["do178"]
+    verify["verify"]
+    config["config"]
+    boundary["boundary"]
+    sci["sci"]
+    runtime["runtime"]
+    template["template"]
+    diff["diff"]
+    release["release"]
+    auditpack["auditpack"]
+    slsa["slsa"]
+    pr["pr"]
+    safety_case["safety_case"]
+    hooks["hooks"]
+    sas["sas"]
+    fix["fix"]
+    misra["misra"]
+    fmea["fmea"]
+    analyze["analyze"]
+    report["report"]
+    coupling["coupling"]
+    hara["hara"]
+    iec61508["iec61508"]
+    tara["tara"]
+    engine["engine"]
+    sign["sign"]
+    testutil["testutil"]
+    main.cpp["main.cpp"]
+    coverage["coverage"]
+    impact["impact"]
+    iso26262["iso26262"]
+    badge["badge"]
+    end
+
+    disposition --> std::filesystem
+    iec62443 --> std::filesystem
+    metrics --> std::filesystem
+    cmd --> std::filesystem
+    vuln --> std::filesystem
+    qualify --> std::filesystem
+    lint --> std::filesystem
+    cyber --> std::filesystem
+    trace --> std::filesystem
+    do178 --> std::filesystem
+    verify --> std::filesystem
+    config --> std::filesystem
+    boundary --> std::filesystem
+    sci --> std::filesystem
+    template --> std::filesystem
+    diff --> std::filesystem
+    release --> std::filesystem
+    auditpack --> std::filesystem
+    slsa --> std::filesystem
+    pr --> std::filesystem
+    safety_case --> std::filesystem
+    hooks --> std::filesystem
+    sas --> std::filesystem
+    fix --> std::filesystem
+    fmea --> std::filesystem
+    analyze --> std::filesystem
+    report --> std::filesystem
+    coupling --> std::filesystem
+    hara --> std::filesystem
+    iec61508 --> std::filesystem
+    tara --> std::filesystem
+    engine --> std::filesystem
+    sign --> std::filesystem
+    testutil --> std::filesystem
+    coverage --> std::filesystem
+    impact --> std::filesystem
+    iso26262 --> std::filesystem
+    badge --> std::filesystem

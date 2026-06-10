@@ -1,0 +1,298 @@
+{
+  "findings": [
+    {
+      "cwe": "CWE-242",
+      "file": "./tests/test_lint.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 31,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./tests/test_lint.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 40,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-134",
+      "file": "./tests/test_lint.cpp",
+      "fix": "Always use a literal format string: printf(\"%s\", user_str)",
+      "line": 72,
+      "message": "Format string vulnerability — user-controlled format string — CWE-134",
+      "ruleId": "CYBER018",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./src/qualify/qualify.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 117,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-327",
+      "file": "./src/cyber/cyber.hpp",
+      "fix": "Replace with SHA-256 (e.g. OpenSSL EVP_DigestInit with EVP_sha256())",
+      "line": 8,
+      "message": "Weak cryptographic hash (MD5/SHA-1) detected — use SHA-256 or stronger",
+      "ruleId": "CYBER001",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-327",
+      "file": "./src/cyber/cyber.hpp",
+      "fix": "Replace with AES-256 in GCM mode",
+      "line": 9,
+      "message": "Weak symmetric cipher (DES/3DES/RC4) detected — use AES-256-GCM",
+      "ruleId": "CYBER002",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-134",
+      "file": "./src/cyber/cyber.hpp",
+      "fix": "Always use a literal format string: printf(\"%s\", user_str)",
+      "line": 25,
+      "message": "Format string vulnerability — user-controlled format string — CWE-134",
+      "ruleId": "CYBER018",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-327",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Replace with SHA-256 (e.g. OpenSSL EVP_DigestInit with EVP_sha256())",
+      "line": 54,
+      "message": "Weak cryptographic hash (MD5/SHA-1) detected — use SHA-256 or stronger",
+      "ruleId": "CYBER001",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-327",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Replace with AES-256 in GCM mode",
+      "line": 60,
+      "message": "Weak symmetric cipher (DES/3DES/RC4) detected — use AES-256-GCM",
+      "ruleId": "CYBER002",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 78,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-121",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Use std::vector or fixed-size arrays with bounds enforcement",
+      "line": 138,
+      "message": "Stack alloca() usage — variable-length stack allocation — CWE-121",
+      "ruleId": "CYBER015",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-134",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Always use a literal format string: printf(\"%s\", user_str)",
+      "line": 157,
+      "message": "Format string vulnerability — user-controlled format string — CWE-134",
+      "ruleId": "CYBER018",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-362",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Open the file directly and handle ENOENT/EACCES instead of access()",
+      "line": 162,
+      "message": "TOCTOU risk: access() followed by open() — CWE-362",
+      "ruleId": "CYBER019",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-362",
+      "file": "./src/cyber/cyber.cpp",
+      "fix": "Open the file directly and handle ENOENT/EACCES instead of access()",
+      "line": 163,
+      "message": "TOCTOU risk: access() followed by open() — CWE-362",
+      "ruleId": "CYBER019",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/verify/verify.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 32,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-190",
+      "file": "./src/verify/verify.cpp",
+      "fix": "Verify value fits in target type before narrowing cast",
+      "line": 69,
+      "message": "Integer narrowing conversion — CWE-190 / MISRA 10.3",
+      "ruleId": "CYBER009",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-190",
+      "file": "./src/sci/sci.cpp",
+      "fix": "Verify value fits in target type before narrowing cast",
+      "line": 54,
+      "message": "Integer narrowing conversion — CWE-190 / MISRA 10.3",
+      "ruleId": "CYBER009",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./src/release/release.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 92,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/release/release.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 112,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/auditpack/auditpack.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 32,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./src/auditpack/auditpack.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 79,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./src/fix/fix.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 27,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./src/fix/fix.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 28,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-134",
+      "file": "./src/fix/fix.cpp",
+      "fix": "Always use a literal format string: printf(\"%s\", user_str)",
+      "line": 69,
+      "message": "Format string vulnerability — user-controlled format string — CWE-134",
+      "ruleId": "CYBER018",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-120",
+      "file": "./src/fix/fix.cpp",
+      "fix": "Use strncpy/strncat/snprintf or std::string",
+      "line": 83,
+      "message": "Unsafe string operation (strcpy/strcat/sprintf) — CWE-120",
+      "ruleId": "CYBER011",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-134",
+      "file": "./src/fix/fix.cpp",
+      "fix": "Always use a literal format string: printf(\"%s\", user_str)",
+      "line": 83,
+      "message": "Format string vulnerability — user-controlled format string — CWE-134",
+      "ruleId": "CYBER018",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/analyze/analyze.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 47,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/analyze/analyze.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 56,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    },
+    {
+      "cwe": "CWE-190",
+      "file": "./src/sign/sign.cpp",
+      "fix": "Verify value fits in target type before narrowing cast",
+      "line": 111,
+      "message": "Integer narrowing conversion — CWE-190 / MISRA 10.3",
+      "ruleId": "CYBER009",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-242",
+      "file": "./src/sign/sign.cpp",
+      "fix": "Avoid reinterpret_cast; use static_cast with explicit range checks",
+      "line": 137,
+      "message": "Unsafe reinterpret_cast detected — CWE-242 / MISRA 11.3",
+      "ruleId": "CYBER004",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-190",
+      "file": "./src/sign/sign.cpp",
+      "fix": "Verify value fits in target type before narrowing cast",
+      "line": 209,
+      "message": "Integer narrowing conversion — CWE-190 / MISRA 10.3",
+      "ruleId": "CYBER009",
+      "severity": "warning"
+    },
+    {
+      "cwe": "CWE-78",
+      "file": "./src/impact/impact.cpp",
+      "fix": "Use execv() family with explicit argument arrays instead",
+      "line": 29,
+      "message": "Command injection risk: system()/popen() call — CWE-78",
+      "ruleId": "CYBER005",
+      "severity": "error"
+    }
+  ],
+  "format": "cpp-FuSa Cyber Report v1",
+  "generatedAt": "2026-06-09T17:20:31Z",
+  "project": "cpp-FuSa",
+  "totalFiles": 83,
+  "totalFindings": 32,
+  "version": "0.6.0"
+}

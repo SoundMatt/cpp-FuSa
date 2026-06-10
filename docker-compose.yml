@@ -1,0 +1,54 @@
+# docker-compose.yml — cpp-FuSa full safety pipeline
+#
+# Run individual commands against the current directory:
+#
+#   docker compose run --rm cpfusa check
+#   docker compose run --rm cpfusa lint
+#   docker compose run --rm cpfusa trace
+#   docker compose run --rm cpfusa release
+#   docker compose run --rm cpfusa qualify
+#
+# Run the complete evidence-generation pipeline:
+#
+#   docker compose run --rm pipeline
+
+services:
+  cpfusa:
+    image: ghcr.io/soundmatt/cpp-fusa:latest
+    volumes:
+      - .:/project
+    working_dir: /project
+
+  pipeline:
+    image: ghcr.io/soundmatt/cpp-fusa:latest
+    volumes:
+      - .:/project
+    working_dir: /project
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        set -e
+        echo "==> cpfusa check"
+        cpfusa check
+        echo "==> cpfusa lint"
+        cpfusa lint || true
+        echo "==> cpfusa trace"
+        cpfusa trace
+        echo "==> cpfusa cyber"
+        cpfusa cyber --write || true
+        echo "==> cpfusa qualify"
+        cpfusa qualify
+        echo "==> cpfusa tara"
+        cpfusa tara
+        echo "==> cpfusa fmea"
+        cpfusa fmea
+        echo "==> cpfusa safety-case"
+        cpfusa safety-case
+        echo "==> cpfusa release"
+        cpfusa release
+        echo "==> cpfusa audit-pack"
+        cpfusa audit-pack
+        echo "==> cpfusa badge"
+        cpfusa badge
+        echo "Pipeline complete."
