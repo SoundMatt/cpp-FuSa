@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cpfusa
-    VERSION 0.7.0
+    VERSION 0.8.0
     DESCRIPTION "C++ Functional Safety Toolkit"
     HOMEPAGE_URL "https://github.com/SoundMatt/cpp-FuSa"
     LANGUAGES CXX
@@ -30,6 +30,16 @@ if(MSVC)
         /wd4100   # unreferenced formal parameter (matches -Wno-unused-parameter)
         /wd4996   # deprecated CRT functions (gmtime safe for internal timestamps)
     )
+endif()
+
+# ── Optional: libclang for AST analysis ──────────────────────────────────────
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+find_package(LibClang QUIET)
+if(LibClang_FOUND)
+    message(STATUS "libclang found — AST analysis enabled (${LibClang_LIBRARY})")
+else()
+    message(STATUS "libclang not found — AST analysis will run in stub mode")
+    message(STATUS "  Install: brew install llvm  |  apt install libclang-dev")
 endif()
 
 # ── Fetch dependencies ────────────────────────────────────────────────────────
@@ -75,6 +85,7 @@ add_library(cpfusa_lib STATIC
     src/coupling/coupling.cpp
     src/iec62443/iec62443.cpp
     src/slsa/slsa.cpp
+    src/ast/ast.cpp
     src/cmd/cli.cpp
 )
 
@@ -92,6 +103,13 @@ target_link_libraries(cpfusa_lib
 # Thread support required by runtime headers.
 find_package(Threads REQUIRED)
 target_link_libraries(cpfusa_lib PUBLIC Threads::Threads)
+
+# Wire libclang when available.
+if(LibClang_FOUND)
+    target_compile_definitions(cpfusa_lib PUBLIC CPFUSA_HAS_LIBCLANG)
+    target_include_directories(cpfusa_lib PRIVATE ${LibClang_INCLUDE_DIRS})
+    target_link_libraries(cpfusa_lib PUBLIC LibClang::LibClang)
+endif()
 
 # ── CLI binary ────────────────────────────────────────────────────────────────
 add_executable(cpfusa src/main.cpp)

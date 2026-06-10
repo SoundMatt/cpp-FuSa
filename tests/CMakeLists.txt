@@ -40,6 +40,7 @@ add_executable(cpfusa_tests
     test_template.cpp
     test_iec62443.cpp
     test_slsa.cpp
+    test_ast.cpp
 )
 
 target_include_directories(cpfusa_tests

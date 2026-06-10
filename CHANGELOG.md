@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0] — 2026-06-10
+
+### Added
+- libclang AST integration (`src/ast/ast.cpp`, `cmake/FindLibClang.cmake`)
+  - Optional: links `LibClang::LibClang` when `brew install llvm` / `apt install libclang-dev` is present
+  - When available: AST001 (virtual method without virtual dtor), AST002 (variable shadowing), AST003 (raw pointer return without `[[nodiscard]]`)
+  - When unavailable: stub mode returns AST000 INFO finding and exits 0
+  - `cpfusa ast --format text|json --output <file>` CLI subcommand
+- Full MISRA C++:2023 rule set — LINT011–030 (20 new rules)
+  - M4-10-2 NULL literal, A10-3-2 missing override, M6-4-6 switch default, M15-3-4 empty catch, M15-5-1 throw in destructor
+  - A16-0-1 function-like macro, A15-1-2 setjmp/longjmp, A5-2-3 dynamic_cast, A9-5-1 union, A2-11-1 volatile
+  - A8-4-1 variadic, A27-0-1 unsafe string functions, A27-0-2 atoi/atof, M6-3-1 missing braces, A19-3-1 errno
+  - M17-0-5 C library headers, M16-0-3 #undef, A7-4-1 inline asm, A2-13-4 magic numbers, M16-2-1 include guard
+- 37 new requirements: REQ-LINT011–030 and REQ-AST001–005 added to `.fusa-reqs.json` (total: 179)
+- 37 new tests: LINT011–030 positive + negative tests in `test_lint.cpp`; `test_ast.cpp` covering stub and libclang paths
+- Test suite: 500 tests passing
+
 ## [0.7.0] — 2026-06-10
 
 ### Added

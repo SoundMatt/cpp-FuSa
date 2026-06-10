@@ -37,6 +37,7 @@
 #include "../coupling/coupling.hpp"
 #include "../iec62443/iec62443.hpp"
 #include "../slsa/slsa.hpp"
+#include "../ast/ast.hpp"
 #include "cpfusa/fusa.hpp"
 
 #include <CLI/CLI.hpp>
@@ -977,6 +978,26 @@ int run(int argc, char* argv[]) {
             print_ok("SLSA report written to " + slsa_output);
         }
         slsa::render_text(rep);
+    });
+
+    // ── ast ───────────────────────────────────────────────────────────────────
+    auto* ast_cmd = app.add_subcommand("ast", "Deep AST-based safety analysis (requires libclang)");
+    std::string ast_fmt, ast_out;
+    ast_cmd->add_option("--format", ast_fmt, "text|json (default: text)");
+    ast_cmd->add_option("--output", ast_out,  "Write output to file");
+    ast_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto cfg_opt = load_config(dir);
+        if (!cfg_opt) { std::exit(3); }
+        if (!ast::libclang_available())
+            std::cerr << "[WARN] libclang not available — rebuild with LLVM installed for full AST analysis\n";
+        auto findings = ast::run(dir, *cfg_opt);
+        report::ReportOptions ropts;
+        ropts.no_color = no_color_flag;
+        if (ast_fmt == "json")  ropts.format = report::Format::JSON;
+        if (!ast_out.empty())   ropts.output  = ast_out;
+        (void)report::write_report(findings, *cfg_opt, ropts);
+        std::exit(report::exit_code(findings, false));
     });
 
     // §2.3: usage errors → exit 2; parse success (including --help/--version) → 0

@@ -1,4 +1,4 @@
-//fusa:test REQ-LINT001 REQ-LINT002 REQ-LINT003 REQ-LINT004 REQ-LINT005 REQ-LINT006 REQ-LINT007 REQ-LINT008 REQ-LINT009 REQ-LINT010
+//fusa:test REQ-LINT001 REQ-LINT002 REQ-LINT003 REQ-LINT004 REQ-LINT005 REQ-LINT006 REQ-LINT007 REQ-LINT008 REQ-LINT009 REQ-LINT010 REQ-LINT011 REQ-LINT012 REQ-LINT013 REQ-LINT014 REQ-LINT015 REQ-LINT016 REQ-LINT017 REQ-LINT018 REQ-LINT019 REQ-LINT020 REQ-LINT021 REQ-LINT022 REQ-LINT023 REQ-LINT024 REQ-LINT025 REQ-LINT026 REQ-LINT027 REQ-LINT028 REQ-LINT029 REQ-LINT030
 #include <catch2/catch_all.hpp>
 #include "lint/lint.hpp"
 #include "testutil/testutil.hpp"
@@ -84,4 +84,236 @@ TEST_CASE("lint: run() aggregates all rules", "[lint]") {
     auto f = lint::run(tmp.path(), cfg);
     REQUIRE(has_finding(f, "LINT002"));
     REQUIRE(has_finding(f, "LINT006"));
+}
+
+// ─── LINT011 — NULL literal ───────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT011 detects NULL", "[lint][lint011]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "int* p = NULL;\n");
+    REQUIRE(has_finding(lint::check_null_literal(tmp.path()), "LINT011"));
+}
+
+TEST_CASE("lint: LINT011 passes on nullptr", "[lint][lint011]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "int* p = nullptr;\n");
+    REQUIRE(lint::check_null_literal(tmp.path()).empty());
+}
+
+// ─── LINT012 — missing override ───────────────────────────────────────────────
+
+TEST_CASE("lint: LINT012 detects virtual without override", "[lint][lint012]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "struct B { virtual void f(); };\n");
+    REQUIRE(has_finding(lint::check_missing_override(tmp.path()), "LINT012"));
+}
+
+TEST_CASE("lint: LINT012 passes when override present", "[lint][lint012]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "struct D : B { void f() override; };\n");
+    REQUIRE(lint::check_missing_override(tmp.path()).empty());
+}
+
+// ─── LINT013 — switch without default ────────────────────────────────────────
+
+TEST_CASE("lint: LINT013 detects switch without default", "[lint][lint013]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f(int x){ switch(x){ case 1: break; } }\n");
+    REQUIRE(has_finding(lint::check_switch_default(tmp.path()), "LINT013"));
+}
+
+TEST_CASE("lint: LINT013 passes with default case", "[lint][lint013]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void f(int x){ switch(x){ case 1: break; default: break; } }\n");
+    REQUIRE(lint::check_switch_default(tmp.path()).empty());
+}
+
+// ─── LINT014 — empty catch ────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT014 detects empty catch block", "[lint][lint014]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f(){ try {} catch(std::exception&) {} }\n");
+    REQUIRE(has_finding(lint::check_empty_catch(tmp.path()), "LINT014"));
+}
+
+TEST_CASE("lint: LINT014 passes when catch has body", "[lint][lint014]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void f(){ try {} catch(std::exception& e){ log(e); } }\n");
+    REQUIRE(lint::check_empty_catch(tmp.path()).empty());
+}
+
+// ─── LINT015 — throw in destructor ───────────────────────────────────────────
+
+TEST_CASE("lint: LINT015 detects throw in destructor", "[lint][lint015]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "struct S { ~S() { throw std::runtime_error(\"x\"); } };\n");
+    REQUIRE(has_finding(lint::check_throw_in_destructor(tmp.path()), "LINT015"));
+}
+
+// ─── LINT016 — function-like macro ───────────────────────────────────────────
+
+TEST_CASE("lint: LINT016 detects function-like macro", "[lint][lint016]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "#define MAX(a,b) ((a)>(b)?(a):(b))\n");
+    REQUIRE(has_finding(lint::check_function_like_macro(tmp.path()), "LINT016"));
+}
+
+TEST_CASE("lint: LINT016 passes for object-like macro", "[lint][lint016]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "#define MAX_VALUE 100\n");
+    REQUIRE(lint::check_function_like_macro(tmp.path()).empty());
+}
+
+// ─── LINT017 — setjmp/longjmp ────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT017 detects setjmp", "[lint][lint017]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f(){ jmp_buf j; setjmp(j); }\n");
+    REQUIRE(has_finding(lint::check_setjmp(tmp.path()), "LINT017"));
+}
+
+TEST_CASE("lint: LINT017 detects longjmp", "[lint][lint017]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void g(jmp_buf j){ longjmp(j, 1); }\n");
+    REQUIRE(has_finding(lint::check_setjmp(tmp.path()), "LINT017"));
+}
+
+// ─── LINT018 — dynamic_cast ───────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT018 detects dynamic_cast", "[lint][lint018]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "auto* p = dynamic_cast<Derived*>(base);\n");
+    REQUIRE(has_finding(lint::check_dynamic_cast(tmp.path()), "LINT018"));
+}
+
+// ─── LINT019 — union ─────────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT019 detects union", "[lint][lint019]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "union Data { int i; float f; };\n");
+    REQUIRE(has_finding(lint::check_union(tmp.path()), "LINT019"));
+}
+
+// ─── LINT020 — volatile ───────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT020 detects volatile without justification", "[lint][lint020]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "volatile int reg;\n");
+    REQUIRE(has_finding(lint::check_volatile(tmp.path()), "LINT020"));
+}
+
+TEST_CASE("lint: LINT020 passes with fusa:volatile annotation", "[lint][lint020]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "volatile int reg; // fusa:volatile hardware MMIO register\n");
+    REQUIRE(lint::check_volatile(tmp.path()).empty());
+}
+
+// ─── LINT021 — variadic ───────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT021 detects variadic function", "[lint][lint021]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void log(const char* fmt, ...);\n");
+    REQUIRE(has_finding(lint::check_variadic(tmp.path()), "LINT021"));
+}
+
+// ─── LINT022 — unsafe string functions ───────────────────────────────────────
+
+TEST_CASE("lint: LINT022 detects strcpy", "[lint][lint022]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "strcpy(dst, src);\n");
+    REQUIRE(has_finding(lint::check_unsafe_string_fn(tmp.path()), "LINT022"));
+}
+
+TEST_CASE("lint: LINT022 detects gets", "[lint][lint022]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "gets(buf);\n");
+    REQUIRE(has_finding(lint::check_unsafe_string_fn(tmp.path()), "LINT022"));
+}
+
+// ─── LINT023 — atoi/atof ─────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT023 detects atoi", "[lint][lint023]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "int n = atoi(argv[1]);\n");
+    REQUIRE(has_finding(lint::check_unsafe_numeric_conv(tmp.path()), "LINT023"));
+}
+
+// ─── LINT024 — missing braces ────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT024 detects if without braces", "[lint][lint024]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f(bool b){\n  if (b)\n    do_thing();\n}\n");
+    REQUIRE(has_finding(lint::check_missing_braces(tmp.path()), "LINT024"));
+}
+
+TEST_CASE("lint: LINT024 passes when braces present", "[lint][lint024]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void f(bool b){\n  if (b) {\n    do_thing();\n  }\n}\n");
+    REQUIRE(lint::check_missing_braces(tmp.path()).empty());
+}
+
+// ─── LINT025 — errno ──────────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT025 detects errno usage", "[lint][lint025]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "if (errno != 0) handle_error();\n");
+    REQUIRE(has_finding(lint::check_errno(tmp.path()), "LINT025"));
+}
+
+// ─── LINT026 — C library headers ─────────────────────────────────────────────
+
+TEST_CASE("lint: LINT026 detects deprecated C header", "[lint][lint026]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "#include <stdio.h>\n");
+    REQUIRE(has_finding(lint::check_c_headers(tmp.path()), "LINT026"));
+}
+
+TEST_CASE("lint: LINT026 passes for C++ header", "[lint][lint026]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "#include <cstdio>\n");
+    REQUIRE(lint::check_c_headers(tmp.path()).empty());
+}
+
+// ─── LINT027 — #undef ────────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT027 detects #undef", "[lint][lint027]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "#undef SOME_MACRO\n");
+    REQUIRE(has_finding(lint::check_undef(tmp.path()), "LINT027"));
+}
+
+// ─── LINT028 — asm ────────────────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT028 detects asm statement", "[lint][lint028]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "__asm__(\"nop\");\n");
+    REQUIRE(has_finding(lint::check_asm(tmp.path()), "LINT028"));
+}
+
+// ─── LINT029 — magic numbers ──────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT029 detects magic number literal", "[lint][lint029]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f(){ int x = 42; }\n");
+    REQUIRE(has_finding(lint::check_magic_numbers(tmp.path()), "LINT029"));
+}
+
+TEST_CASE("lint: LINT029 passes for constexpr named constant", "[lint][lint029]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "constexpr int LIMIT = 42;\n");
+    REQUIRE(lint::check_magic_numbers(tmp.path()).empty());
+}
+
+// ─── LINT030 — include guard ──────────────────────────────────────────────────
+
+TEST_CASE("lint: LINT030 detects header without include guard", "[lint][lint030]") {
+    TempDir tmp;
+    tmp.write("include/bare.hpp", "void foo();\n");
+    REQUIRE(has_finding(lint::check_include_guard(tmp.path()), "LINT030"));
+}
+
+TEST_CASE("lint: LINT030 passes with pragma once", "[lint][lint030]") {
+    TempDir tmp;
+    tmp.write("include/guarded.hpp", "#pragma once\nvoid foo();\n");
+    REQUIRE(lint::check_include_guard(tmp.path()).empty());
 }

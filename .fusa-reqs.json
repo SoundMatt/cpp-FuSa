@@ -149,5 +149,32 @@
 
   {"id":"REQ-NF001","title":"No external runtime dependencies","description":"The cpfusa binary shall have no runtime dependencies beyond the system C++ standard library.","standard_ref":"ISO 21434 §8","severity":"safety"},
   {"id":"REQ-NF002","title":"All timestamps use UTC","description":"All generatedAt timestamps shall be in ISO 8601 UTC format ending in 'Z'.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
-  {"id":"REQ-NF003","title":"Recognised standard identifiers","description":"The tool shall recognise standard identifiers: iso26262, iec61508, iso21434, do178c.","standard_ref":"IEC 61508 §7.4","severity":"info"}
+  {"id":"REQ-NF003","title":"Recognised standard identifiers","description":"The tool shall recognise standard identifiers: iso26262, iec61508, iso21434, do178c.","standard_ref":"IEC 61508 §7.4","severity":"info"},
+
+  {"id":"REQ-LINT011","title":"NULL literal (MISRA M4-10-2)","description":"The NULL macro shall not be used; nullptr shall be used instead.","standard_ref":"MISRA C++:2023 M4-10-2","severity":"warning"},
+  {"id":"REQ-LINT012","title":"Missing override (AUTOSAR A10-3-2)","description":"Virtual member functions shall be marked override or final in derived classes.","standard_ref":"AUTOSAR A10-3-2","severity":"warning"},
+  {"id":"REQ-LINT013","title":"Switch without default (MISRA M6-4-6)","description":"Every switch statement shall contain a final default clause.","standard_ref":"MISRA C++:2023 M6-4-6","severity":"warning"},
+  {"id":"REQ-LINT014","title":"Empty catch block (MISRA M15-3-4)","description":"Catch blocks shall not be empty; exceptions shall be handled or logged.","standard_ref":"MISRA C++:2023 M15-3-4","severity":"warning"},
+  {"id":"REQ-LINT015","title":"Throw in destructor (MISRA M15-5-1)","description":"A destructor shall not throw exceptions.","standard_ref":"MISRA C++:2023 M15-5-1","severity":"error"},
+  {"id":"REQ-LINT016","title":"Function-like macro (AUTOSAR A16-0-1)","description":"Function-like macros shall not be defined; inline functions shall be used instead.","standard_ref":"AUTOSAR A16-0-1","severity":"warning"},
+  {"id":"REQ-LINT017","title":"setjmp/longjmp (AUTOSAR A15-1-2)","description":"setjmp and longjmp shall not be used.","standard_ref":"AUTOSAR A15-1-2","severity":"error"},
+  {"id":"REQ-LINT018","title":"dynamic_cast (AUTOSAR A5-2-3)","description":"dynamic_cast shall not be used; prefer virtual dispatch.","standard_ref":"AUTOSAR A5-2-3","severity":"warning"},
+  {"id":"REQ-LINT019","title":"Union usage (AUTOSAR A9-5-1)","description":"Unions shall not be used; use std::variant instead.","standard_ref":"AUTOSAR A9-5-1","severity":"warning"},
+  {"id":"REQ-LINT020","title":"volatile without justification (AUTOSAR A2-11-1)","description":"volatile shall only be used for hardware registers, annotated with fusa:volatile.","standard_ref":"AUTOSAR A2-11-1","severity":"warning"},
+  {"id":"REQ-LINT021","title":"Variadic functions (AUTOSAR A8-4-1)","description":"Variadic functions shall not be defined.","standard_ref":"AUTOSAR A8-4-1","severity":"warning"},
+  {"id":"REQ-LINT022","title":"Unsafe string functions (AUTOSAR A27-0-1)","description":"Unsafe C string functions (strcpy, gets, strcat, sprintf) shall not be used.","standard_ref":"AUTOSAR A27-0-1","severity":"error"},
+  {"id":"REQ-LINT023","title":"atoi/atof (AUTOSAR A27-0-2)","description":"atoi, atof, atol shall not be used; use std::stoi or std::from_chars.","standard_ref":"AUTOSAR A27-0-2","severity":"warning"},
+  {"id":"REQ-LINT024","title":"Missing braces (MISRA M6-3-1)","description":"if/else/for/while compound-statements shall be enclosed in braces.","standard_ref":"MISRA C++:2023 M6-3-1","severity":"warning"},
+  {"id":"REQ-LINT025","title":"errno usage (AUTOSAR A19-3-1)","description":"errno shall not be used for error detection.","standard_ref":"AUTOSAR A19-3-1","severity":"warning"},
+  {"id":"REQ-LINT026","title":"C library headers (MISRA M17-0-5)","description":"The C standard library *.h headers shall not be included; use C++ equivalents.","standard_ref":"MISRA C++:2023 M17-0-5","severity":"warning"},
+  {"id":"REQ-LINT027","title":"#undef (MISRA M16-0-3)","description":"#undef shall not be used.","standard_ref":"MISRA C++:2023 M16-0-3","severity":"warning"},
+  {"id":"REQ-LINT028","title":"Inline assembler (AUTOSAR A7-4-1)","description":"Inline assembler (asm, __asm__) shall not be used unless fusa:unsafe annotated.","standard_ref":"AUTOSAR A7-4-1","severity":"warning"},
+  {"id":"REQ-LINT029","title":"Magic numbers (AUTOSAR A2-13-4)","description":"Numeric literals other than 0 and 1 shall not be used outside of named constants.","standard_ref":"AUTOSAR A2-13-4","severity":"warning"},
+  {"id":"REQ-LINT030","title":"Include guard (MISRA M16-2-1)","description":"Header files shall contain an include guard or #pragma once.","standard_ref":"MISRA C++:2023 M16-2-1","severity":"warning"},
+
+  {"id":"REQ-AST001","title":"Virtual destructor (AST check)","description":"A class with virtual methods shall declare a virtual destructor.","standard_ref":"MISRA C++:2023 M12-1-1","severity":"error"},
+  {"id":"REQ-AST002","title":"Variable shadowing (AST check)","description":"Local variables shall not shadow outer-scope identifiers.","standard_ref":"AUTOSAR A2-10-1","severity":"warning"},
+  {"id":"REQ-AST003","title":"Raw pointer return without nodiscard (AST check)","description":"Functions returning raw pointers shall be annotated [[nodiscard]].","standard_ref":"AUTOSAR A7-1-7","severity":"warning"},
+  {"id":"REQ-AST004","title":"libclang integration","description":"The tool shall optionally link libclang to provide AST-level analysis beyond regex checks.","standard_ref":"ISO 26262-6 §7.4.2","severity":"info"},
+  {"id":"REQ-AST005","title":"AST stub mode","description":"When libclang is unavailable, the ast subcommand shall return an INFO finding (AST000) and exit 0.","standard_ref":"ISO 26262-6 §7.4.2","severity":"info"}
 ]

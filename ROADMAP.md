@@ -129,22 +129,37 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 
 ---
 
-## v0.8 — Distribution ✅ *(in progress → tagged v0.7.0)*
+## v0.8 — Distribution ✅ *(tagged v0.7.0)*
 
 **Goal:** Zero-install and package manager distribution.
 
 - ✅ Docker image (`ghcr.io/soundmatt/cpp-fusa`) — shipped in v0.6
 - ✅ GitHub Actions release pipeline (tag-triggered, linux/macOS/Windows binaries) — shipped in v0.6
-- Homebrew formula (`Formula/cpp-fusa.rb`) — builds from source via GitHub archive
-- GitHub Actions composite action (`.github/action.yml`) — `uses: SoundMatt/cpp-FuSa@v0.7.0`
-- CPack packaging — NSIS (Windows installer) + DEB/RPM (Linux packages)
+- ✅ Homebrew formula (`Formula/cpp-fusa.rb`) — builds from source via GitHub archive
+- ✅ GitHub Actions composite action (`.github/action.yml`) — `uses: SoundMatt/cpp-FuSa@v0.7.0`
+- ✅ CPack packaging — NSIS (Windows installer) + DEB/RPM (Linux packages)
+
+---
+
+## v0.9 — AST Analysis + Full MISRA C++:2023 ✅
+
+**Goal:** libclang AST integration and complete MISRA C++:2023 rule set.
+
+- ✅ libclang optional integration (`src/ast/ast.cpp`, `cmake/FindLibClang.cmake`) — AST001-003
+- ✅ Stub mode when libclang unavailable (AST000 INFO finding)
+- ✅ `cpfusa ast` CLI subcommand with `--format text|json --output`
+- ✅ LINT011–030: full MISRA C++:2023 + AUTOSAR extended rules
+  - M4-10-2 NULL, A10-3-2 override, M6-4-6 switch default, M15-3-4 empty catch, M15-5-1 dtor throw
+  - A16-0-1 function-like macro, A15-1-2 setjmp, A5-2-3 dynamic_cast, A9-5-1 union, A2-11-1 volatile
+  - A8-4-1 variadic, A27-0-1 unsafe string fn, A27-0-2 atoi, M6-3-1 missing braces, A19-3-1 errno
+  - M17-0-5 C headers, M16-0-3 #undef, A7-4-1 asm, A2-13-4 magic numbers, M16-2-1 include guard
+- ✅ 179 requirements, 500 tests
 
 ---
 
 ## Future
 
-- libclang integration for deeper AST analysis
-- MISRA C++:2023 full rule set (300+ rules)
 - QNX / FreeRTOS / Zephyr RTOS integration
 - AUTOSAR Adaptive Platform compliance checks
 - Homebrew tap (`homebrew-soundmatt`) for binary distribution
+- MISRA C++:2023 remaining rules (rule count >100)
