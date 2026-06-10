@@ -2,6 +2,9 @@
 #include <catch2/catch_all.hpp>
 #include "trace/trace.hpp"
 #include "testutil/testutil.hpp"
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 using namespace cpfusa;
 using namespace cpfusa::testutil;
@@ -131,6 +134,73 @@ TEST_CASE("trace: render_matrix contains req IDs when present", "[trace][trace00
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto txt = trace::render_matrix(res, {});
     REQUIRE(txt.find("REQ-001") != std::string::npos);
+}
+
+// ─── render_json (§5 trace-report) ───────────────────────────────────────────
+
+TEST_CASE("trace: render_json produces valid JSON", "[trace][trace006]") {
+    TempDir tmp;
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    REQUIRE_NOTHROW(json::parse(trace::render_json(res, cfg)));
+}
+
+TEST_CASE("trace: render_json has spec v1.8 envelope", "[trace][trace006]") {
+    TempDir tmp;
+    config::ProjectConfig cfg; cfg.project = "TestProj"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j["schemaVersion"] == "1.8");
+    REQUIRE(j["kind"] == "trace-report");
+    REQUIRE(j["tool"] == "cpp-FuSa");
+    REQUIRE(j["language"] == "cpp");
+    REQUIRE(j["project"] == "TestProj");
+    REQUIRE_FALSE(j["generatedAt"].get<std::string>().empty());
+}
+
+TEST_CASE("trace: render_json requirements array contains req IDs", "[trace][trace006]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j["requirements"].is_array());
+    REQUIRE(j["requirements"].size() == 1);
+    REQUIRE(j["requirements"][0]["id"] == "REQ-001");
+}
+
+TEST_CASE("trace: render_json requirement has implementedBy and testedBy arrays", "[trace][trace006]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    auto& req = j["requirements"][0];
+    REQUIRE(req["implementedBy"].is_array());
+    REQUIRE(req["testedBy"].is_array());
+}
+
+TEST_CASE("trace: render_json covered req has status covered", "[trace][trace006]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    tmp.write("src/a.cpp",   "//fusa:req REQ-001\nvoid f(){}\n");
+    tmp.write("tests/t.cpp", "//fusa:test REQ-001\nvoid t(){}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j["requirements"][0]["status"] == "covered");
+}
+
+TEST_CASE("trace: render_json summary has annotationCoverage and testCoverage", "[trace][trace006]") {
+    TempDir tmp;
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j["summary"].contains("total"));
+    REQUIRE(j["summary"].contains("annotated"));
+    REQUIRE(j["summary"].contains("tested"));
+    REQUIRE(j["summary"].contains("annotationCoverage"));
+    REQUIRE(j["summary"].contains("testCoverage"));
 }
 
 // ─── render_req ──────────────────────────────────────────────────────────────

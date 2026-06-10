@@ -118,8 +118,8 @@ void write_json(const fs::path& out, const Report& r) {
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["sil"]         = r.sil;
-    j["summary"]     = {{"total", r.total}, {"addressed", r.addressed},
-                         {"partial", r.partial}, {"gap", r.gap}};
+    j["summary"]     = {{"total", r.total}, {"satisfied", r.addressed},
+                         {"partial", r.partial}, {"gaps", r.gap}};
     j["objectives"] = json::array();
     for (auto& o : r.objectives) {
         j["objectives"].push_back({

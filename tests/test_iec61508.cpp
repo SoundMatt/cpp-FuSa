@@ -84,3 +84,15 @@ TEST_CASE("iec61508: JSON summary total matches report", "[iec61508][iec61508003
     json j; f >> j;
     REQUIRE(j["summary"]["total"].get<int>() == r.total);
 }
+
+TEST_CASE("iec61508: JSON summary uses satisfied and gaps keys (§9.3)", "[iec61508][iec61508003]") {
+    TempDir tmp;
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    iec61508::write_json(tmp.path() / iec61508::IEC61508_REPORT_FILE, r);
+    std::ifstream f(tmp.path() / iec61508::IEC61508_REPORT_FILE);
+    json j; f >> j;
+    REQUIRE(j["summary"].contains("satisfied"));
+    REQUIRE(j["summary"].contains("gaps"));
+    REQUIRE_FALSE(j["summary"].contains("addressed"));
+    REQUIRE_FALSE(j["summary"].contains("gap"));
+}

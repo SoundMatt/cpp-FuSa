@@ -57,6 +57,10 @@ struct TraceOptions {
 [[nodiscard]] std::string render_matrix(const TraceResult& result,
                                         const TraceOptions& opts);
 
+// §5 JSON schema for cross-language traceability (FuSaOps).
+[[nodiscard]] std::string render_json(const TraceResult& result,
+                                      const config::ProjectConfig& cfg);
+
 [[nodiscard]] std::string render_req(const Requirement& req,
                                      const std::vector<Annotation>& annotations);
 

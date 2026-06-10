@@ -186,6 +186,79 @@ std::string render_matrix(const TraceResult& result, const TraceOptions& opts) {
     return out.str();
 }
 
+std::string render_json(const TraceResult& result,
+                        const config::ProjectConfig& cfg) {
+    using namespace std::chrono;
+    auto now = system_clock::now();
+    auto t   = system_clock::to_time_t(now);
+    std::tm tm_buf{};
+#ifdef _WIN32
+    gmtime_s(&tm_buf, &t);
+#else
+    gmtime_r(&t, &tm_buf);
+#endif
+    std::ostringstream ts;
+    ts << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
+
+    // Strip project root prefix so paths are project-relative (§4).
+    const std::string& root = cfg.project_root;
+    auto rel = [&](const std::string& p) -> std::string {
+        if (!root.empty() && p.rfind(root, 0) == 0) {
+            auto s = p.substr(root.size());
+            if (!s.empty() && (s[0] == '/' || s[0] == '\\')) s = s.substr(1);
+            return s;
+        }
+        return p;
+    };
+
+    json j;
+    j["schemaVersion"] = "1.8";
+    j["kind"]          = "trace-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["generatedAt"]   = ts.str();
+    j["project"]       = cfg.project;
+
+    j["requirements"] = json::array();
+    for (const auto& req : result.requirements) {
+        json entry;
+        entry["id"]          = req.id;
+        entry["title"]       = req.title;
+        entry["severity"]    = req.severity;
+        entry["standardRef"] = req.standard_ref;
+
+        json impls = json::array();
+        json tests = json::array();
+        auto it = result.by_req.find(req.id);
+        if (it != result.by_req.end()) {
+            for (const auto& ann : it->second) {
+                json loc = {{"file", rel(ann.file)}, {"line", ann.line}};
+                if (ann.is_test) tests.push_back(loc);
+                else             impls.push_back(loc);
+            }
+        }
+        entry["implementedBy"] = impls;
+        entry["testedBy"]      = tests;
+
+        bool has_impl = !impls.empty();
+        bool has_test = !tests.empty();
+        entry["status"] = (has_impl && has_test) ? "covered"
+                        : (has_impl || has_test)  ? "partial"
+                                                   : "gap";
+        j["requirements"].push_back(entry);
+    }
+
+    j["summary"] = {
+        {"total",              result.total},
+        {"annotated",         result.annotated},
+        {"tested",            result.tested},
+        {"annotationCoverage", result.annotation_coverage},
+        {"testCoverage",       result.test_coverage}
+    };
+    return j.dump(2);
+}
+
 std::string render_req(const Requirement& req,
                        const std::vector<Annotation>& annotations) {
     std::ostringstream out;

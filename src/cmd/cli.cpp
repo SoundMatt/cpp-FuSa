@@ -222,20 +222,35 @@ int run(int argc, char* argv[]) {
     auto* trace_cmd = app.add_subcommand("trace", "Show requirements traceability matrix");
     bool show_gaps  = false;
     int  req_cov = 0, sec_tested = 0;
-    trace_cmd->add_flag("--gaps",         show_gaps,  "Show only gaps");
-    trace_cmd->add_option("--req-coverage", req_cov,  "Fail if annotation coverage < N%");
-    trace_cmd->add_option("--sec-tested",  sec_tested, "Fail if test coverage < N%");
+    std::string trace_fmt, trace_out;
+    trace_cmd->add_flag("--gaps",           show_gaps,  "Show only gaps");
+    trace_cmd->add_option("--req-coverage", req_cov,    "Fail if annotation coverage < N%");
+    trace_cmd->add_option("--sec-tested",   sec_tested, "Fail if test coverage < N%");
+    trace_cmd->add_option("--format",       trace_fmt,  "text|json (default: text)");
+    trace_cmd->add_option("--output",       trace_out,  "Write output to file instead of stdout");
     trace_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        cfg_opt->project_root = fs::canonical(dir).string();
         trace::TraceOptions topts;
         topts.show_gaps          = show_gaps;
         topts.min_annotation_pct = req_cov;
         topts.min_test_pct       = sec_tested;
         auto r = trace::run(dir, *cfg_opt, topts);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
-        std::cout << trace::render_matrix(value_of(r), topts);
+        const bool as_json = (trace_fmt == "json");
+        std::string out_str = as_json
+            ? trace::render_json(value_of(r), *cfg_opt)
+            : trace::render_matrix(value_of(r), topts);
+        if (!trace_out.empty()) {
+            std::ofstream f(trace_out);
+            if (!f) { print_err("cannot write " + trace_out); std::exit(3); }
+            f << out_str;
+            if (as_json) print_ok("trace-report.json written to " + trace_out);
+        } else {
+            std::cout << out_str;
+        }
     });
 
     // ── req ───────────────────────────────────────────────────────────────────

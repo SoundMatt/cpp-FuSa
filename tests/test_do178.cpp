@@ -105,3 +105,15 @@ TEST_CASE("do178: JSON objectives array matches report size", "[do178][do178003]
     json j; f >> j;
     REQUIRE(j["objectives"].size() == r.objectives.size());
 }
+
+TEST_CASE("do178: JSON summary uses satisfied and gaps keys (§9.3)", "[do178][do178003]") {
+    TempDir tmp;
+    auto r = do178::assess(tmp.path(), "p", do178::DAL::C);
+    do178::write_json(tmp.path() / do178::DO178_REPORT_FILE, r);
+    std::ifstream f(tmp.path() / do178::DO178_REPORT_FILE);
+    json j; f >> j;
+    REQUIRE(j["summary"].contains("satisfied"));
+    REQUIRE(j["summary"].contains("gaps"));
+    REQUIRE_FALSE(j["summary"].contains("addressed"));
+    REQUIRE_FALSE(j["summary"].contains("gap"));
+}
