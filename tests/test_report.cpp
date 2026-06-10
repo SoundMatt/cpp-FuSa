@@ -58,5 +58,5 @@ TEST_CASE("report: render_html contains project name", "[report]") {
 TEST_CASE("report: render_sarif contains runs array", "[report]") {
     auto sarif = report::render_sarif({}, make_cfg());
     REQUIRE(sarif.find("\"runs\"") != std::string::npos);
-    REQUIRE(sarif.find("cpfusa") != std::string::npos);
+    REQUIRE(sarif.find("cpp-FuSa") != std::string::npos);
 }

@@ -1,10 +1,12 @@
 {
-  "project": "cpp-FuSa",
-  "version": "0.6.0",
+  "configVersion": "1.0",
+  "project": {
+    "name": "cpp-FuSa",
+    "version": "0.6.0"
+  },
   "standard": "iso26262",
-  "asil": "B",
-  "language": "cpp17",
-  "strict": false,
-  "source_dirs": ["src", "include"],
-  "exclude_patterns": ["build/", "build-cov/", "_deps/"]
+  "asil": "ASIL-B",
+  "sourceDirs": ["src", "include"],
+  "excludePatterns": ["build/", "build-cov/", "_deps/"],
+  "strict": false
 }

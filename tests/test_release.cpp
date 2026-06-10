@@ -129,7 +129,7 @@ TEST_CASE("release: write_all creates sbom.json, provenance.json, artifact-manif
     REQUIRE(std::filesystem::exists(tmp.path() / release::ManifestFile));
 }
 
-TEST_CASE("release: sbom.json is valid SPDX JSON-LD", "[release]") {
+TEST_CASE("release: sbom.json conforms to x-FuSa §7 format", "[release]") {
     TempDir tmp;
     config::ProjectConfig cfg;
     auto sbom = value_of(release::build_sbom(tmp.path(), cfg));
@@ -139,6 +139,12 @@ TEST_CASE("release: sbom.json is valid SPDX JSON-LD", "[release]") {
     std::ifstream f(tmp.path() / release::SBOMFile);
     json j;
     REQUIRE_NOTHROW(f >> j);
-    REQUIRE(j.contains("@context")); // SPDX 3.0.1 JSON-LD
-    REQUIRE(j.contains("@graph"));
+    // §3.1 common header
+    REQUIRE(j.contains("schemaVersion"));
+    REQUIRE(j["kind"] == "sbom");
+    REQUIRE(j["tool"] == "cpp-FuSa");
+    // §7 SBOM fields
+    REQUIRE(j["format"] == "x-FuSa SBOM v1");
+    REQUIRE(j.contains("module"));
+    REQUIRE(j.contains("components"));
 }

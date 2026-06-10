@@ -40,6 +40,7 @@
 #include "cpfusa/fusa.hpp"
 
 #include <CLI/CLI.hpp>
+#include <nlohmann/json.hpp>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
@@ -75,31 +76,60 @@ void print_err(const std::string& msg) { std::cerr << "[ERROR] " << msg << "\n";
 //fusa:req REQ-CLI001 REQ-CLI002 REQ-CLI003 REQ-CLI004 REQ-CLI005 REQ-CLI006 REQ-CLI007 REQ-CLI008 REQ-CLI009 REQ-CLI010 REQ-NF001 REQ-NF002 REQ-NF003
 int run(int argc, char* argv[]) {
     CLI::App app{"cpfusa — C++ Functional Safety Toolkit v" + std::string(Version)};
-    app.set_version_flag("--version", std::string(Version));
 
     std::string dir_str = fs::current_path().string();
+    bool no_color_flag = false;
     app.add_option("--dir", dir_str, "Project directory (default: cwd)");
+    app.add_flag("--no-color", no_color_flag, "Disable ANSI colour (also honoured via NO_COLOR env)");
     app.fallthrough(true);
 
+    // §2.6: honour NO_COLOR environment variable
+    auto* nc_env = std::getenv("NO_COLOR");
+    if (nc_env != nullptr) no_color_flag = true;
+
     // ── init ──────────────────────────────────────────────────────────────────
-    auto* init      = app.add_subcommand("init", "Initialise a .fusa.json project configuration");
-    std::string standard = "iso26262", asil = "B";
-    init->add_option("--standard", standard, "iso26262|iec61508|iso21434|do178c");
-    init->add_option("--asil",     asil,     "A|B|C|D or SIL-1..4 or DAL-A..E");
+    auto* init      = app.add_subcommand("init", "Initialise .fusa.json and .fusa-reqs.json");
+    std::string init_standard = "iso26262", init_asil = "ASIL-B";
+    std::string init_name, init_project_version;
+    bool init_force = false;
+    init->add_option("--standard",        init_standard,        "iso26262|iec61508|iso21434|do178c");
+    init->add_option("--asil",            init_asil,            "ASIL-A..D | SIL-1..4 | DAL-A..E");
+    init->add_option("--name",            init_name,            "Project name (default: directory name)");
+    init->add_option("--project-version", init_project_version, "Project version (default: 0.1.0)");
+    init->add_flag("--force",             init_force,           "Overwrite existing files");
     init->callback([&] {
         fs::path dir{dir_str};
-        if (config::exists(dir)) {
-            std::cerr << ".fusa.json already exists. Remove it to re-initialise.\n";
-            return;
+        bool wrote_any = false;
+
+        // .fusa.json — per-file: create if missing, leave untouched unless --force
+        if (!config::exists(dir) || init_force) {
+            auto cfg     = config::defaults(dir);
+            cfg.standard = init_standard;
+            cfg.asil     = init_asil;
+            if (!init_name.empty())           cfg.project = init_name;
+            if (!init_project_version.empty()) cfg.version = init_project_version;
+            auto r = config::save(dir, cfg);
+            if (!is_ok(r)) { print_err(error_of(r)); std::exit(3); }
+            print_ok("Created .fusa.json for project '" + cfg.project + "'");
+            wrote_any = true;
+        } else {
+            std::cerr << ".fusa.json already exists (use --force to overwrite)\n";
         }
-        auto cfg     = config::defaults(dir);
-        cfg.standard = standard;
-        cfg.asil     = asil;
-        auto r = config::save(dir, cfg);
-        if (!is_ok(r)) { print_err(error_of(r)); return; }
-        print_ok("Created .fusa.json for project '" + cfg.project + "'");
-        std::cout << "  Standard: " << cfg.standard << "  ASIL/SIL: " << cfg.asil << "\n";
-        std::cout << "Next: add //fusa:req REQ-XXX annotations, then run 'cpfusa check'\n";
+
+        // .fusa-reqs.json — §9.1: create with empty requirements array
+        auto reqs_path = dir / ".fusa-reqs.json";
+        if (!fs::exists(reqs_path) || init_force) {
+            std::ofstream rf(reqs_path);
+            if (!rf) { print_err("failed to write .fusa-reqs.json"); std::exit(3); }
+            rf << "{\n  \"requirements\": []\n}\n";
+            print_ok("Created .fusa-reqs.json");
+            wrote_any = true;
+        } else {
+            std::cerr << ".fusa-reqs.json already exists (use --force to overwrite)\n";
+        }
+
+        if (wrote_any)
+            std::cout << "Next: add //fusa:req REQ-XXX annotations, then run 'cpfusa check'\n";
     });
 
     // ── check ─────────────────────────────────────────────────────────────────
@@ -112,14 +142,15 @@ int run(int argc, char* argv[]) {
     check->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto& cfg = *cfg_opt;
         cfg.strict = strict_flag;
         auto eng      = engine::make_default_engine();
         auto findings = eng.run(dir, cfg);
         report::ReportOptions ropts;
-        ropts.strict = strict_flag;
-        ropts.output = out;
+        ropts.strict   = strict_flag;
+        ropts.output   = out;
+        ropts.no_color = no_color_flag;
         if (fmt == "json")       ropts.format = report::Format::JSON;
         else if (fmt == "html")  ropts.format = report::Format::HTML;
         else if (fmt == "sarif") ropts.format = report::Format::SARIF;
@@ -135,9 +166,9 @@ int run(int argc, char* argv[]) {
     lint_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto findings = lint::run(dir, *cfg_opt);
-        report::ReportOptions ropts; ropts.strict = lint_strict;
+        report::ReportOptions ropts; ropts.strict = lint_strict; ropts.no_color = no_color_flag;
         (void)report::write_report(findings, *cfg_opt, ropts);
         std::exit(report::exit_code(findings, lint_strict));
     });
@@ -150,7 +181,7 @@ int run(int argc, char* argv[]) {
     analyze_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         analyze::AnalyzeOptions aopts;
         aopts.run_clang_tidy = !no_clang_tidy;
         aopts.run_cppcheck   = !no_cppcheck;
@@ -167,7 +198,7 @@ int run(int argc, char* argv[]) {
     cyber_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto rpt = cyber::run(dir, *cfg_opt);
         if (cyber_write) {
             auto wr = cyber::write_report(dir, rpt);
@@ -197,7 +228,7 @@ int run(int argc, char* argv[]) {
     trace_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         trace::TraceOptions topts;
         topts.show_gaps          = show_gaps;
         topts.min_annotation_pct = req_cov;
@@ -214,7 +245,7 @@ int run(int argc, char* argv[]) {
     req_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto reqs_r = trace::load_requirements(dir);
         if (!is_ok(reqs_r)) { print_err(error_of(reqs_r)); std::exit(1); }
         const auto& reqs = value_of(reqs_r);
@@ -233,7 +264,7 @@ int run(int argc, char* argv[]) {
     tmpl_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         tmpl::TemplateType tt = tmpl::TemplateType::ALL;
         if (tmpl_type == "safety-plan")       tt = tmpl::TemplateType::SAFETY_PLAN;
         else if (tmpl_type == "test-evidence") tt = tmpl::TemplateType::TEST_EVIDENCE;
@@ -254,13 +285,14 @@ int run(int argc, char* argv[]) {
     rpt_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto eng      = engine::make_default_engine();
         auto findings = eng.run(dir, *cfg_opt);
         auto lint_findings = lint::run(dir, *cfg_opt);
         findings.insert(findings.end(), lint_findings.begin(), lint_findings.end());
         report::ReportOptions ropts;
-        ropts.output = rpt_out;
+        ropts.output   = rpt_out;
+        ropts.no_color = no_color_flag;
         if (rpt_fmt == "json")       ropts.format = report::Format::JSON;
         else if (rpt_fmt == "html")  ropts.format = report::Format::HTML;
         else if (rpt_fmt == "sarif") ropts.format = report::Format::SARIF;
@@ -273,7 +305,7 @@ int run(int argc, char* argv[]) {
     verify_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         std::cout << "Running ctest...\n";
         auto r = verify::run_ctest(dir, *cfg_opt);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
@@ -318,7 +350,7 @@ int run(int argc, char* argv[]) {
     release_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
 
         if (release_full) {
             // Run tara
@@ -351,7 +383,7 @@ int run(int argc, char* argv[]) {
     auditpack_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         fs::path out_path = auditpack_out.empty() ? dir / std::string(auditpack::AuditPackFile)
                                                   : fs::path(auditpack_out);
         auto r = auditpack::pack(dir, out_path);
@@ -370,7 +402,7 @@ int run(int argc, char* argv[]) {
     badge_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         int errors = 0, warnings = 0;
         if (!badge_report.empty()) {
             // Load from JSON report file.
@@ -465,7 +497,7 @@ int run(int argc, char* argv[]) {
     tara_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto r = tara::generate(dir, *cfg_opt);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto wr = tara::write(dir, value_of(r));
@@ -480,7 +512,7 @@ int run(int argc, char* argv[]) {
     fmea_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto r = fmea::generate(dir, *cfg_opt);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto wr = fmea::write(dir, value_of(r));
@@ -495,7 +527,7 @@ int run(int argc, char* argv[]) {
     sc_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto r = safety_case::generate(dir, *cfg_opt);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto wr = safety_case::write(dir, value_of(r));
@@ -752,7 +784,7 @@ int run(int argc, char* argv[]) {
     sas_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto s = sas::build(dir, cfg_opt->project, cfg_opt->version, sas_dal);
         sas::write_json(dir / sas::SAS_JSON_FILE, s);
         sas::write_markdown(dir / sas::SAS_MD_FILE, s);
@@ -766,7 +798,7 @@ int run(int argc, char* argv[]) {
     sci_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
-        if (!cfg_opt) { std::exit(1); }
+        if (!cfg_opt) { std::exit(3); }
         auto s = sci::build(dir, cfg_opt->project, cfg_opt->version);
         sci::write_json(dir / sci::SCI_FILE, s);
         print_ok("sci.json written (" + std::to_string(s.items.size()) + " lifecycle items)");
@@ -813,8 +845,56 @@ int run(int argc, char* argv[]) {
 
     // ── version ───────────────────────────────────────────────────────────────
     auto* ver_cmd = app.add_subcommand("version", "Print version and exit");
+    std::string ver_fmt;
+    ver_cmd->add_option("--format", ver_fmt, "text|json");
     ver_cmd->callback([&]() -> void {
-        std::cout << "cpfusa version " << Version << "\n";
+        if (ver_fmt == "json") {
+            nlohmann::json j;
+            j["tool"]        = "cpp-FuSa";
+            j["version"]     = std::string(Version);
+            j["specVersion"] = std::string(SpecVersion);
+            std::cout << j.dump(2) << "\n";
+        } else {
+            // §9.1: MUST match ^(\S+) (\d+\.\d+\.\d+)$
+            std::cout << "cpp-FuSa " << Version << "\n";
+        }
+    });
+
+    // ── capabilities ──────────────────────────────────────────────────────────
+    // §10 (SHOULD): machine-readable discovery for FuSaOps orchestration
+    auto* caps_cmd = app.add_subcommand("capabilities", "Emit machine-readable tool capabilities");
+    std::string caps_fmt;
+    caps_cmd->add_option("--format", caps_fmt, "json (default)");
+    caps_cmd->callback([&]() -> void {
+        nlohmann::json j;
+        j["schemaVersion"] = std::string(SpecVersion);
+        j["kind"]          = "capabilities";
+        j["tool"]          = "cpp-FuSa";
+        j["toolVersion"]   = std::string(Version);
+        j["language"]      = "cpp";
+        {
+            auto t = std::time(nullptr);
+            std::ostringstream ss;
+            ss << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%SZ");
+            j["generatedAt"] = ss.str();
+        }
+        j["specVersion"] = std::string(SpecVersion);
+        j["commands"]    = nlohmann::json::array({"check","lint","analyze","trace","report",
+                                                   "init","version","capabilities","cyber","verify",
+                                                   "qualify","release","audit-pack","badge","diff",
+                                                   "sign","hooks","tara","fmea","safety-case","hara",
+                                                   "iso26262","iec61508","boundary","metrics","vuln",
+                                                   "coverage","disposition","impact","do178","sas",
+                                                   "sci","pr","fix","misra","coupling","iec62443","slsa"});
+        nlohmann::json fmts;
+        fmts["check"]   = {"text","json","html","sarif"};
+        fmts["report"]  = {"text","json","html","sarif"};
+        fmts["trace"]   = {"text","json"};
+        fmts["diff"]    = {"text","json"};
+        fmts["version"] = {"text","json"};
+        j["formats"]    = fmts;
+        j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c","iec62443"});
+        std::cout << j.dump(2) << "\n";
     });
 
     // ── misra ─────────────────────────────────────────────────────────────────
@@ -878,7 +958,14 @@ int run(int argc, char* argv[]) {
         slsa::render_text(rep);
     });
 
-    CLI11_PARSE(app, argc, argv);
+    // §2.3: usage errors → exit 2; parse success (including --help/--version) → 0
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        int ret = app.exit(e);
+        if (ret != 0) std::exit(2);
+        return ret;
+    }
     return 0;
 }
 

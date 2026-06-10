@@ -1,5 +1,6 @@
 #include "auditpack.hpp"
 #include "../release/release.hpp"
+#include "cpfusa/fusa.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
@@ -116,16 +117,22 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
         manifest.files.push_back({name, present.back().sha256, present.back().size});
     }
 
-    // Write AUDIT-MANIFEST.json to a temp file, then zip everything.
-    auto tmp_manifest = fs::temp_directory_path() / "AUDIT-MANIFEST.json";
+    // Write manifest.json (§8: lowercase, at ZIP root) to a temp file, then zip everything.
+    auto tmp_manifest = fs::temp_directory_path() / "manifest.json";
     {
         json j;
-        j["format"]       = manifest.format;
-        j["generated_at"] = manifest.generated_at;
-        j["project"]      = manifest.project;
+        // §3.1 common header on the audit manifest
+        j["schemaVersion"] = std::string(SpecVersion);
+        j["kind"]          = "audit-manifest";
+        j["tool"]          = "cpp-FuSa";
+        j["toolVersion"]   = std::string(Version);
+        j["language"]      = "cpp";
+        j["generatedAt"]   = manifest.generated_at;
+        j["module"]        = "github.com/SoundMatt/cpp-FuSa";
         json fa = json::array();
         for (const auto& f : present)
-            fa.push_back({{"path",f.name},{"sha256",f.sha256},{"size",f.size}});
+            fa.push_back({{"path", f.name}, {"size", f.size},
+                          {"sha256", f.sha256}});  // §2.7: bare hex for sha256-named field
         j["files"] = fa;
         std::ofstream mf(tmp_manifest);
         mf << j.dump(2) << "\n";
@@ -147,15 +154,14 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
                         + " 2>&1";
     auto zip_out = run_cmd(zip_cmd);
 
-    // Add the manifest (from tmp) into the zip.
+    // Add manifest.json (from tmp) into the zip at the root.
     std::string add_manifest = "cd \"" + fs::temp_directory_path().string()
                              + "\" && zip -q \"" + output_path.string()
-                             + "\" AUDIT-MANIFEST.json 2>&1";
+                             + "\" manifest.json 2>&1";
     run_cmd(add_manifest);
 
     if (!fs::exists(output_path)) {
-        // zip might not be installed; fall back to writing a tar-like flat manifest only.
-        // Write manifest JSON as the "archive" so the command still produces output.
+        // zip not installed; write manifest.json as the fallback artefact.
         fs::copy(tmp_manifest, output_path);
     }
 

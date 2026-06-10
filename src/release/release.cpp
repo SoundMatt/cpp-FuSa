@@ -1,4 +1,5 @@
 #include "release.hpp"
+#include "cpfusa/fusa.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
@@ -212,72 +213,62 @@ Result<std::monostate> write_all(const fs::path& dir,
                                  const Provenance& prov,
                                  const Manifest& manifest) {
     try {
-        // sbom.json — SPDX 3.0.1 style JSON-LD
+        // sbom.json — §7 spec-conformant with §3.1 common header
         {
             json j;
-            j["@context"]    = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld";
-            json graph = json::array();
-            json doc;
-            doc["type"]        = "SpdxDocument";
-            doc["spdxId"]      = "SPDXRef-DOCUMENT";
-            doc["specVersion"] = "SPDX-3.0.1";
-            doc["created"]     = sbom.generated_at;
-            doc["createdBy"]   = json::array({"Tool: cpfusa"});
-            doc["name"]        = sbom.project;
-            json elem_ids = json::array();
-            json comps = json::array();
-            for (const auto& c : sbom.components) {
-                std::string id = "SPDXRef-" + c.name;
-                elem_ids.push_back(id);
-                json pkg;
-                pkg["type"]                    = "Package";
-                pkg["spdxId"]                  = id;
-                pkg["name"]                    = c.name;
-                pkg["software_packageVersion"] = c.version;
-                pkg["creationInfo"]            = "SPDXRef-DOCUMENT";
-                comps.push_back(pkg);
-            }
-            doc["element"]     = elem_ids;
-            doc["rootElement"] = json::array({"SPDXRef-DOCUMENT"});
-            graph.push_back(doc);
-            for (const auto& c : comps) graph.push_back(c);
-            j["@graph"]        = graph;
-            // Also embed our internal SBOM fields for tooling
-            j["_cpfusaSBOM"]   = {
-                {"format", sbom.format},
-                {"generatedAt", sbom.generated_at},
-                {"project", sbom.project},
-                {"cppVersion", sbom.cpp_version},
-                {"cmakeVersion", sbom.cmake_version}
-            };
+            j["schemaVersion"] = std::string(SpecVersion);
+            j["kind"]          = "sbom";
+            j["tool"]          = "cpp-FuSa";
+            j["toolVersion"]   = std::string(Version);
+            j["language"]      = "cpp";
+            j["generatedAt"]   = sbom.generated_at;
+            j["format"]        = "x-FuSa SBOM v1";
+            // §7: module = repo URL or <project>@<version> for ecosystems without a module path
+            j["module"]        = "github.com/SoundMatt/cpp-FuSa";
             json cs = json::array();
-            for (const auto& c : sbom.components)
-                cs.push_back({{"name",c.name},{"version",c.version},{"hash",c.hash}});
-            j["_cpfusaSBOM"]["components"] = cs;
+            for (const auto& c : sbom.components) {
+                json cj;
+                cj["name"]    = c.name;
+                cj["version"] = c.version;
+                // §7: hash MUST be "algo:value"; §2.7: named hash field uses algo:value prefix
+                cj["hash"] = c.hash.empty() ? "" : ("sha256:" + c.hash);
+                cs.push_back(cj);
+            }
+            j["components"] = cs;
             std::ofstream out(dir / SBOMFile);
             out << j.dump(2) << "\n";
         }
-        // provenance.json
+        // provenance.json — §7 with §3.1 common header
         {
             json j;
-            j["format"]      = prov.format;
-            j["generatedAt"] = prov.generated_at;
-            j["project"]     = prov.project;
-            j["cppVersion"]  = prov.cpp_version;
-            j["platform"]    = prov.platform;
-            j["vcsRevision"] = prov.vcs_revision;
-            j["vcsModified"] = prov.vcs_modified;
+            j["schemaVersion"] = std::string(SpecVersion);
+            j["kind"]          = "provenance";
+            j["tool"]          = "cpp-FuSa";
+            j["toolVersion"]   = std::string(Version);
+            j["language"]      = "cpp";
+            j["generatedAt"]   = prov.generated_at;
+            j["format"]        = "x-FuSa provenance v1";
+            j["module"]        = "github.com/SoundMatt/cpp-FuSa";
+            j["builder"]       = "local";
+            j["vcsRevision"]   = prov.vcs_revision;
+            j["vcsModified"]   = prov.vcs_modified;
+            j["os"]            = prov.platform;
             std::ofstream out(dir / ProvenanceFile);
             out << j.dump(2) << "\n";
         }
-        // artifact-manifest.json
+        // artifact-manifest.json — §7 with §3.1 common header
         {
             json j;
-            j["format"]      = manifest.format;
-            j["generatedAt"] = manifest.generated_at;
+            j["schemaVersion"] = std::string(SpecVersion);
+            j["kind"]          = "artifact-manifest";
+            j["tool"]          = "cpp-FuSa";
+            j["toolVersion"]   = std::string(Version);
+            j["language"]      = "cpp";
+            j["generatedAt"]   = manifest.generated_at;
+            j["format"]        = "x-FuSa manifest v1";
             json ar = json::array();
             for (const auto& a : manifest.artifacts)
-                ar.push_back({{"path",a.path},{"sha256",a.sha256}});
+                ar.push_back({{"path", a.path}, {"sha256", a.sha256}});
             j["artifacts"] = ar;
             std::ofstream out(dir / ManifestFile);
             out << j.dump(2) << "\n";

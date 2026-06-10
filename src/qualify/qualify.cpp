@@ -312,12 +312,18 @@ Result<QualifyReport> run(const std::vector<Case>& cases) {
 
 Result<std::monostate> save(const fs::path& path, const QualifyReport& r) {
     json j;
-    j["generatedAt"] = r.generated_at;
-    j["cppVersion"]  = r.cpp_version;
-    j["module"]      = r.module;
-    j["total"]       = r.total;
-    j["passed"]      = r.passed;
-    j["failed"]      = r.failed;
+    // §3.1 common header
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "qualification";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["generatedAt"]   = r.generated_at;
+    // §6 qualify payload
+    j["module"]        = r.module;
+    j["total"]         = r.total;
+    j["passed"]        = r.passed;
+    j["failed"]        = r.failed;
     json ra = json::array();
     for (const auto& cr : r.results) {
         json rj;

@@ -8,14 +8,15 @@
 namespace cpfusa::config {
 
 struct ProjectConfig {
-    std::string project;
-    std::string version;
-    std::string standard;   // iso26262 | iec61508 | iso21434 | do178c
-    std::string asil;       // A|B|C|D or SIL-1..4 or DAL-A..E
-    std::string language;   // cpp17 | cpp20
+    std::string project;            // display name (project.name from §1.2.1)
+    std::string version;            // project version (project.version from §1.2.1)
+    std::string standard;           // canonical standard id (§2.4.1)
+    std::string asil;               // integrity level value
+    std::string language{"cpp"};    // registry language id (§1.1)
     std::vector<std::string> source_dirs;
     std::vector<std::string> exclude_patterns;
     bool strict{false};
+    std::string project_root;       // absolute path to --dir (for envelope projectRoot)
 };
 
 constexpr std::string_view ConfigFile = ".fusa.json";
