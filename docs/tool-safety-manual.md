@@ -1,6 +1,6 @@
 # cpp-FuSa Tool Safety Manual
 
-**Version:** 0.9.1  
+**Version:** 0.9.2  
 **Binary:** `cpfusa`  
 **Repository:** `github.com/SoundMatt/cpp-FuSa`  
 **License:** Mozilla Public License 2.0  
