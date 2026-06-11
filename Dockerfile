@@ -10,7 +10,7 @@
 # Run (mount your C++ project at /project):
 #   docker run --rm -v "$(pwd)":/project cpp-fusa check
 #   docker run --rm -v "$(pwd)":/project cpp-fusa lint
-#   docker run --rm -v "$(pwd)":/project cpp-fusa trace
+#   docker run --rm -v "$(pwd)":/project cpp-fusa trace --format json
 #   docker run --rm -v "$(pwd)":/project cpp-fusa release
 
 # ── Stage 1: build ────────────────────────────────────────────────────────────

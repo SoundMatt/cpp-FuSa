@@ -1,6 +1,6 @@
 # cpp-FuSa Tool Safety Manual
 
-**Version:** 0.9.0  
+**Version:** 0.9.1  
 **Binary:** `cpfusa`  
 **Repository:** `github.com/SoundMatt/cpp-FuSa`  
 **License:** Mozilla Public License 2.0  
@@ -170,9 +170,12 @@ Runs clang-tidy, cppcheck, and own analysis passes (ANAL003–007).
 ### `cpfusa trace`
 ```
 cpfusa trace [--dir <path>] [--gaps] [--req-coverage N] [--sec-tested N]
+             [--format text|json] [--output <file>]
 ```
 Scans `//fusa:req` (implementation) and `//fusa:test` (test) annotations.
 CI gates: `--req-coverage 80` fails if fewer than 80% of requirements are annotated.
+`--format json` writes `trace-report.json` to the project directory (x-FuSa §5 schema);
+use `--output <file>` to redirect to a custom path.
 
 ### `cpfusa verify`
 ```

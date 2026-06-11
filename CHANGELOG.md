@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.1] — 2026-06-11
+
+### Fixed
+- `cpfusa trace --format json` now writes `trace-report.json` to the project directory
+  instead of emitting to stdout only; FuSaOps artifact discovery no longer fails
+- `iec62443` and `slsa` JSON summary keys corrected to x-FuSa spec §9.3 canonical form:
+  `"met"` → `"satisfied"`, `"gap"` → `"gaps"` (plural); per-objective status string
+  updated likewise (`"met"` → `"satisfied"`)
+- 4 new conformance tests (§9.3 summary key and objective status checks for both modules)
+
 ## [0.9.0] — 2026-06-10
 
 ### Added
