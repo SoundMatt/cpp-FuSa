@@ -9,6 +9,9 @@
   `"met"` → `"satisfied"`, `"gap"` → `"gaps"` (plural); per-objective status string
   updated likewise (`"met"` → `"satisfied"`)
 - `qualification.md` test count corrected (549 → 571)
+- `Dockerfile` missing all OCI + `io.x-fusa.*` labels added per spec §15:
+  `org.opencontainers.image.{title,description,source,licenses,version}` and
+  `io.x-fusa.{tool,language,binary,spec-version}`
 
 ### Tests
 - 22 new tests across `auditpack`, `fmea`, `tara`, `sas`, `sci` modules covering
