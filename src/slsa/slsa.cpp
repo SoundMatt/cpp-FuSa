@@ -27,7 +27,7 @@ std::string level_str(Level l) {
     }
 }
 std::string status_str(Status s) {
-    return (s == Status::Met) ? "met" : "gap";
+    return (s == Status::Met) ? "satisfied" : "gap";
 }
 
 namespace {
@@ -97,7 +97,7 @@ Report assess(const fs::path& dir, const std::string& project, Level lvl) {
         req.status = detect_status(req, dir);
         r.requirements.push_back(req);
         r.total++;
-        if (req.status == Status::Met) r.met++;
+        if (req.status == Status::Met) r.satisfied++;
         else                           r.gap++;
     }
     return r;
@@ -108,7 +108,7 @@ void write_json(const fs::path& out, const Report& r) {
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["level"]       = r.level;
-    j["summary"]     = {{"total", r.total}, {"met", r.met}, {"gap", r.gap}};
+    j["summary"]     = {{"total", r.total}, {"satisfied", r.satisfied}, {"gaps", r.gap}};
     j["requirements"] = json::array();
     for (auto& req : r.requirements) {
         j["requirements"].push_back({
@@ -128,7 +128,7 @@ void render_text(const Report& r) {
         std::cout << m << " " << req.id << "  " << req.description << "\n";
     }
     std::cout << std::string(70, '-') << "\n";
-    std::cout << "Total: " << r.total << "  Met: " << r.met << "  Gap: " << r.gap << "\n";
+    std::cout << "Total: " << r.total << "  Satisfied: " << r.satisfied << "  Gap: " << r.gap << "\n";
 }
 
 } // namespace cpfusa::slsa

@@ -22,7 +22,7 @@ TEST_CASE("iec62443: sl_str roundtrip", "[iec62443][iec62443001]") {
 }
 
 TEST_CASE("iec62443: status_str met", "[iec62443][iec62443001]") {
-    REQUIRE(iec62443::status_str(iec62443::Status::Met) == "met");
+    REQUIRE(iec62443::status_str(iec62443::Status::Met) == "satisfied");
 }
 
 TEST_CASE("iec62443: status_str gap", "[iec62443][iec62443001]") {
@@ -47,7 +47,7 @@ TEST_CASE("iec62443: assess sets project and sl", "[iec62443][iec62443002]") {
 TEST_CASE("iec62443: assess counts are consistent", "[iec62443][iec62443002]") {
     TempDir tmp;
     auto r = iec62443::assess(tmp.path(), "p", iec62443::SL::SL1);
-    REQUIRE(r.met + r.partial + r.gap == r.total);
+    REQUIRE(r.satisfied + r.partial + r.gap == r.total);
 }
 
 TEST_CASE("iec62443: higher SL has >= checks than lower", "[iec62443][iec62443002]") {
@@ -101,4 +101,28 @@ TEST_CASE("iec62443: JSON checks have id field", "[iec62443][iec62443003]") {
     json j; f >> j;
     for (auto& c : j["checks"])
         REQUIRE(c.contains("id"));
+}
+
+TEST_CASE("iec62443: JSON summary has spec 9.3 keys satisfied and gaps", "[iec62443][iec62443003]") {
+    TempDir tmp;
+    auto r = iec62443::assess(tmp.path(), "p", iec62443::SL::SL1);
+    iec62443::write_json(tmp.path() / iec62443::IEC62443_REPORT_FILE, r);
+    std::ifstream f(tmp.path() / iec62443::IEC62443_REPORT_FILE);
+    json j; f >> j;
+    REQUIRE(j["summary"].contains("satisfied"));
+    REQUIRE(j["summary"].contains("gaps"));
+    REQUIRE_FALSE(j["summary"].contains("met"));
+    REQUIRE_FALSE(j["summary"].contains("gap"));
+}
+
+TEST_CASE("iec62443: check status values are spec-conformant", "[iec62443][iec62443003]") {
+    TempDir tmp;
+    auto r = iec62443::assess(tmp.path(), "p", iec62443::SL::SL1);
+    iec62443::write_json(tmp.path() / iec62443::IEC62443_REPORT_FILE, r);
+    std::ifstream f(tmp.path() / iec62443::IEC62443_REPORT_FILE);
+    json j; f >> j;
+    for (auto& c : j["checks"]) {
+        auto s = c["status"].get<std::string>();
+        REQUIRE((s == "satisfied" || s == "partial" || s == "gap"));
+    }
 }

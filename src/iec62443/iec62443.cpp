@@ -28,7 +28,7 @@ std::string sl_str(SL sl) {
 }
 std::string status_str(Status s) {
     switch (s) {
-        case Status::Met:     return "met";
+        case Status::Met:     return "satisfied";
         case Status::Partial: return "partial";
         default:              return "gap";
     }
@@ -132,7 +132,7 @@ Report assess(const fs::path& dir, const std::string& project, SL sl) {
         r.checks.push_back(chk);
         r.total++;
         switch (chk.status) {
-            case Status::Met:     r.met++;     break;
+            case Status::Met:     r.satisfied++;     break;
             case Status::Partial: r.partial++; break;
             default:              r.gap++;     break;
         }
@@ -145,8 +145,8 @@ void write_json(const fs::path& out, const Report& r) {
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["sl"]          = r.sl;
-    j["summary"]     = {{"total", r.total}, {"met", r.met},
-                         {"partial", r.partial}, {"gap", r.gap}};
+    j["summary"]     = {{"total", r.total}, {"satisfied", r.satisfied},
+                         {"partial", r.partial}, {"gaps", r.gap}};
     j["checks"] = json::array();
     for (auto& c : r.checks) {
         j["checks"].push_back({
@@ -168,7 +168,7 @@ void render_text(const Report& r) {
         std::cout << m << " " << c.id << "  " << c.requirement << "\n";
     }
     std::cout << std::string(70, '-') << "\n";
-    std::cout << "Total: " << r.total << "  Met: " << r.met
+    std::cout << "Total: " << r.total << "  Satisfied: " << r.satisfied
               << "  Partial: " << r.partial << "  Gap: " << r.gap << "\n";
 }
 

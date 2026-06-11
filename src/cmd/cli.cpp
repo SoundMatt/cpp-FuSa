@@ -251,6 +251,12 @@ int run(int argc, char* argv[]) {
             if (!f) { print_err("cannot write " + trace_out); std::exit(3); }
             f << out_str;
             if (as_json) print_ok("trace-report.json written to " + trace_out);
+        } else if (as_json) {
+            auto json_path = dir / "trace-report.json";
+            std::ofstream f(json_path);
+            if (!f) { print_err("cannot write trace-report.json"); std::exit(3); }
+            f << out_str;
+            print_ok("trace-report.json written");
         } else {
             std::cout << out_str;
         }

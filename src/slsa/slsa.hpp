@@ -33,7 +33,7 @@ struct Report {
     std::string generated_at;
     std::vector<Requirement> requirements;
     int total{0};
-    int met{0};
+    int satisfied{0};
     int gap{0};
 };
 

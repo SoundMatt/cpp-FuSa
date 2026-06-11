@@ -22,7 +22,7 @@ TEST_CASE("slsa: level_str roundtrip", "[slsa][slsa001]") {
 }
 
 TEST_CASE("slsa: status_str met", "[slsa][slsa001]") {
-    REQUIRE(slsa::status_str(slsa::Status::Met) == "met");
+    REQUIRE(slsa::status_str(slsa::Status::Met) == "satisfied");
 }
 
 TEST_CASE("slsa: status_str gap", "[slsa][slsa001]") {
@@ -47,7 +47,7 @@ TEST_CASE("slsa: assess sets project and level", "[slsa][slsa002]") {
 TEST_CASE("slsa: assess counts are consistent", "[slsa][slsa002]") {
     TempDir tmp;
     auto r = slsa::assess(tmp.path(), "p", slsa::Level::L1);
-    REQUIRE(r.met + r.gap == r.total);
+    REQUIRE(r.satisfied + r.gap == r.total);
 }
 
 TEST_CASE("slsa: higher level has >= requirements than lower", "[slsa][slsa002]") {
@@ -104,4 +104,28 @@ TEST_CASE("slsa: JSON requirements have id field", "[slsa][slsa003]") {
     json j; f >> j;
     for (auto& req : j["requirements"])
         REQUIRE(req.contains("id"));
+}
+
+TEST_CASE("slsa: JSON summary has spec 9.3 keys satisfied and gaps", "[slsa][slsa003]") {
+    TempDir tmp;
+    auto r = slsa::assess(tmp.path(), "p", slsa::Level::L1);
+    slsa::write_json(tmp.path() / slsa::SLSA_REPORT_FILE, r);
+    std::ifstream f(tmp.path() / slsa::SLSA_REPORT_FILE);
+    json j; f >> j;
+    REQUIRE(j["summary"].contains("satisfied"));
+    REQUIRE(j["summary"].contains("gaps"));
+    REQUIRE_FALSE(j["summary"].contains("met"));
+    REQUIRE_FALSE(j["summary"].contains("gap"));
+}
+
+TEST_CASE("slsa: requirement status values are spec-conformant", "[slsa][slsa003]") {
+    TempDir tmp;
+    auto r = slsa::assess(tmp.path(), "p", slsa::Level::L1);
+    slsa::write_json(tmp.path() / slsa::SLSA_REPORT_FILE, r);
+    std::ifstream f(tmp.path() / slsa::SLSA_REPORT_FILE);
+    json j; f >> j;
+    for (auto& req : j["requirements"]) {
+        auto s = req["status"].get<std::string>();
+        REQUIRE((s == "satisfied" || s == "partial" || s == "gap"));
+    }
 }
