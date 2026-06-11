@@ -73,3 +73,39 @@ TEST_CASE("auditpack: pack zip has non-zero size", "[auditpack][audit001]") {
     auditpack::pack(tmp.path(), out);
     REQUIRE(std::filesystem::file_size(out) > 0);
 }
+
+TEST_CASE("auditpack: manifest format is cpp-FuSa Audit Pack v1", "[auditpack][audit002]") {
+    TempDir tmp;
+    auto out = tmp.path() / "audit-pack.zip";
+    auto r = auditpack::pack(tmp.path(), out);
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).format == "cpp-FuSa Audit Pack v1");
+}
+
+TEST_CASE("auditpack: manifest generated_at is non-empty", "[auditpack][audit002]") {
+    TempDir tmp;
+    auto out = tmp.path() / "audit-pack.zip";
+    auto r = auditpack::pack(tmp.path(), out);
+    REQUIRE(is_ok(r));
+    REQUIRE_FALSE(value_of(r).generated_at.empty());
+}
+
+TEST_CASE("auditpack: multiple evidence files all appear in manifest", "[auditpack][audit002]") {
+    TempDir tmp;
+    tmp.write("qualify-report.json",   R"({"passed":8})");
+    tmp.write(".fusa-evidence.json",   R"({"total":42})");
+    tmp.write("sbom.json",             R"({"format":"spdx"})");
+    auto out = tmp.path() / "audit-pack.zip";
+    auto r = auditpack::pack(tmp.path(), out);
+    REQUIRE(is_ok(r));
+    int found = 0;
+    for (auto& e : value_of(r).files)
+        if (e.path.find("qualify-report") != std::string::npos
+         || e.path.find("fusa-evidence")  != std::string::npos
+         || e.path.find("sbom")            != std::string::npos) ++found;
+    REQUIRE(found >= 2);
+}
+
+TEST_CASE("auditpack: AuditPackFile constant is audit-pack.zip", "[auditpack][audit001]") {
+    REQUIRE(std::string(auditpack::AuditPackFile) == "audit-pack.zip");
+}

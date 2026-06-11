@@ -93,7 +93,7 @@ The suite covers the core engine rules (FUSA001–005):
 | FUSA004-neg | FUSA004 | `.fusa-evidence.json` present → no finding |
 
 The LINT001–010 and ANAL003–007 rules are indirectly qualified through the
-Catch2 unit test suite (545 tests). Run `cpfusa verify` to capture those results.
+Catch2 unit test suite (571 tests). Run `cpfusa verify` to capture those results.
 
 ## Tool Confidence Level
 

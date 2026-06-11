@@ -8,7 +8,13 @@
 - `iec62443` and `slsa` JSON summary keys corrected to x-FuSa spec §9.3 canonical form:
   `"met"` → `"satisfied"`, `"gap"` → `"gaps"` (plural); per-objective status string
   updated likewise (`"met"` → `"satisfied"`)
-- 4 new conformance tests (§9.3 summary key and objective status checks for both modules)
+- `qualification.md` test count corrected (549 → 571)
+
+### Tests
+- 22 new tests across `auditpack`, `fmea`, `tara`, `sas`, `sci` modules covering
+  JSON schema validation, field completeness, multi-artifact bundling, and markdown content
+- 4 conformance tests for §9.3 summary keys in `iec62443` and `slsa`
+- Total: **571 tests** (was 549)
 
 ## [0.9.0] — 2026-06-10
 

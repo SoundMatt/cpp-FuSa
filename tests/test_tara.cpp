@@ -98,3 +98,61 @@ TEST_CASE("tara: tara.md contains markdown header", "[tara][tara002]") {
     std::string content((std::istreambuf_iterator<char>(f)), {});
     REQUIRE(content.find('#') != std::string::npos);
 }
+
+TEST_CASE("tara: tara.json has generatedAt field", "[tara][tara002]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.project = "TaraProj";
+    auto r = tara::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    tara::write(tmp.path(), value_of(r));
+    std::ifstream f(tmp.path() / tara::TaraJsonFile);
+    json j; f >> j;
+    REQUIRE(j.contains("generatedAt"));
+    REQUIRE_FALSE(j["generatedAt"].get<std::string>().empty());
+}
+
+TEST_CASE("tara: tara.json scenarios have riskLevel field", "[tara][tara002]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = tara::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    tara::write(tmp.path(), value_of(r));
+    std::ifstream f(tmp.path() / tara::TaraJsonFile);
+    json j; f >> j;
+    for (auto& s : j["scenarios"])
+        REQUIRE(s.contains("riskLevel"));
+}
+
+TEST_CASE("tara: tara.json scenarios have damageScenario field", "[tara][tara002]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = tara::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    tara::write(tmp.path(), value_of(r));
+    std::ifstream f(tmp.path() / tara::TaraJsonFile);
+    json j; f >> j;
+    for (auto& s : j["scenarios"])
+        REQUIRE(s.contains("damageScenario"));
+}
+
+TEST_CASE("tara: generate scenarios all have positive riskValue", "[tara][tara001]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = tara::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    for (auto& s : value_of(r).scenarios)
+        REQUIRE(s.risk_value > 0);
+}
+
+TEST_CASE("tara: tara.md contains project name", "[tara][tara002]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.project = "MyTARA";
+    auto r = tara::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    tara::write(tmp.path(), value_of(r));
+    std::ifstream f(tmp.path() / tara::TaraMdFile);
+    std::string content((std::istreambuf_iterator<char>(f)), {});
+    REQUIRE(content.find("MyTARA") != std::string::npos);
+}

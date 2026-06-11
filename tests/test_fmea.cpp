@@ -106,3 +106,54 @@ TEST_CASE("fmea: fmea.csv has header row", "[fmea][fmea002]") {
     REQUIRE_FALSE(header.empty());
     REQUIRE(header.find(',') != std::string::npos);
 }
+
+TEST_CASE("fmea: JSON entries have component field", "[fmea][fmea002]") {
+    TempDir tmp;
+    tmp.write("src/x.cpp", "class Actuator { public:\n  void move();\n};\n");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    fmea::write(tmp.path(), value_of(r));
+    std::ifstream f(tmp.path() / fmea::FmeaJsonFile);
+    json j; f >> j;
+    for (auto& e : j["entries"])
+        REQUIRE(e.contains("component"));
+}
+
+TEST_CASE("fmea: JSON entries have rpn field", "[fmea][fmea002]") {
+    TempDir tmp;
+    tmp.write("src/x.cpp", "class Sensor { public:\n  int read();\n};\n");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    fmea::write(tmp.path(), value_of(r));
+    std::ifstream f(tmp.path() / fmea::FmeaJsonFile);
+    json j; f >> j;
+    for (auto& e : j["entries"])
+        REQUIRE(e.contains("rpn"));
+}
+
+TEST_CASE("fmea: generate empty dir produces empty entries", "[fmea][fmea001]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).entries.empty());
+}
+
+TEST_CASE("fmea: multiple classes in source all generate entries", "[fmea][fmea001]") {
+    TempDir tmp;
+    tmp.write("src/multi.cpp",
+        "class Alpha { public:\n  void run();\n};\n"
+        "class Beta  { public:\n  void run();\n};\n");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    int alpha = 0, beta = 0;
+    for (auto& e : value_of(r).entries) {
+        if (e.component.find("Alpha") != std::string::npos) ++alpha;
+        if (e.component.find("Beta")  != std::string::npos) ++beta;
+    }
+    REQUIRE(alpha > 0);
+    REQUIRE(beta  > 0);
+}

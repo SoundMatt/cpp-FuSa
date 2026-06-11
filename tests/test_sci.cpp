@@ -86,3 +86,42 @@ TEST_CASE("sci: JSON items have present field", "[sci][sci002]") {
     for (auto& item : j["items"])
         REQUIRE(item.contains("present"));
 }
+
+TEST_CASE("sci: JSON has generatedAt field", "[sci][sci002]") {
+    TempDir tmp;
+    auto s = sci::build(tmp.path(), "p", "1.0");
+    sci::write_json(tmp.path() / sci::SCI_FILE, s);
+    std::ifstream f(tmp.path() / sci::SCI_FILE);
+    json j; f >> j;
+    REQUIRE(j.contains("generatedAt"));
+    REQUIRE_FALSE(j["generatedAt"].get<std::string>().empty());
+}
+
+TEST_CASE("sci: JSON items have artifact field", "[sci][sci002]") {
+    TempDir tmp;
+    auto s = sci::build(tmp.path(), "p", "1.0");
+    sci::write_json(tmp.path() / sci::SCI_FILE, s);
+    std::ifstream f(tmp.path() / sci::SCI_FILE);
+    json j; f >> j;
+    for (auto& item : j["items"])
+        REQUIRE(item.contains("artifact"));
+}
+
+TEST_CASE("sci: JSON items have sha256 field", "[sci][sci002]") {
+    TempDir tmp;
+    auto s = sci::build(tmp.path(), "p", "1.0");
+    sci::write_json(tmp.path() / sci::SCI_FILE, s);
+    std::ifstream f(tmp.path() / sci::SCI_FILE);
+    json j; f >> j;
+    for (auto& item : j["items"])
+        REQUIRE(item.contains("sha256"));
+}
+
+TEST_CASE("sci: JSON has version field", "[sci][sci001]") {
+    TempDir tmp;
+    auto s = sci::build(tmp.path(), "p", "3.0");
+    sci::write_json(tmp.path() / sci::SCI_FILE, s);
+    std::ifstream f(tmp.path() / sci::SCI_FILE);
+    json j; f >> j;
+    REQUIRE(j["version"].get<std::string>() == "3.0");
+}
