@@ -69,20 +69,25 @@ TEST_CASE("safe_state_flag: set and clear", "[runtime][safe_state]") {
 TEST_CASE("heartbeat: on_missed fires when beat() not called", "[runtime][heartbeat]") {
     std::atomic<int> missed{0};
     {
-        Heartbeat hb(50ms, [] {}, [&] { missed.fetch_add(1); });
-        std::this_thread::sleep_for(130ms);
+        // 100ms period, 600ms sleep → nominal 6 fires, all misses.
+        // Conservative threshold (>= 3) tolerates heavy CI scheduler jitter.
+        Heartbeat hb(100ms, [] {}, [&] { missed.fetch_add(1); });
+        std::this_thread::sleep_for(600ms);
     }
-    REQUIRE(missed.load() >= 1);
+    REQUIRE(missed.load() >= 3);
 }
 
 TEST_CASE("heartbeat: on_alive fires when beat() is called", "[runtime][heartbeat]") {
     std::atomic<int> alive_count{0};
     {
-        Heartbeat hb(50ms, [&] { alive_count.fetch_add(1); }, [] {});
-        for (int i = 0; i < 4; ++i) {
+        // 100ms period; beat every 20ms for 30 iters (nominal 600ms).
+        // Each 100ms window always sees multiple beats → on_alive fires.
+        // Conservative threshold (>= 3) tolerates heavy CI scheduler jitter.
+        Heartbeat hb(100ms, [&] { alive_count.fetch_add(1); }, [] {});
+        for (int i = 0; i < 30; ++i) {
             hb.beat();
-            std::this_thread::sleep_for(60ms);
+            std::this_thread::sleep_for(20ms);
         }
     }
-    REQUIRE(alive_count.load() >= 2);
+    REQUIRE(alive_count.load() >= 3);
 }
