@@ -49,5 +49,15 @@ COPY --from=builder /build/build/cpfusa /usr/local/bin/cpfusa
 # Default working directory is /project; mount your C++ project here.
 WORKDIR /project
 
+LABEL org.opencontainers.image.title="cpp-FuSa" \
+      org.opencontainers.image.description="C++ functional safety toolkit" \
+      org.opencontainers.image.source="https://github.com/SoundMatt/cpp-FuSa" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="0.9.1" \
+      io.x-fusa.tool="cpp-FuSa" \
+      io.x-fusa.language="cpp" \
+      io.x-fusa.binary="cpfusa" \
+      io.x-fusa.spec-version="1.9"
+
 ENTRYPOINT ["cpfusa"]
 CMD ["--help"]
