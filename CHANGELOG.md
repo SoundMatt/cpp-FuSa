@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.1] — 2026-06-12
+
+### Fixed
+- `trace --format json` now emits spec §5 flat `tags[]` array with `{requirementId, file, line, kind}` per annotation instead of split `implementedBy[]`/`testedBy[]` arrays.
+- `trace --format json` now writes to stdout by default (§2.2); `--output` writes to a named file.
+- `trace --format json` summary block now includes `secTestedRequirements` (count of cybersecurity requirements with at least one `//fusa:test` annotation, §5).
+- `cpfusa slsa` JSON output now includes §3.1 common header: `schemaVersion`, `kind: "gap-report"`, `standard: "slsa"`, `tool`, `toolVersion`, `language`.
+- `cpfusa iec62443` JSON output now includes §3.1 common header: `schemaVersion`, `kind: "gap-report"`, `standard: "iec62443"`, `tool`, `toolVersion`, `language`.
+
+### Requirements
+- 3 new requirements: REQ-TRACE010 (tags[] schema), REQ-TRACE011 (trace stdout default), REQ-TRACE012 (secTestedRequirements) — total: **189 requirements**
+
+### Tests
+- 2 new tests for `secTestedRequirements` counting and summary field presence
+- Total: **630 tests** (was 628)
+
 ## [0.12.0] — 2026-06-12
 
 ### Added

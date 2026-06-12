@@ -1220,6 +1220,27 @@
       "severity": "info"
     },
     {
+      "id": "REQ-TRACE010",
+      "title": "Trace JSON tags[] flat array (spec §5)",
+      "description": "render_json() shall emit a flat tags[] array per requirement with requirementId, file, line, and kind fields (kind = 'req' or 'test'). The legacy implementedBy/testedBy split is non-conformant with x-FuSa spec §5.",
+      "standard_ref": "x-FuSa spec §5",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-TRACE011",
+      "title": "Trace JSON writes to stdout by default (spec §2.2)",
+      "description": "cpfusa trace --format json shall write to stdout when --output is not given. Writing to a file shall require an explicit --output path.",
+      "standard_ref": "x-FuSa spec §2.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-TRACE012",
+      "title": "secTestedRequirements in trace JSON summary (spec §5)",
+      "description": "The trace JSON summary block shall include secTestedRequirements: the count of requirements with severity 'cybersecurity' that have at least one //fusa:test annotation.",
+      "standard_ref": "x-FuSa spec §5",
+      "severity": "safety"
+    },
+    {
       "id": "REQ-RELEASE009",
       "title": "SPDX 2.2 and 2.3 SBOM formats",
       "description": "write_sbom() shall support SPDX-2.2 and SPDX-2.3 formats in addition to the native cpp-FuSa SBOM v1 format.",

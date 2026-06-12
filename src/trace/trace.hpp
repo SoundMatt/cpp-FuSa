@@ -32,6 +32,7 @@ struct TraceResult {
     int total{0};
     int annotated{0};
     int tested{0};
+    int sec_tested{0};  // cybersecurity requirements with at least one //fusa:test annotation
     double annotation_coverage{0.0};
     double test_coverage{0.0};
 };

@@ -18,7 +18,7 @@ constexpr std::string_view ReqsFile = ".fusa-reqs.json";
 
 } // namespace
 
-//fusa:req REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007
+//fusa:req REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007 REQ-TRACE010 REQ-TRACE011 REQ-TRACE012
 Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
     auto path = dir / ReqsFile;
     if (!fs::exists(path)) {
@@ -107,7 +107,10 @@ Result<TraceResult> run(const fs::path& dir,
             else              has_test = true;
         }
         if (has_impl) ++result.annotated;
-        if (has_test) ++result.tested;
+        if (has_test) {
+            ++result.tested;
+            if (req.severity == "cybersecurity") ++result.sec_tested;
+        }
     }
 
     if (result.total > 0) {
@@ -233,21 +236,26 @@ std::string render_json(const TraceResult& result,
         entry["standardRef"] = req.standard_ref;
         if (!req.asil.empty()) entry["asil"] = req.asil;
 
-        json impls = json::array();
-        json tests = json::array();
+        // §5: flat tags[] array with requirementId/file/line/kind fields.
+        json tags = json::array();
         auto it = result.by_req.find(req.id);
         if (it != result.by_req.end()) {
             for (const auto& ann : it->second) {
-                json loc = {{"file", rel(ann.file)}, {"line", ann.line}};
-                if (ann.is_test) tests.push_back(loc);
-                else             impls.push_back(loc);
+                tags.push_back({
+                    {"requirementId", req.id},
+                    {"file",          rel(ann.file)},
+                    {"line",          ann.line},
+                    {"kind",          ann.is_test ? "test" : "req"}
+                });
             }
         }
-        entry["implementedBy"] = impls;
-        entry["testedBy"]      = tests;
+        entry["tags"] = tags;
 
-        bool has_impl = !impls.empty();
-        bool has_test = !tests.empty();
+        bool has_impl = false, has_test = false;
+        for (const auto& tag : tags) {
+            if (tag["kind"] == "req")  has_impl = true;
+            if (tag["kind"] == "test") has_test = true;
+        }
         entry["status"] = (has_impl && has_test) ? "covered"
                         : (has_impl || has_test)  ? "partial"
                                                    : "gap";
@@ -255,11 +263,12 @@ std::string render_json(const TraceResult& result,
     }
 
     j["summary"] = {
-        {"total",              result.total},
-        {"annotated",         result.annotated},
-        {"tested",            result.tested},
-        {"annotationCoverage", result.annotation_coverage},
-        {"testCoverage",       result.test_coverage}
+        {"total",                    result.total},
+        {"annotated",               result.annotated},
+        {"tested",                  result.tested},
+        {"secTestedRequirements",   result.sec_tested},
+        {"annotationCoverage",      result.annotation_coverage},
+        {"testCoverage",            result.test_coverage}
     };
     return j.dump(2);
 }
