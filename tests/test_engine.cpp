@@ -1,4 +1,4 @@
-//fusa:test REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005 REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004 REQ-COUP003 REQ-HARA005 REQ-ISO26262002 REQ-ISO26262003
+//fusa:test REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005 REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004 REQ-COUP003 REQ-HARA005 REQ-ISO26262002 REQ-ISO26262003 REQ-HARA002 REQ-HARA003 REQ-HARA004 REQ-VERIFY006
 #include <catch2/catch_all.hpp>
 #include "engine/engine.hpp"
 #include "engine/rules.hpp"
@@ -114,9 +114,9 @@ TEST_CASE("engine: FUSA005 passes when CHANGELOG.md exists with content", "[engi
 
 // ─── default engine ────────────────────────────────────────────────────────────
 
-TEST_CASE("engine: default engine has nine built-in rules", "[engine]") {
+TEST_CASE("engine: default engine has thirteen built-in rules", "[engine]") {
     auto eng = engine::make_default_engine();
-    REQUIRE(eng.rules().size() == 9);
+    REQUIRE(eng.rules().size() == 13);
 }
 
 TEST_CASE("engine: default engine fires FUSA001 and FUSA004 on empty dir", "[engine]") {
@@ -267,4 +267,80 @@ TEST_CASE("engine: ISO26262003 does not fire when qualify-report.json absent", "
     TempDir tmp;
     config::ProjectConfig cfg;
     REQUIRE(engine::make_iso26262003().check(tmp.path(), cfg).empty());
+}
+
+// ─── HARA002 — hazard missing S/E/C ──────────────────────────────────────────
+
+TEST_CASE("engine: HARA002 fires when hazard has no risk severity", "[engine][hara002]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",
+        R"({"hazards":[{"id":"H-001","risk":{"exposure":"E3","controllability":"C2"}}],"safetyGoals":[]})");
+    config::ProjectConfig cfg;
+    auto findings = engine::make_hara002().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "HARA002"));
+}
+
+TEST_CASE("engine: HARA002 passes when hazard has all S/E/C fields", "[engine][hara002]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",
+        R"({"hazards":[{"id":"H-001","risk":{"severity":"S2","exposure":"E3","controllability":"C2","asil":"ASIL-B"}}],"safetyGoals":[]})");
+    config::ProjectConfig cfg;
+    REQUIRE(engine::make_hara002().check(tmp.path(), cfg).empty());
+}
+
+// ─── HARA003 — hazard not linked to a safety goal ────────────────────────────
+
+TEST_CASE("engine: HARA003 fires when hazard has empty safetyGoals", "[engine][hara003]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",
+        R"({"hazards":[{"id":"H-001","safetyGoals":[],"risk":{"severity":"S2","exposure":"E3","controllability":"C2"}}],"safetyGoals":[]})");
+    config::ProjectConfig cfg;
+    auto findings = engine::make_hara003().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "HARA003"));
+}
+
+TEST_CASE("engine: HARA003 passes when hazard references a safety goal", "[engine][hara003]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",
+        R"({"hazards":[{"id":"H-001","safetyGoals":["SG-001"],"risk":{"severity":"S2","exposure":"E3","controllability":"C2"}}],"safetyGoals":[{"id":"SG-001","asil":"ASIL-B"}]})");
+    config::ProjectConfig cfg;
+    REQUIRE(engine::make_hara003().check(tmp.path(), cfg).empty());
+}
+
+// ─── HARA004 — safety goal missing ASIL ─────────────────────────────────────
+
+TEST_CASE("engine: HARA004 fires when safety goal has no asil field", "[engine][hara004]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",
+        R"({"hazards":[],"safetyGoals":[{"id":"SG-001","description":"No loss of control"}]})");
+    config::ProjectConfig cfg;
+    auto findings = engine::make_hara004().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "HARA004"));
+}
+
+TEST_CASE("engine: HARA004 passes when safety goal has asil assigned", "[engine][hara004]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",
+        R"({"hazards":[],"safetyGoals":[{"id":"SG-001","asil":"ASIL-C","description":"No loss of control"}]})");
+    config::ProjectConfig cfg;
+    REQUIRE(engine::make_hara004().check(tmp.path(), cfg).empty());
+}
+
+// ─── VERIFY002 — test evidence reports failures ───────────────────────────────
+
+TEST_CASE("engine: VERIFY002 fires when evidence has failed tests", "[engine][verify002]") {
+    TempDir tmp;
+    tmp.write(".fusa-evidence.json",
+        R"({"summary":{"total":10,"passed":8,"failed":2},"results":[]})");
+    config::ProjectConfig cfg;
+    auto findings = engine::make_verify002().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "VERIFY002"));
+}
+
+TEST_CASE("engine: VERIFY002 passes when all tests passed", "[engine][verify002]") {
+    TempDir tmp;
+    tmp.write(".fusa-evidence.json",
+        R"({"summary":{"total":10,"passed":10,"failed":0},"results":[]})");
+    config::ProjectConfig cfg;
+    REQUIRE(engine::make_verify002().check(tmp.path(), cfg).empty());
 }

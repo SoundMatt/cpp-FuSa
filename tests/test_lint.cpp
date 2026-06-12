@@ -1,4 +1,4 @@
-//fusa:test REQ-LINT001 REQ-LINT002 REQ-LINT003 REQ-LINT004 REQ-LINT005 REQ-LINT006 REQ-LINT007 REQ-LINT008 REQ-LINT009 REQ-LINT010 REQ-LINT011 REQ-LINT012 REQ-LINT013 REQ-LINT014 REQ-LINT015 REQ-LINT016 REQ-LINT017 REQ-LINT018 REQ-LINT019 REQ-LINT020 REQ-LINT021 REQ-LINT022 REQ-LINT023 REQ-LINT024 REQ-LINT025 REQ-LINT026 REQ-LINT027 REQ-LINT028 REQ-LINT029 REQ-LINT030
+//fusa:test REQ-LINT001 REQ-LINT002 REQ-LINT003 REQ-LINT004 REQ-LINT005 REQ-LINT006 REQ-LINT007 REQ-LINT008 REQ-LINT009 REQ-LINT010 REQ-LINT011 REQ-LINT012 REQ-LINT013 REQ-LINT014 REQ-LINT015 REQ-LINT016 REQ-LINT017 REQ-LINT018 REQ-LINT019 REQ-LINT020 REQ-LINT021 REQ-LINT022 REQ-LINT023 REQ-LINT024 REQ-LINT025 REQ-LINT026 REQ-LINT027 REQ-LINT028 REQ-LINT029 REQ-LINT030 REQ-LINT031
 #include <catch2/catch_all.hpp>
 #include "lint/lint.hpp"
 #include "testutil/testutil.hpp"
@@ -316,4 +316,30 @@ TEST_CASE("lint: LINT030 passes with pragma once", "[lint][lint030]") {
     TempDir tmp;
     tmp.write("include/guarded.hpp", "#pragma once\nvoid foo();\n");
     REQUIRE(lint::check_include_guard(tmp.path()).empty());
+}
+
+// ─── LINT031 — float/double literal in == or != ───────────────────────────────
+
+TEST_CASE("lint: LINT031 detects float literal in == comparison", "[lint][lint031]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f() { float x = 3.14f; if (x == 3.14f) {} }\n");
+    REQUIRE(has_finding(lint::check_float_equality(tmp.path()), "LINT031"));
+}
+
+TEST_CASE("lint: LINT031 detects double literal in != comparison", "[lint][lint031]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void g() { double y = 0.0; if (y != 0.0) {} }\n");
+    REQUIRE(has_finding(lint::check_float_equality(tmp.path()), "LINT031"));
+}
+
+TEST_CASE("lint: LINT031 passes on integer == comparison", "[lint][lint031]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void h() { int a = 5; if (a == 5) {} }\n");
+    REQUIRE(lint::check_float_equality(tmp.path()).empty());
+}
+
+TEST_CASE("lint: LINT031 passes with fusa:suppress LINT031", "[lint][lint031]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void k() { float z = 0.0f; if (z == 0.0f) {} } // fusa:suppress LINT031\n");
+    REQUIRE(lint::check_float_equality(tmp.path()).empty());
 }

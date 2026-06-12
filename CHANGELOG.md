@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.12.0] — 2026-06-12
+
+### Added
+- LINT031 — Float/double literal in `==` or `!=` comparison (WARNING, MISRA C++:2023 Rule 6-2-2). Flags direct equality checks on floating-point literals; suppressed with `// fusa:suppress LINT031`.
+- HARA002 engine rule — fires WARNING when a hazard in `.fusa-hara.json` is missing `severity`, `exposure`, or `controllability` in its `risk` object (ISO 26262-3 §7).
+- HARA003 engine rule — fires WARNING when a hazard has an empty `safetyGoals` list (not linked to any safety goal, ISO 26262-3 §8).
+- HARA004 engine rule — fires WARNING when a safety goal in `.fusa-hara.json` has no `asil` field (ISO 26262-3 §8).
+- VERIFY002 engine rule — fires ERROR when `.fusa-evidence.json` reports `summary.failed > 0` (tests not green before release).
+- `cpfusa fmea --cyber` — cross-references `cyber-report.json` and appends matching CYBER rule IDs to FMEA entry actions for files with cybersecurity findings (ISO 21434 §9).
+- 6 new requirements: REQ-LINT031, REQ-HARA002, REQ-HARA003, REQ-HARA004, REQ-VERIFY006, REQ-FMEA007 (total: **186 requirements**)
+
+### Engine
+- Default engine now has 13 built-in rules (was 9).
+
+### Tests
+- 14 new tests covering all 6 new capabilities
+- Total: **628 tests** (was 614)
+
 ## [0.11.0] — 2026-06-12
 
 ### Added

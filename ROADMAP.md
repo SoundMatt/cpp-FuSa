@@ -186,7 +186,7 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 
 ---
 
-## v0.12 — rust-FuSa Parity ✅
+## v0.11 — rust-FuSa Parity ✅
 
 **Goal:** Close all static analysis gaps identified vs rust-FuSa v0.2.0.
 
@@ -196,6 +196,21 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 - ✅ ANAL011 — Narrowing integer cast to 8-/16-bit types (WARNING, MISRA C++:2023 Rule 5-0-8)
 - ✅ ANAL012 — More than 3 explicit return points per function (INFO, MISRA C++:2023 Rule 6-6-5)
 - ✅ **180 requirements, 614 tests**
+
+---
+
+## v0.12 — Cross-Tool Parity Gaps ✅
+
+**Goal:** Close all remaining gaps identified across the superset of go-FuSa, rust-FuSa, py-FuSa, and java-FuSa.
+
+- ✅ LINT031 — Float/double literal in `==`/`!=` comparison (WARNING, MISRA C++:2023 Rule 6-2-2); suppressed with `// fusa:suppress LINT031`
+- ✅ HARA002 engine rule — hazard missing `severity`, `exposure`, or `controllability` (ISO 26262-3 §7)
+- ✅ HARA003 engine rule — hazard with empty `safetyGoals` list (not linked to a safety goal, ISO 26262-3 §8)
+- ✅ HARA004 engine rule — safety goal with no `asil` field (ISO 26262-3 §8)
+- ✅ VERIFY002 engine rule — `.fusa-evidence.json` reports `summary.failed > 0` (ERROR)
+- ✅ `cpfusa fmea --cyber` — enrich dFMEA entries with CYBER rule IDs from `cyber-report.json` (ISO 21434 §9)
+- ✅ Default engine now has 13 built-in rules (was 9)
+- ✅ **186 requirements, 628 tests**
 
 ---
 

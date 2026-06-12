@@ -43,6 +43,10 @@ Engine make_default_engine() {
     e.register_rule(make_hara005());
     e.register_rule(make_iso26262002());
     e.register_rule(make_iso26262003());
+    e.register_rule(make_hara002());
+    e.register_rule(make_hara003());
+    e.register_rule(make_hara004());
+    e.register_rule(make_verify002());
     return e;
 }
 

@@ -780,6 +780,38 @@ std::vector<Finding> check_include_guard(const fs::path& dir) {
     return out;
 }
 
+// LINT031 – float/double literal in == or != comparison (MISRA C++:2023 Rule 6-2-2)
+//fusa:req REQ-LINT031
+std::vector<Finding> check_float_equality(const fs::path& dir) {
+    std::vector<Finding> out;
+    // Matches == or != adjacent to a float literal (decimal point required).
+    static const std::regex float_eq_re(
+        R"X([!=]=\s*[+\-]?(?:\d+\.\d*|\.\d+)(?:[eE][+\-]?\d+)?[fFlL]?\b|\b[+\-]?(?:\d+\.\d*|\.\d+)(?:[eE][+\-]?\d+)?[fFlL]?\s*[!=]=)X"
+    );
+    static const std::regex ext_re(R"(\.(cpp|cxx|cc|hpp|h)$)");
+    if (!fs::exists(dir)) return out;
+    for (const auto& entry : fs::recursive_directory_iterator(
+             dir, fs::directory_options::skip_permission_denied)) {
+        if (!entry.is_regular_file()) continue;
+        if (!std::regex_search(entry.path().string(), ext_re)) continue;
+        std::ifstream f(entry.path());
+        std::string line;
+        int lineno = 0;
+        while (std::getline(f, line)) {
+            ++lineno;
+            if (line.find("// fusa:suppress LINT031") != std::string::npos) continue;
+            auto code = line.substr(0, line.find("//"));
+            if (std::regex_search(code, float_eq_re)) {
+                out.push_back({"LINT031", Severity::WARNING,
+                    "Float/double literal compared with == or != (MISRA C++:2023 Rule 6-2-2) — use epsilon comparison",
+                    fs::relative(entry.path(), dir).generic_string(), lineno,
+                    "Replace 'x == 3.14' with 'std::abs(x - 3.14) < eps'", "lint"});
+            }
+        }
+    }
+    return out;
+}
+
 std::vector<Finding> run(const fs::path& dir,
                          const config::ProjectConfig& cfg) {
     std::vector<Finding> all;
@@ -817,6 +849,7 @@ std::vector<Finding> run(const fs::path& dir,
     append(check_asm(dir));
     append(check_magic_numbers(dir));
     append(check_include_guard(dir));
+    append(check_float_equality(dir));
 
     // Remove findings from paths that match any exclude pattern.
     if (!cfg.exclude_patterns.empty()) {

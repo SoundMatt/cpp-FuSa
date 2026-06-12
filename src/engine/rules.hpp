@@ -24,5 +24,13 @@ Rule make_hara005();
 Rule make_iso26262002();
 // ISO26262003 — qualify-report.json has failures
 Rule make_iso26262003();
+// HARA002 — hazard missing S/E/C risk parameters
+Rule make_hara002();
+// HARA003 — hazard not linked to a safety goal
+Rule make_hara003();
+// HARA004 — safety goal missing ASIL assignment
+Rule make_hara004();
+// VERIFY002 — test evidence reports failures
+Rule make_verify002();
 
 } // namespace cpfusa::engine

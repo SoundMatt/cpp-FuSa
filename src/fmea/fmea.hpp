@@ -33,10 +33,13 @@ struct FMEAReport {
 };
 
 // generate scans source files for class/function declarations and creates FMEA entries.
+// When enrich_cyber is true, cross-references cyber-report.json and appends CYBER
+// finding rule IDs to each entry whose source file has cybersecurity findings.
 //
-//fusa:req REQ-FMEA001
+//fusa:req REQ-FMEA001 REQ-FMEA007
 Result<FMEAReport> generate(const std::filesystem::path& dir,
-                            const config::ProjectConfig& cfg);
+                            const config::ProjectConfig& cfg,
+                            bool enrich_cyber = false);
 
 // write serialises the FMEA to fmea.json and fmea.csv in dir.
 //

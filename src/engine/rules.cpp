@@ -238,4 +238,120 @@ Rule make_iso26262003() {
         }};
 }
 
+// HARA002 — hazard missing S/E/C risk parameters
+//fusa:req REQ-HARA002
+Rule make_hara002() {
+    return Rule{
+        RuleInfo{"HARA002", "Hazard missing S/E/C risk parameters",
+                 "A hazard in .fusa-hara.json has no severity, exposure, or controllability.",
+                 Severity::WARNING},
+        [](const fs::path& dir, const config::ProjectConfig&) -> std::vector<Finding> {
+            auto hara_path = dir / ".fusa-hara.json";
+            if (!fs::exists(hara_path)) return {};
+            try {
+                std::ifstream f(hara_path);
+                json j = json::parse(f);
+                for (const auto& hz : j.value("hazards", json::array())) {
+                    const json& risk = hz.value("risk", json{});
+                    std::string sev = risk.value("severity", "");
+                    std::string exp = risk.value("exposure", "");
+                    std::string con = risk.value("controllability", "");
+                    if (sev.empty() || exp.empty() || con.empty()) {
+                        return {Finding{"HARA002", Severity::WARNING,
+                                        "Hazard '" + hz.value("id", "?") +
+                                        "' is missing severity, exposure, or controllability (ISO 26262-3 §7)",
+                                        ".fusa-hara.json", 0,
+                                        "Add risk.severity, risk.exposure, risk.controllability to the hazard",
+                                        "safety"}};
+                    }
+                }
+            } catch (...) {}
+            return {};
+        }};
+}
+
+// HARA003 — hazard not linked to a safety goal
+//fusa:req REQ-HARA003
+Rule make_hara003() {
+    return Rule{
+        RuleInfo{"HARA003", "Hazard not linked to a safety goal",
+                 "A hazard in .fusa-hara.json has an empty safetyGoals list.",
+                 Severity::WARNING},
+        [](const fs::path& dir, const config::ProjectConfig&) -> std::vector<Finding> {
+            auto hara_path = dir / ".fusa-hara.json";
+            if (!fs::exists(hara_path)) return {};
+            try {
+                std::ifstream f(hara_path);
+                json j = json::parse(f);
+                for (const auto& hz : j.value("hazards", json::array())) {
+                    auto goals = hz.value("safetyGoals", json::array());
+                    if (goals.empty()) {
+                        return {Finding{"HARA003", Severity::WARNING,
+                                        "Hazard '" + hz.value("id", "?") +
+                                        "' has no linked safety goals (ISO 26262-3 §8)",
+                                        ".fusa-hara.json", 0,
+                                        "Add safetyGoals references to the hazard",
+                                        "safety"}};
+                    }
+                }
+            } catch (...) {}
+            return {};
+        }};
+}
+
+// HARA004 — safety goal missing ASIL assignment
+//fusa:req REQ-HARA004
+Rule make_hara004() {
+    return Rule{
+        RuleInfo{"HARA004", "Safety goal has no ASIL assigned",
+                 "A safety goal in .fusa-hara.json has no asil field.",
+                 Severity::WARNING},
+        [](const fs::path& dir, const config::ProjectConfig&) -> std::vector<Finding> {
+            auto hara_path = dir / ".fusa-hara.json";
+            if (!fs::exists(hara_path)) return {};
+            try {
+                std::ifstream f(hara_path);
+                json j = json::parse(f);
+                for (const auto& sg : j.value("safetyGoals", json::array())) {
+                    std::string asil = sg.value("asil", "");
+                    if (asil.empty()) {
+                        return {Finding{"HARA004", Severity::WARNING,
+                                        "Safety goal '" + sg.value("id", "?") +
+                                        "' has no ASIL assigned (ISO 26262-3 §8)",
+                                        ".fusa-hara.json", 0,
+                                        "Add an asil field (e.g. \"asil\": \"ASIL-B\") to the safety goal",
+                                        "safety"}};
+                    }
+                }
+            } catch (...) {}
+            return {};
+        }};
+}
+
+// VERIFY002 — test evidence reports failures
+//fusa:req REQ-VERIFY006
+Rule make_verify002() {
+    return Rule{
+        RuleInfo{"VERIFY002", "Test evidence reports failures",
+                 ".fusa-evidence.json summary.failed > 0 — tests are not green.",
+                 Severity::ERROR},
+        [](const fs::path& dir, const config::ProjectConfig&) -> std::vector<Finding> {
+            auto path = dir / ".fusa-evidence.json";
+            if (!fs::exists(path)) return {};
+            try {
+                std::ifstream f(path);
+                json j = json::parse(f);
+                int failed = j.value("summary", json{}).value("failed", 0);
+                if (failed > 0) {
+                    return {Finding{"VERIFY002", Severity::ERROR,
+                                    std::to_string(failed) + " test(s) failed in .fusa-evidence.json — all tests must pass before release",
+                                    ".fusa-evidence.json", 0,
+                                    "Run 'ctest --output-on-failure -j1' and fix failing tests",
+                                    "verification"}};
+                }
+            } catch (...) {}
+            return {};
+        }};
+}
+
 } // namespace cpfusa::engine

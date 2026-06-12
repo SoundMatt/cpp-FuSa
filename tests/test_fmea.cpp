@@ -1,4 +1,4 @@
-//fusa:test REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006
+//fusa:test REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006 REQ-FMEA007
 #include <catch2/catch_all.hpp>
 #include "fmea/fmea.hpp"
 #include "testutil/testutil.hpp"
@@ -156,4 +156,30 @@ TEST_CASE("fmea: multiple classes in source all generate entries", "[fmea][fmea0
     }
     REQUIRE(alpha > 0);
     REQUIRE(beta  > 0);
+}
+
+// ─── fmea --cyber enrichment ─────────────────────────────────────────────────
+
+TEST_CASE("fmea: cyber enrichment appends CYBER rule IDs to matching entries", "[fmea][fmea007]") {
+    TempDir tmp;
+    tmp.write("src/widget.cpp", "class Widget { public:\n  void draw();\n};\n");
+    tmp.write("cyber-report.json",
+        R"({"findings":[{"ruleId":"CYBER001","file":"src/widget.cpp","message":"test"}],"totalFindings":1})");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg, true);
+    REQUIRE(is_ok(r));
+    bool enriched = false;
+    for (const auto& e : value_of(r).entries)
+        if (e.action.find("CYBER001") != std::string::npos) enriched = true;
+    REQUIRE(enriched);
+}
+
+TEST_CASE("fmea: cyber enrichment is a no-op when cyber-report.json absent", "[fmea][fmea007]") {
+    TempDir tmp;
+    tmp.write("src/widget.cpp", "class Widget { public:\n  void draw();\n};\n");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg, true);
+    REQUIRE(is_ok(r));
+    for (const auto& e : value_of(r).entries)
+        REQUIRE(e.action.find("CYBER") == std::string::npos);
 }
