@@ -227,6 +227,7 @@ std::string render_json(const TraceResult& result,
     j["generatedAt"]   = ts.str();
     j["project"]       = cfg.project;
 
+    // §5: requirements[] — metadata only; no nested tags.
     j["requirements"] = json::array();
     for (const auto& req : result.requirements) {
         json entry;
@@ -235,40 +236,39 @@ std::string render_json(const TraceResult& result,
         entry["severity"]    = req.severity;
         entry["standardRef"] = req.standard_ref;
         if (!req.asil.empty()) entry["asil"] = req.asil;
-
-        // §5: flat tags[] array with requirementId/file/line/kind fields.
-        json tags = json::array();
-        auto it = result.by_req.find(req.id);
-        if (it != result.by_req.end()) {
-            for (const auto& ann : it->second) {
-                tags.push_back({
-                    {"requirementId", req.id},
-                    {"file",          rel(ann.file)},
-                    {"line",          ann.line},
-                    {"kind",          ann.is_test ? "test" : "req"}
-                });
-            }
-        }
-        entry["tags"] = tags;
-
-        bool has_impl = false, has_test = false;
-        for (const auto& tag : tags) {
-            if (tag["kind"] == "req")  has_impl = true;
-            if (tag["kind"] == "test") has_test = true;
-        }
-        entry["status"] = (has_impl && has_test) ? "covered"
-                        : (has_impl || has_test)  ? "partial"
-                                                   : "gap";
         j["requirements"].push_back(entry);
     }
 
-    j["summary"] = {
-        {"total",                    result.total},
-        {"annotated",               result.annotated},
-        {"tested",                  result.tested},
-        {"secTestedRequirements",   result.sec_tested},
-        {"annotationCoverage",      result.annotation_coverage},
-        {"testCoverage",            result.test_coverage}
+    // §5: flat top-level tags[] with kind ∈ {impl, test, sec-test}.
+    // A sec-test tag is a test annotation on a cybersecurity requirement;
+    // it counts toward both testedRequirements and secTestedRequirements.
+    std::map<std::string, std::string> req_severity_map;
+    for (const auto& req : result.requirements)
+        req_severity_map[req.id] = req.severity;
+
+    json tags_arr = json::array();
+    for (const auto& req : result.requirements) {
+        auto it = result.by_req.find(req.id);
+        if (it == result.by_req.end()) continue;
+        const bool is_cyber = (req.severity == "cybersecurity");
+        for (const auto& ann : it->second) {
+            std::string kind = ann.is_test ? (is_cyber ? "sec-test" : "test") : "impl";
+            tags_arr.push_back({
+                {"requirementId", req.id},
+                {"file",          rel(ann.file)},
+                {"line",          ann.line},
+                {"kind",          kind}
+            });
+        }
+    }
+    j["tags"] = tags_arr;
+
+    // §5: coverage block — spec-canonical field names.
+    j["coverage"] = {
+        {"totalRequirements",    result.total},
+        {"tracedRequirements",   result.annotated},
+        {"testedRequirements",   result.tested},
+        {"secTestedRequirements", result.sec_tested}
     };
     return j.dump(2);
 }

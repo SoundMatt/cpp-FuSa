@@ -1221,23 +1221,23 @@
     },
     {
       "id": "REQ-TRACE010",
-      "title": "Trace JSON tags[] flat array (spec §5)",
-      "description": "render_json() shall emit a flat tags[] array per requirement with requirementId, file, line, and kind fields (kind = 'req' or 'test'). The legacy implementedBy/testedBy split is non-conformant with x-FuSa spec §5.",
-      "standard_ref": "x-FuSa spec §5",
+      "title": "Trace JSON tags[] flat array (spec \u00a75)",
+      "description": "render_json() shall emit a flat tags[] array per requirement with requirementId, file, line, and kind fields (kind = 'req' or 'test'). The legacy implementedBy/testedBy split is non-conformant with x-FuSa spec \u00a75.",
+      "standard_ref": "x-FuSa spec \u00a75",
       "severity": "safety"
     },
     {
       "id": "REQ-TRACE011",
-      "title": "Trace JSON writes to stdout by default (spec §2.2)",
+      "title": "Trace JSON writes to stdout by default (spec \u00a72.2)",
       "description": "cpfusa trace --format json shall write to stdout when --output is not given. Writing to a file shall require an explicit --output path.",
-      "standard_ref": "x-FuSa spec §2.2",
+      "standard_ref": "x-FuSa spec \u00a72.2",
       "severity": "safety"
     },
     {
       "id": "REQ-TRACE012",
-      "title": "secTestedRequirements in trace JSON summary (spec §5)",
+      "title": "secTestedRequirements in trace JSON summary (spec \u00a75)",
       "description": "The trace JSON summary block shall include secTestedRequirements: the count of requirements with severity 'cybersecurity' that have at least one //fusa:test annotation.",
-      "standard_ref": "x-FuSa spec §5",
+      "standard_ref": "x-FuSa spec \u00a75",
       "severity": "safety"
     },
     {
@@ -1299,7 +1299,7 @@
       "id": "REQ-HARA002",
       "title": "Hazard missing S/E/C risk parameters",
       "description": "HARA002 shall fire when any hazard in .fusa-hara.json is missing the severity, exposure, or controllability field in its risk object.",
-      "standard_ref": "ISO 26262-3 §7",
+      "standard_ref": "ISO 26262-3 \u00a77",
       "severity": "WARNING",
       "asil": ""
     },
@@ -1307,7 +1307,7 @@
       "id": "REQ-HARA003",
       "title": "Hazard not linked to a safety goal",
       "description": "HARA003 shall fire when any hazard in .fusa-hara.json has an empty safetyGoals list.",
-      "standard_ref": "ISO 26262-3 §8",
+      "standard_ref": "ISO 26262-3 \u00a78",
       "severity": "WARNING",
       "asil": ""
     },
@@ -1315,7 +1315,7 @@
       "id": "REQ-HARA004",
       "title": "Safety goal missing ASIL assignment",
       "description": "HARA004 shall fire when any safety goal in .fusa-hara.json has no asil field.",
-      "standard_ref": "ISO 26262-3 §8",
+      "standard_ref": "ISO 26262-3 \u00a78",
       "severity": "WARNING",
       "asil": ""
     },
@@ -1323,7 +1323,7 @@
       "id": "REQ-VERIFY006",
       "title": "Test evidence failure detection (engine rule)",
       "description": "VERIFY002 engine rule shall fire when .fusa-evidence.json reports summary.failed > 0, indicating that tests are not green before release.",
-      "standard_ref": "ISO 26262-6 §9.4",
+      "standard_ref": "ISO 26262-6 \u00a79.4",
       "severity": "ERROR",
       "asil": ""
     },
@@ -1331,8 +1331,40 @@
       "id": "REQ-FMEA007",
       "title": "FMEA cyber enrichment",
       "description": "When --cyber flag is passed, fmea generate() shall cross-reference cyber-report.json and append matching CYBER rule IDs to the action field of FMEA entries for files that have cybersecurity findings.",
-      "standard_ref": "ISO 21434 §9",
+      "standard_ref": "ISO 21434 \u00a79",
       "severity": "INFO",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TRACE013",
+      "title": "Trace JSON top-level flat tags array",
+      "description": "trace --format json shall emit a top-level flat tags[] array with {requirementId, file, line, kind} per annotation; kind shall be impl, test, or sec-test. Tags shall NOT be nested inside requirement entries.",
+      "standard_ref": "x-FuSa spec \u00a75",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TRACE014",
+      "title": "Trace JSON coverage block with spec-canonical field names",
+      "description": "trace --format json shall emit a coverage block with totalRequirements, tracedRequirements, testedRequirements, and secTestedRequirements fields instead of a summary block.",
+      "standard_ref": "x-FuSa spec \u00a75",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TRACE015",
+      "title": "Trace JSON sec-test kind for cybersecurity test annotations",
+      "description": "A test annotation on a requirement with severity cybersecurity shall have kind sec-test, counting toward both testedRequirements and secTestedRequirements.",
+      "standard_ref": "x-FuSa spec \u00a75",
+      "severity": "cybersecurity",
+      "asil": ""
+    },
+    {
+      "id": "REQ-RPT006",
+      "title": "Finding location endLine and endColumn fields",
+      "description": "When a finding has end_line > 0, the JSON location object shall emit endLine and endColumn. When end_line is 0 the fields shall be omitted. SARIF output shall emit region.endLine and region.endColumn likewise.",
+      "standard_ref": "x-FuSa spec \u00a74 MAY",
+      "severity": "info",
       "asil": ""
     }
   ]

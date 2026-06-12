@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cpfusa
-    VERSION 0.12.1
+    VERSION 0.12.2
     DESCRIPTION "C++ Functional Safety Toolkit"
     HOMEPAGE_URL "https://github.com/SoundMatt/cpp-FuSa"
     LANGUAGES CXX

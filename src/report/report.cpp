@@ -110,8 +110,10 @@ std::string render_json(const std::vector<Finding>& findings,
         // §4: location MUST be an object, not flat file/line
         json loc;
         loc["file"] = f.file;                          // project-relative (§4)
-        if (f.line > 0)   loc["line"]   = f.line;
-        if (f.column > 0) loc["column"] = f.column;
+        if (f.line > 0)       loc["line"]      = f.line;
+        if (f.column > 0)     loc["column"]    = f.column;
+        if (f.end_line > 0)   loc["endLine"]   = f.end_line;   // §4 MAY
+        if (f.end_column > 0) loc["endColumn"] = f.end_column; // §4 MAY
         item["location"] = loc;
         if (!f.category.empty())     item["category"]    = f.category;
         if (!f.standard_id.empty())  item["standard"]    = f.standard_id;
@@ -219,7 +221,13 @@ std::string render_sarif(const std::vector<Finding>& findings,
         r["locations"] = json::array({
             {{"physicalLocation",
               {{"artifactLocation", {{"uri", uri}}},
-               {"region", {{"startLine", f.line > 0 ? f.line : 1}}}}}}
+               {"region", [&]() {
+                   json reg{{"startLine", f.line > 0 ? f.line : 1}};
+                   if (f.column > 0)     reg["startColumn"] = f.column;
+                   if (f.end_line > 0)   reg["endLine"]     = f.end_line;
+                   if (f.end_column > 0) reg["endColumn"]   = f.end_column;
+                   return reg;
+               }()}}}}
         });
         if (!cfg.project.empty()) {
             json props;

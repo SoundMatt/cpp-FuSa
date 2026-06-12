@@ -1,4 +1,4 @@
-//fusa:test REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007 REQ-TRACE008 REQ-TRACE010 REQ-TRACE011 REQ-TRACE012
+//fusa:test REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007 REQ-TRACE008 REQ-TRACE010 REQ-TRACE011 REQ-TRACE012 REQ-TRACE013 REQ-TRACE014 REQ-TRACE015
 #include <catch2/catch_all.hpp>
 #include "trace/trace.hpp"
 #include "testutil/testutil.hpp"
@@ -145,12 +145,12 @@ TEST_CASE("trace: render_json produces valid JSON", "[trace][trace006]") {
     REQUIRE_NOTHROW(json::parse(trace::render_json(res, cfg)));
 }
 
-TEST_CASE("trace: render_json has spec v1.9 envelope", "[trace][trace006]") {
+TEST_CASE("trace: render_json has spec v1.10 envelope", "[trace][trace006]") {
     TempDir tmp;
     config::ProjectConfig cfg; cfg.project = "TestProj"; cfg.version = "1.0.0";
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
-    REQUIRE(j["schemaVersion"] == "1.9");
+    REQUIRE(j["schemaVersion"] == "1.10");
     REQUIRE(j["kind"] == "trace-report");
     REQUIRE(j["tool"] == "cpp-FuSa");
     REQUIRE(j["language"] == "cpp");
@@ -169,7 +169,7 @@ TEST_CASE("trace: render_json requirements array contains req IDs", "[trace][tra
     REQUIRE(j["requirements"][0]["id"] == "REQ-001");
 }
 
-TEST_CASE("trace: render_json requirement has tags array with kind and requirementId", "[trace][trace006]") {
+TEST_CASE("trace: render_json tags is top-level flat array with impl and test kinds", "[trace][trace006]") {
     TempDir tmp;
     tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
     tmp.write("src/a.cpp",   "//fusa:req REQ-001\nvoid f(){}\n");
@@ -177,52 +177,42 @@ TEST_CASE("trace: render_json requirement has tags array with kind and requireme
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
-    auto& req = j["requirements"][0];
-    REQUIRE(req["tags"].is_array());
-    REQUIRE(req["tags"].size() == 2);
-    bool has_req_kind  = false;
-    bool has_test_kind = false;
-    for (const auto& tag : req["tags"]) {
+    // §5: top-level flat tags[] — not nested inside requirements
+    REQUIRE(j["tags"].is_array());
+    REQUIRE(j["tags"].size() == 2);
+    bool has_impl = false, has_test = false;
+    for (const auto& tag : j["tags"]) {
         REQUIRE(tag["requirementId"] == "REQ-001");
         REQUIRE_FALSE(tag["file"].get<std::string>().empty());
         REQUIRE(tag["line"].is_number());
         std::string k = tag["kind"].get<std::string>();
-        if (k == "req")  has_req_kind  = true;
-        if (k == "test") has_test_kind = true;
+        if (k == "impl") has_impl = true;
+        if (k == "test") has_test = true;
     }
-    REQUIRE(has_req_kind);
-    REQUIRE(has_test_kind);
+    REQUIRE(has_impl);
+    REQUIRE(has_test);
+    // requirements[] must NOT have nested tags
+    REQUIRE_FALSE(j["requirements"][0].contains("tags"));
 }
 
-TEST_CASE("trace: render_json covered req has status covered", "[trace][trace006]") {
-    TempDir tmp;
-    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
-    tmp.write("src/a.cpp",   "//fusa:req REQ-001\nvoid f(){}\n");
-    tmp.write("tests/t.cpp", "//fusa:test REQ-001\nvoid t(){}\n");
-    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
-    auto res = value_of(trace::run(tmp.path(), cfg));
-    auto j = json::parse(trace::render_json(res, cfg));
-    REQUIRE(j["requirements"][0]["status"] == "covered");
-}
-
-TEST_CASE("trace: render_json summary has annotationCoverage and testCoverage", "[trace][trace006]") {
+TEST_CASE("trace: render_json coverage block has spec-canonical fields", "[trace][trace006]") {
     TempDir tmp;
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
-    REQUIRE(j["summary"].contains("total"));
-    REQUIRE(j["summary"].contains("annotated"));
-    REQUIRE(j["summary"].contains("tested"));
-    REQUIRE(j["summary"].contains("annotationCoverage"));
-    REQUIRE(j["summary"].contains("testCoverage"));
+    REQUIRE(j["coverage"].contains("totalRequirements"));
+    REQUIRE(j["coverage"].contains("tracedRequirements"));
+    REQUIRE(j["coverage"].contains("testedRequirements"));
+    REQUIRE(j["coverage"].contains("secTestedRequirements"));
+    REQUIRE_FALSE(j.contains("summary"));
 }
 
-TEST_CASE("trace: render_json summary has secTestedRequirements", "[trace][trace006]") {
+TEST_CASE("trace: render_json coverage secTestedRequirements is present", "[trace][trace006]") {
     TempDir tmp;
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
-    REQUIRE(j["summary"].contains("secTestedRequirements"));
+    REQUIRE(j["coverage"].contains("secTestedRequirements"));
 }
 
 TEST_CASE("trace: secTestedRequirements counts cybersecurity reqs with test annotations", "[trace][trace008]") {
@@ -234,7 +224,22 @@ TEST_CASE("trace: secTestedRequirements counts cybersecurity reqs with test anno
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
-    REQUIRE(j["summary"]["secTestedRequirements"] == 1);
+    REQUIRE(j["coverage"]["secTestedRequirements"] == 1);
+}
+
+TEST_CASE("trace: render_json sec-test kind for cybersecurity requirement", "[trace][trace008]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json",
+        R"([{"id":"REQ-C01","title":"C","severity":"cybersecurity"}])");
+    tmp.write("tests/t.cpp", "//fusa:test REQ-C01\nvoid t(){}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    bool found_sec_test = false;
+    for (const auto& tag : j["tags"]) {
+        if (tag["kind"] == "sec-test") { found_sec_test = true; break; }
+    }
+    REQUIRE(found_sec_test);
 }
 
 // ─── render_req ──────────────────────────────────────────────────────────────
