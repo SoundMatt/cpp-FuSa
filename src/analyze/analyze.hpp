@@ -42,5 +42,10 @@ struct AnalyzeOptions {
 [[nodiscard]] std::vector<Finding> check_unbounded_loop(const std::filesystem::path& dir);
 [[nodiscard]] std::vector<Finding> check_large_stack_alloc(const std::filesystem::path& dir);
 [[nodiscard]] std::vector<Finding> check_memcpy_on_class(const std::filesystem::path& dir);
+[[nodiscard]] std::vector<Finding> check_function_length(const std::filesystem::path& dir);
+[[nodiscard]] std::vector<Finding> check_nesting_depth(const std::filesystem::path& dir);
+[[nodiscard]] std::vector<Finding> check_parameter_count(const std::filesystem::path& dir);
+[[nodiscard]] std::vector<Finding> check_integer_truncating_cast(const std::filesystem::path& dir);
+[[nodiscard]] std::vector<Finding> check_multiple_returns(const std::filesystem::path& dir);
 
 } // namespace cpfusa::analyze

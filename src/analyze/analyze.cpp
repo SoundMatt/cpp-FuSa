@@ -6,7 +6,6 @@
 #include <sstream>
 #include <array>
 #include <cstdio>
-#include <stdexcept>
 #include <string>
 #ifdef _WIN32
 #  define popen  _popen
@@ -58,6 +57,54 @@ void for_each_source(const fs::path& dir,
 
 [[nodiscard]] bool tool_available(const std::string& bin) {
     return std::system(("command -v " + bin + " >/dev/null 2>&1").c_str()) == 0;
+}
+
+// Lightweight function-body extractor shared by ANAL008/009/012.
+struct FuncBlock { std::string name; int start_line; std::string body; };
+
+[[nodiscard]] std::vector<FuncBlock> extract_func_blocks(const Lines& lines) {
+    std::vector<FuncBlock> out;
+    static const std::regex sig_re(
+        R"(^[\w:~<>\*&\s]+\s+(\w+)\s*\([^)]*\)\s*(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?\{)"
+    );
+    static const std::regex keyword_re(R"(\b(if|else|for|while|do|switch|catch)\b)");
+
+    int brace_depth = 0;
+    bool in_func = false;
+    std::string func_name;
+    int func_start = 0;
+    std::string func_body;
+
+    for (const auto& [n, line] : lines) {
+        if (!in_func) {
+            std::smatch m;
+            if (std::regex_search(line, m, sig_re) &&
+                !std::regex_search(m[1].str(), keyword_re)) {
+                func_name  = m[1].str();
+                func_start = n;
+                brace_depth = 0;
+                func_body.clear();
+                for (char c : line) {
+                    if (c == '{') { ++brace_depth; in_func = true; }
+                    else if (c == '}') { --brace_depth; }
+                }
+            }
+        } else {
+            func_body += line + "\n";
+            for (char c : line) {
+                if (c == '{') { ++brace_depth; }
+                else if (c == '}') {
+                    if (--brace_depth == 0) {
+                        out.push_back({func_name, func_start, func_body});
+                        in_func = false;
+                        func_body.clear();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return out;
 }
 
 } // anonymous namespace
@@ -265,6 +312,150 @@ std::vector<Finding> check_memcpy_on_class(const fs::path& dir) {
     return out;
 }
 
+// ANAL008 – Function body > 60 lines
+//fusa:req REQ-ANAL008
+std::vector<Finding> check_function_length(const fs::path& dir) {
+    std::vector<Finding> out;
+    constexpr int MAX_LINES = 60;
+    for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
+        for (const auto& fn : extract_func_blocks(lines)) {
+            int count = static_cast<int>(
+                std::count(fn.body.begin(), fn.body.end(), '\n'));
+            if (count > MAX_LINES) {
+                out.push_back({"ANAL008", Severity::WARNING,
+                    "Function '" + fn.name + "' is " + std::to_string(count) +
+                    " lines (max: " + std::to_string(MAX_LINES) + ")",
+                    p.string(), fn.start_line,
+                    "Refactor into smaller functions with single responsibility"});
+            }
+        }
+    });
+    return out;
+}
+
+// ANAL009 – Nesting depth > 5 within a function body
+//fusa:req REQ-ANAL009
+std::vector<Finding> check_nesting_depth(const fs::path& dir) {
+    std::vector<Finding> out;
+    constexpr int MAX_DEPTH = 5;
+    for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
+        for (const auto& fn : extract_func_blocks(lines)) {
+            int depth = 0;
+            int body_line = fn.start_line;
+            bool flagged = false;
+            std::istringstream ss(fn.body);
+            std::string line;
+            while (!flagged && std::getline(ss, line)) {
+                ++body_line;
+                for (char c : line) {
+                    if (c == '{') {
+                        if (++depth > MAX_DEPTH) {
+                            out.push_back({"ANAL009", Severity::WARNING,
+                                "Nesting depth " + std::to_string(depth) +
+                                " in '" + fn.name + "' exceeds limit of " +
+                                std::to_string(MAX_DEPTH),
+                                p.string(), body_line,
+                                "Reduce nesting via early returns or helper functions"});
+                            flagged = true;
+                            break;
+                        }
+                    } else if (c == '}') {
+                        --depth;
+                    }
+                }
+            }
+        }
+    });
+    return out;
+}
+
+// ANAL010 – Function with more than 7 parameters
+//fusa:req REQ-ANAL010
+std::vector<Finding> check_parameter_count(const fs::path& dir) {
+    std::vector<Finding> out;
+    constexpr int MAX_PARAMS = 7;
+    static const std::regex sig_re(
+        R"(^\s*[\w:~<>\*&\s]+\s+(\w+)\s*\(([^)]+)\)\s*(?:const\s*)?(?:noexcept\s*)?\s*[{;])"
+    );
+    static const std::regex keyword_re(R"(\b(if|else|for|while|do|switch|catch|return)\b)");
+    for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
+        for (const auto& [n, line] : lines) {
+            std::smatch m;
+            if (!std::regex_search(line, m, sig_re)) continue;
+            if (std::regex_search(m[1].str(), keyword_re)) continue;
+            std::string params = m[2].str();
+            // Trim and check for (void)
+            auto trim_start = params.find_first_not_of(" \t");
+            if (trim_start == std::string::npos) continue;
+            std::string trimmed = params.substr(trim_start);
+            if (trimmed == "void" || trimmed == "void ") continue;
+            // Count commas outside template angle brackets
+            int depth = 0;
+            int commas = 0;
+            for (char c : params) {
+                if (c == '<') ++depth;
+                else if (c == '>') { if (depth > 0) --depth; }
+                else if (c == ',' && depth == 0) ++commas;
+            }
+            if (commas + 1 > MAX_PARAMS) {
+                out.push_back({"ANAL010", Severity::WARNING,
+                    "Function '" + m[1].str() + "' has " +
+                    std::to_string(commas + 1) +
+                    " parameters (max: " + std::to_string(MAX_PARAMS) + ")",
+                    p.string(), n,
+                    "Bundle parameters into a config struct to reduce interface complexity"});
+            }
+        }
+    });
+    return out;
+}
+
+// ANAL011 – C-style narrowing integer cast (silent truncation)
+//fusa:req REQ-ANAL011
+std::vector<Finding> check_integer_truncating_cast(const fs::path& dir) {
+    std::vector<Finding> out;
+    static const std::regex cast_re(
+        R"X(\(\s*(?:u?int(?:8|16)_t|unsigned\s+char|(?:unsigned\s+)?short)\s*\)\s*\w)X"
+    );
+    for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
+        for (const auto& [n, line] : lines) {
+            if (line.find("fusa:unsafe") != std::string::npos) continue;
+            if (std::regex_search(line, cast_re)) {
+                out.push_back({"ANAL011", Severity::WARNING,
+                    "Narrowing integer cast — silent truncation may lose data",
+                    p.string(), n,
+                    "Use static_cast with a range check, or annotate // fusa:unsafe if intentional"});
+            }
+        }
+    });
+    return out;
+}
+
+// ANAL012 – More than 3 explicit return points in a function
+//fusa:req REQ-ANAL012
+std::vector<Finding> check_multiple_returns(const fs::path& dir) {
+    std::vector<Finding> out;
+    constexpr int MAX_RETURNS = 3;
+    static const std::regex ret_re(R"(\breturn\b)");
+    for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
+        for (const auto& fn : extract_func_blocks(lines)) {
+            int count = 0;
+            for (std::sregex_iterator it(fn.body.begin(), fn.body.end(), ret_re), end;
+                 it != end; ++it) {
+                ++count;
+            }
+            if (count > MAX_RETURNS) {
+                out.push_back({"ANAL012", Severity::INFO,
+                    "Function '" + fn.name + "' has " + std::to_string(count) +
+                    " return points (max: " + std::to_string(MAX_RETURNS) + ")",
+                    p.string(), fn.start_line,
+                    "Consider restructuring to reduce exit points for clarity"});
+            }
+        }
+    });
+    return out;
+}
+
 std::vector<Finding> run_own_passes(const fs::path& dir) {
     std::vector<Finding> all;
     auto append = [&](std::vector<Finding> v) {
@@ -276,6 +467,11 @@ std::vector<Finding> run_own_passes(const fs::path& dir) {
     append(check_unbounded_loop(dir));
     append(check_large_stack_alloc(dir));
     append(check_memcpy_on_class(dir));
+    append(check_function_length(dir));
+    append(check_nesting_depth(dir));
+    append(check_parameter_count(dir));
+    append(check_integer_truncating_cast(dir));
+    append(check_multiple_returns(dir));
     return all;
 }
 

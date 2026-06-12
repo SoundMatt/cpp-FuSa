@@ -1,6 +1,6 @@
 # cpp-FuSa Tool Safety Manual
 
-**Version:** 0.10.0  
+**Version:** 0.11.0  
 **Binary:** `cpfusa`  
 **Repository:** `github.com/SoundMatt/cpp-FuSa`  
 **License:** Mozilla Public License 2.0  
@@ -29,7 +29,7 @@ Capabilities:
 |---|---|---|
 | Project structure checks | FUSA001–005 | `cpfusa check` |
 | MISRA/AUTOSAR/JSF++ coding standard analysis | LINT001–010 | `cpfusa lint` |
-| Static analysis (clang-tidy, cppcheck, own passes) | ANAL001–007 | `cpfusa analyze` |
+| Static analysis (clang-tidy, cppcheck, own passes) | ANAL001–012 | `cpfusa analyze` |
 | Requirements traceability and coverage | — | `cpfusa trace` |
 | Requirements import/export (CSV, DOORS ReqIF, Polarion XML) | — | `cpfusa req import|export` |
 | Cyclomatic complexity analysis (DO-178C §6.3.4) | COMP001 | `cpfusa comp` |

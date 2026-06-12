@@ -1,4 +1,4 @@
-//fusa:test REQ-ANAL001 REQ-ANAL002 REQ-ANAL003 REQ-ANAL004 REQ-ANAL005
+//fusa:test REQ-ANAL001 REQ-ANAL002 REQ-ANAL003 REQ-ANAL004 REQ-ANAL005 REQ-ANAL008 REQ-ANAL009 REQ-ANAL010 REQ-ANAL011 REQ-ANAL012
 #include <catch2/catch_all.hpp>
 #include "analyze/analyze.hpp"
 #include "testutil/testutil.hpp"
@@ -100,4 +100,150 @@ TEST_CASE("analyze: run_own_passes aggregates all own checks", "[analyze]") {
         "void f() { g_val = 1; }\n");
     auto f = analyze::run_own_passes(tmp.path());
     REQUIRE(has_finding(f, "ANAL003"));
+}
+
+// ─── ANAL008 – function length ────────────────────────────────────────────────
+
+TEST_CASE("analyze: ANAL008 detects function body over 60 lines", "[analyze][anal008]") {
+    TempDir tmp;
+    std::string src = "void long_func() {\n";
+    for (int i = 0; i < 65; ++i)
+        src += "    int x" + std::to_string(i) + " = " + std::to_string(i) + ";\n";
+    src += "}\n";
+    tmp.write("src/bad.cpp", src);
+    auto f = analyze::check_function_length(tmp.path());
+    REQUIRE(has_finding(f, "ANAL008"));
+}
+
+TEST_CASE("analyze: ANAL008 passes when function is within 60 lines", "[analyze][anal008]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void short_func() {\n    int x = 0;\n    int y = 1;\n}\n");
+    auto f = analyze::check_function_length(tmp.path());
+    REQUIRE(f.empty());
+}
+
+// ─── ANAL009 – nesting depth ─────────────────────────────────────────────────
+
+TEST_CASE("analyze: ANAL009 detects nesting depth over 5", "[analyze][anal009]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp",
+        "void deep(int x) {\n"
+        "  if (x>0) {\n"
+        "    if (x>1) {\n"
+        "      if (x>2) {\n"
+        "        if (x>3) {\n"
+        "          if (x>4) {\n"
+        "            if (x>5) {\n"  // depth 6 inside body — FLAGGED
+        "              x=0;\n"
+        "            }\n"
+        "          }\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}\n");
+    auto f = analyze::check_nesting_depth(tmp.path());
+    REQUIRE(has_finding(f, "ANAL009"));
+}
+
+TEST_CASE("analyze: ANAL009 passes when nesting depth is 5 or less", "[analyze][anal009]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp",
+        "void moderate(int x) {\n"
+        "  if (x>0) {\n"
+        "    if (x>1) {\n"
+        "      if (x>2) {\n"
+        "        if (x>3) {\n"
+        "          x = 0;\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}\n");
+    auto f = analyze::check_nesting_depth(tmp.path());
+    REQUIRE(f.empty());
+}
+
+// ─── ANAL010 – parameter count ────────────────────────────────────────────────
+
+TEST_CASE("analyze: ANAL010 detects function with more than 7 parameters", "[analyze][anal010]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp",
+        "int too_many(int a, int b, int c, int d, int e, int f, int g, int h) {\n"
+        "    return a;\n"
+        "}\n");
+    auto f = analyze::check_parameter_count(tmp.path());
+    REQUIRE(has_finding(f, "ANAL010"));
+}
+
+TEST_CASE("analyze: ANAL010 passes with 7 or fewer parameters", "[analyze][anal010]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp",
+        "int fine(int a, int b, int c, int d, int e, int f, int g) {\n"
+        "    return a;\n"
+        "}\n");
+    auto f = analyze::check_parameter_count(tmp.path());
+    REQUIRE(f.empty());
+}
+
+// ─── ANAL011 – integer truncating cast ───────────────────────────────────────
+
+TEST_CASE("analyze: ANAL011 detects uint8_t narrowing cast", "[analyze][anal011]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp",
+        "void narrow() {\n"
+        "    int x = 300;\n"
+        "    auto y = (uint8_t)x;\n"
+        "}\n");
+    auto f = analyze::check_integer_truncating_cast(tmp.path());
+    REQUIRE(has_finding(f, "ANAL011"));
+}
+
+TEST_CASE("analyze: ANAL011 detects uint16_t narrowing cast", "[analyze][anal011]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp",
+        "void narrow16() {\n"
+        "    long x = 70000L;\n"
+        "    auto y = (uint16_t)x;\n"
+        "}\n");
+    auto f = analyze::check_integer_truncating_cast(tmp.path());
+    REQUIRE(has_finding(f, "ANAL011"));
+}
+
+TEST_CASE("analyze: ANAL011 passes when fusa:unsafe annotation present", "[analyze][anal011]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp",
+        "void narrow_ok() {\n"
+        "    int x = 10;\n"
+        "    auto y = (uint8_t)x; // fusa:unsafe value always fits 0-10\n"
+        "}\n");
+    auto f = analyze::check_integer_truncating_cast(tmp.path());
+    REQUIRE(f.empty());
+}
+
+// ─── ANAL012 – multiple return points ────────────────────────────────────────
+
+TEST_CASE("analyze: ANAL012 detects more than 3 return points", "[analyze][anal012]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp",
+        "int multi(int x) {\n"
+        "    if (x == 1) return 1;\n"
+        "    if (x == 2) return 2;\n"
+        "    if (x == 3) return 3;\n"
+        "    return 4;\n"
+        "}\n");
+    auto f = analyze::check_multiple_returns(tmp.path());
+    REQUIRE(has_finding(f, "ANAL012"));
+}
+
+TEST_CASE("analyze: ANAL012 passes with 3 or fewer return points", "[analyze][anal012]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp",
+        "int few_returns(int x) {\n"
+        "    if (x < 0) return -1;\n"
+        "    if (x > 0) return 1;\n"
+        "    return 0;\n"
+        "}\n");
+    auto f = analyze::check_multiple_returns(tmp.path());
+    REQUIRE(f.empty());
 }

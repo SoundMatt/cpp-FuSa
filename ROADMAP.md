@@ -186,6 +186,19 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 
 ---
 
+## v0.12 — rust-FuSa Parity ✅
+
+**Goal:** Close all static analysis gaps identified vs rust-FuSa v0.2.0.
+
+- ✅ ANAL008 — Function body > 60 lines (WARNING, DO-178C §6.3.4 / MISRA C++:2023 Rule 6-3-1)
+- ✅ ANAL009 — Nesting depth > 5 within a function body (WARNING)
+- ✅ ANAL010 — Function parameter count > 7 (WARNING, MISRA C++:2023 Rule 8-4-2 / JSF++ Rule 122)
+- ✅ ANAL011 — Narrowing integer cast to 8-/16-bit types (WARNING, MISRA C++:2023 Rule 5-0-8)
+- ✅ ANAL012 — More than 3 explicit return points per function (INFO, MISRA C++:2023 Rule 6-6-5)
+- ✅ **180 requirements, 614 tests**
+
+---
+
 ## Future
 
 - QNX / FreeRTOS / Zephyr RTOS integration

@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.11.0] — 2026-06-12
+
+### Added
+- ANAL008 — Function body > 60 lines (WARNING). Enforces single-responsibility per DO-178C §6.3.4 and MISRA C++:2023 Rule 6-3-1.
+- ANAL009 — Nesting depth > 5 within a function (WARNING). Flags deep conditional nesting that increases complexity and reduces test coverage tractability.
+- ANAL010 — Function parameter count > 7 (WARNING). Excessive parameters indicate poor interface design; matches MISRA C++:2023 Rule 8-4-2 and JSF++ Rule 122.
+- ANAL011 — Narrowing integer cast to `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `unsigned char`, `short` (WARNING). C-style truncating casts silently discard high bits; suppressed with `// fusa:unsafe`.
+- ANAL012 — More than 3 explicit `return` points per function (INFO). Multiple exit points obscure control flow; matches MISRA C++:2023 Rule 6-6-5 and JSF++ Rule 113.
+- 5 new requirements: REQ-ANAL008–REQ-ANAL012 (total: **180 requirements**)
+
+### Tests
+- 11 new tests covering detection and suppression for all five rules
+- Total: **614 tests** (was 603)
+
 ## [0.10.0] — 2026-06-12
 
 ### Added
