@@ -622,12 +622,14 @@ int run(int argc, char* argv[]) {
     });
 
     // ── fmea ──────────────────────────────────────────────────────────────────
-    auto* fmea_cmd = app.add_subcommand("fmea", "Generate dFMEA from class/function declarations");
+    auto* fmea_cmd  = app.add_subcommand("fmea", "Generate dFMEA from class/function declarations");
+    bool fmea_cyber = false;
+    fmea_cmd->add_flag("--cyber", fmea_cyber, "Enrich FMEA entries with findings from cyber-report.json");
     fmea_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
-        auto r = fmea::generate(dir, *cfg_opt);
+        auto r = fmea::generate(dir, *cfg_opt, fmea_cyber);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto wr = fmea::write(dir, value_of(r));
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }

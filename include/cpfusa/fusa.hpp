@@ -9,9 +9,9 @@
 
 namespace cpfusa {
 
-constexpr std::string_view Version      = "0.9.0";
+constexpr std::string_view Version      = "0.12.0";
 constexpr std::string_view VersionMajor = "0";
-constexpr std::string_view VersionMinor = "9";
+constexpr std::string_view VersionMinor = "12";
 constexpr std::string_view VersionPatch = "0";
 constexpr std::string_view SpecVersion  = "1.9";
 

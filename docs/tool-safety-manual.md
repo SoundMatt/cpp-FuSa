@@ -1,6 +1,6 @@
 # cpp-FuSa Tool Safety Manual
 
-**Version:** 0.11.0  
+**Version:** 0.12.0  
 **Binary:** `cpfusa`  
 **Repository:** `github.com/SoundMatt/cpp-FuSa`  
 **License:** Mozilla Public License 2.0  
@@ -28,7 +28,7 @@ Capabilities:
 | Capability | Rules | Command |
 |---|---|---|
 | Project structure checks | FUSA001–005 | `cpfusa check` |
-| MISRA/AUTOSAR/JSF++ coding standard analysis | LINT001–010 | `cpfusa lint` |
+| MISRA/AUTOSAR/JSF++ coding standard analysis | LINT001–031 | `cpfusa lint` |
 | Static analysis (clang-tidy, cppcheck, own passes) | ANAL001–012 | `cpfusa analyze` |
 | Requirements traceability and coverage | — | `cpfusa trace` |
 | Requirements import/export (CSV, DOORS ReqIF, Polarion XML) | — | `cpfusa req import|export` |
@@ -36,7 +36,7 @@ Capabilities:
 | SPDX 2.2 / 2.3 / 3.0.1 SBOM, provenance, artifact manifest | — | `cpfusa release [--spdx-version 2.2|2.3|3.0.1]` |
 | Test evidence collection (CTest) | — | `cpfusa verify` |
 | Cybersecurity analysis — 20 CWE-mapped rules | CYBER001–020 | `cpfusa cyber` |
-| Hazard Analysis and Risk Assessment | HARA001–005 | `cpfusa hara` |
+| Hazard Analysis and Risk Assessment | HARA001–005, engine rules HARA002–005 | `cpfusa hara` |
 | ISO 26262 Part 6 gap assessment | — | `cpfusa iso26262` |
 | IEC 61508 Parts 1-3 gap assessment | — | `cpfusa iec61508` |
 | DO-178C Annex A gap assessment | — | `cpfusa do178` |
@@ -44,7 +44,7 @@ Capabilities:
 | UNECE R155 threat category gap assessment | — | `cpfusa unece --regulation r155` |
 | UNECE R156 SUMS gap assessment | — | `cpfusa unece --regulation r156` |
 | Threat Analysis and Risk Assessment (ISO 21434) | — | `cpfusa tara` |
-| dFMEA generation from source declarations | — | `cpfusa fmea` |
+| dFMEA generation from source declarations (with optional `--cyber` enrichment) | — | `cpfusa fmea [--cyber]` |
 | GSN Safety case assembly | — | `cpfusa safety-case` |
 | SBOM (SPDX 2.2/2.3/3.0.1), provenance, artifact manifest | — | `cpfusa release` |
 | Tool qualification suite | — | `cpfusa qualify` |

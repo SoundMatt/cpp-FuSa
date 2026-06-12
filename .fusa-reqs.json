@@ -1265,6 +1265,54 @@
       "standard_ref": "MISRA C++:2023 Rule 6-6-5, JSF++ Rule 113",
       "severity": "INFO",
       "asil": ""
+    },
+    {
+      "id": "REQ-LINT031",
+      "title": "Float/double literal equality comparison (MISRA Rule 6-2-2)",
+      "description": "LINT031: Source files containing == or != comparisons with a float or double literal must be flagged (WARNING). Floating-point equality is unreliable due to rounding and should use an epsilon comparison.",
+      "standard_ref": "MISRA C++:2023 Rule 6-2-2",
+      "severity": "WARNING",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA002",
+      "title": "Hazard missing S/E/C risk parameters",
+      "description": "HARA002 shall fire when any hazard in .fusa-hara.json is missing the severity, exposure, or controllability field in its risk object.",
+      "standard_ref": "ISO 26262-3 §7",
+      "severity": "WARNING",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA003",
+      "title": "Hazard not linked to a safety goal",
+      "description": "HARA003 shall fire when any hazard in .fusa-hara.json has an empty safetyGoals list.",
+      "standard_ref": "ISO 26262-3 §8",
+      "severity": "WARNING",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA004",
+      "title": "Safety goal missing ASIL assignment",
+      "description": "HARA004 shall fire when any safety goal in .fusa-hara.json has no asil field.",
+      "standard_ref": "ISO 26262-3 §8",
+      "severity": "WARNING",
+      "asil": ""
+    },
+    {
+      "id": "REQ-VERIFY006",
+      "title": "Test evidence failure detection (engine rule)",
+      "description": "VERIFY002 engine rule shall fire when .fusa-evidence.json reports summary.failed > 0, indicating that tests are not green before release.",
+      "standard_ref": "ISO 26262-6 §9.4",
+      "severity": "ERROR",
+      "asil": ""
+    },
+    {
+      "id": "REQ-FMEA007",
+      "title": "FMEA cyber enrichment",
+      "description": "When --cyber flag is passed, fmea generate() shall cross-reference cyber-report.json and append matching CYBER rule IDs to the action field of FMEA entries for files that have cybersecurity findings.",
+      "standard_ref": "ISO 21434 §9",
+      "severity": "INFO",
+      "asil": ""
     }
   ]
 }

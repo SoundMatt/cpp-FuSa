@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <ctime>
 #include <algorithm>
+#include <map>
 
 namespace fs = std::filesystem;
 using json   = nlohmann::json;
@@ -82,8 +83,9 @@ std::vector<Declaration> scan_declarations(const fs::path& dir,
 
 } // namespace
 
-//fusa:req REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006
-Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cfg) {
+//fusa:req REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006 REQ-FMEA007
+Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cfg,
+                            bool enrich_cyber) {
     FMEAReport rpt;
     rpt.generated_at = now_iso8601();
     rpt.project      = cfg.project;
@@ -123,6 +125,43 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
     // Sort by RPN descending (highest risk first).
     std::sort(rpt.entries.begin(), rpt.entries.end(),
               [](const FmeaEntry& a, const FmeaEntry& b){ return a.rpn > b.rpn; });
+
+    // Optionally enrich with cybersecurity findings from cyber-report.json.
+    if (enrich_cyber) {
+        auto cyber_path = dir / "cyber-report.json";
+        if (fs::exists(cyber_path)) {
+            try {
+                std::ifstream cf(cyber_path);
+                json cj = json::parse(cf);
+                // Build map: source filename → unique CYBER rule IDs
+                std::map<std::string, std::vector<std::string>> cyber_map;
+                for (const auto& finding : cj.value("findings", json::array())) {
+                    std::string file    = finding.value("file", "");
+                    std::string rule_id = finding.value("ruleId", "");
+                    if (!file.empty() && !rule_id.empty())
+                        cyber_map[fs::path(file).filename().string()].push_back(rule_id);
+                }
+                // Deduplicate and annotate matching entries.
+                for (auto& [fname, ids] : cyber_map) {
+                    std::sort(ids.begin(), ids.end());
+                    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+                }
+                for (auto& e : rpt.entries) {
+                    std::string fname = fs::path(e.file).filename().string();
+                    auto it = cyber_map.find(fname);
+                    if (it != cyber_map.end()) {
+                        std::string refs;
+                        for (const auto& id : it->second) {
+                            if (!refs.empty()) refs += ", ";
+                            refs += id;
+                        }
+                        e.action += "; CYBER: " + refs;
+                    }
+                }
+            } catch (...) {}
+        }
+    }
+
     return rpt;
 }
 

@@ -47,5 +47,6 @@ namespace cpfusa::lint {
 [[nodiscard]] std::vector<Finding> check_asm(const std::filesystem::path& dir);
 [[nodiscard]] std::vector<Finding> check_magic_numbers(const std::filesystem::path& dir);
 [[nodiscard]] std::vector<Finding> check_include_guard(const std::filesystem::path& dir);
+[[nodiscard]] std::vector<Finding> check_float_equality(const std::filesystem::path& dir);
 
 } // namespace cpfusa::lint
