@@ -1068,7 +1068,7 @@ int run(int argc, char* argv[]) {
         fmts["version"] = {"text","json"};
         j["formats"]    = fmts;
         j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c",
-                                                   "iec62443","unece-r155","unece-r156"});
+                                                   "iec62443","unece-r155","unece-r156","slsa"});
         std::cout << j.dump(2) << "\n";
     });
 
