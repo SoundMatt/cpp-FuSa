@@ -1,4 +1,5 @@
 #include "iec62443.hpp"
+#include "cpfusa/fusa.hpp"
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -142,6 +143,13 @@ Report assess(const fs::path& dir, const std::string& project, SL sl) {
 
 void write_json(const fs::path& out, const Report& r) {
     json j;
+    // §3.1 common header
+    j["schemaVersion"] = std::string(cpfusa::SpecVersion);
+    j["kind"]          = "gap-report";
+    j["standard"]      = "iec62443";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(cpfusa::Version);
+    j["language"]      = "cpp";
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["sl"]          = r.sl;
