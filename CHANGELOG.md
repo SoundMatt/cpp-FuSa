@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.3] — 2026-06-12
+
+### Fixed
+- **Gap-report `objectives` key** (issues #7): `iec62443` JSON now emits `"objectives"` (was `"checks"`) with `"title"` (was `"requirement"`); `slsa` JSON now emits `"objectives"` (was `"requirements"`). All six gap-report commands (`iso26262`, `iec61508`, `do178`, `iec62443`, `slsa`) now emit `"title"` for the human-readable objective name (was `"description"`). Fixes FuSaOps rollup decoding.
+- **Capabilities `standards` array** (issue #8): `cpfusa capabilities --format json` now includes `"slsa"` in the `standards[]` array.
+- **Dockerfile OCI label** (issue #9): `io.x-fusa.spec-version` updated from `"1.9"` to `"1.10"` to match current spec.
+
 ## [0.12.2] — 2026-06-12
 
 ### Fixed

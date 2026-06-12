@@ -155,11 +155,10 @@ void write_json(const fs::path& out, const Report& r) {
     j["sl"]          = r.sl;
     j["summary"]     = {{"total", r.total}, {"satisfied", r.satisfied},
                          {"partial", r.partial}, {"gaps", r.gap}};
-    j["checks"] = json::array();
+    j["objectives"] = json::array();
     for (auto& c : r.checks) {
-        j["checks"].push_back({
-            {"id", c.id}, {"requirement", c.requirement},
-            {"description", c.description},
+        j["objectives"].push_back({
+            {"id", c.id}, {"title", c.requirement},
             {"status", status_str(c.status)}
         });
     }

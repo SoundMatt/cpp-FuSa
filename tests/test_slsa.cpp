@@ -83,7 +83,7 @@ TEST_CASE("slsa: write_json creates valid JSON", "[slsa][slsa003]") {
     std::ifstream f(out);
     json j;
     REQUIRE_NOTHROW(f >> j);
-    REQUIRE(j.contains("requirements"));
+    REQUIRE(j.contains("objectives"));
     REQUIRE(j.contains("summary"));
 }
 
@@ -96,13 +96,13 @@ TEST_CASE("slsa: JSON summary total matches report", "[slsa][slsa003]") {
     REQUIRE(j["summary"]["total"].get<int>() == r.total);
 }
 
-TEST_CASE("slsa: JSON requirements have id field", "[slsa][slsa003]") {
+TEST_CASE("slsa: JSON objectives have id field", "[slsa][slsa003]") {
     TempDir tmp;
     auto r = slsa::assess(tmp.path(), "p", slsa::Level::L2);
     slsa::write_json(tmp.path() / slsa::SLSA_REPORT_FILE, r);
     std::ifstream f(tmp.path() / slsa::SLSA_REPORT_FILE);
     json j; f >> j;
-    for (auto& req : j["requirements"])
+    for (auto& req : j["objectives"])
         REQUIRE(req.contains("id"));
 }
 
@@ -118,13 +118,13 @@ TEST_CASE("slsa: JSON summary has spec 9.3 keys satisfied and gaps", "[slsa][sls
     REQUIRE_FALSE(j["summary"].contains("gap"));
 }
 
-TEST_CASE("slsa: requirement status values are spec-conformant", "[slsa][slsa003]") {
+TEST_CASE("slsa: objective status values are spec-conformant", "[slsa][slsa003]") {
     TempDir tmp;
     auto r = slsa::assess(tmp.path(), "p", slsa::Level::L1);
     slsa::write_json(tmp.path() / slsa::SLSA_REPORT_FILE, r);
     std::ifstream f(tmp.path() / slsa::SLSA_REPORT_FILE);
     json j; f >> j;
-    for (auto& req : j["requirements"]) {
+    for (auto& req : j["objectives"]) {
         auto s = req["status"].get<std::string>();
         REQUIRE((s == "satisfied" || s == "partial" || s == "gap"));
     }

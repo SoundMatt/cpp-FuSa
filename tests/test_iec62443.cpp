@@ -80,7 +80,7 @@ TEST_CASE("iec62443: write_json creates valid JSON", "[iec62443][iec62443003]") 
     std::ifstream f(out);
     json j;
     REQUIRE_NOTHROW(f >> j);
-    REQUIRE(j.contains("checks"));
+    REQUIRE(j.contains("objectives"));
     REQUIRE(j.contains("summary"));
 }
 
@@ -93,13 +93,13 @@ TEST_CASE("iec62443: JSON summary total matches report", "[iec62443][iec62443003
     REQUIRE(j["summary"]["total"].get<int>() == r.total);
 }
 
-TEST_CASE("iec62443: JSON checks have id field", "[iec62443][iec62443003]") {
+TEST_CASE("iec62443: JSON objectives have id field", "[iec62443][iec62443003]") {
     TempDir tmp;
     auto r = iec62443::assess(tmp.path(), "p", iec62443::SL::SL2);
     iec62443::write_json(tmp.path() / iec62443::IEC62443_REPORT_FILE, r);
     std::ifstream f(tmp.path() / iec62443::IEC62443_REPORT_FILE);
     json j; f >> j;
-    for (auto& c : j["checks"])
+    for (auto& c : j["objectives"])
         REQUIRE(c.contains("id"));
 }
 
@@ -115,13 +115,13 @@ TEST_CASE("iec62443: JSON summary has spec 9.3 keys satisfied and gaps", "[iec62
     REQUIRE_FALSE(j["summary"].contains("gap"));
 }
 
-TEST_CASE("iec62443: check status values are spec-conformant", "[iec62443][iec62443003]") {
+TEST_CASE("iec62443: objective status values are spec-conformant", "[iec62443][iec62443003]") {
     TempDir tmp;
     auto r = iec62443::assess(tmp.path(), "p", iec62443::SL::SL1);
     iec62443::write_json(tmp.path() / iec62443::IEC62443_REPORT_FILE, r);
     std::ifstream f(tmp.path() / iec62443::IEC62443_REPORT_FILE);
     json j; f >> j;
-    for (auto& c : j["checks"]) {
+    for (auto& c : j["objectives"]) {
         auto s = c["status"].get<std::string>();
         REQUIRE((s == "satisfied" || s == "partial" || s == "gap"));
     }

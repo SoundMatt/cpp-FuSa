@@ -175,7 +175,7 @@ void write_json(const fs::path& out, const Report& r) {
     for (auto& o : r.objectives) {
         j["objectives"].push_back({
             {"id", o.id}, {"table", o.table},
-            {"description", o.description},
+            {"title", o.description},
             {"status", status_str(o.status)}
         });
     }
