@@ -193,6 +193,7 @@ std::string render_matrix(const TraceResult& result, const TraceOptions& opts) {
     return out.str();
 }
 
+//fusa:req REQ-TRACE016 REQ-TRACE017
 std::string render_json(const TraceResult& result,
                         const config::ProjectConfig& cfg) {
     using namespace std::chrono;
@@ -220,7 +221,7 @@ std::string render_json(const TraceResult& result,
 
     json j;
     j["schemaVersion"] = std::string(SpecVersion);
-    j["kind"]          = "trace-report";
+    j["kind"]          = "trace-matrix";
     j["tool"]          = "cpp-FuSa";
     j["toolVersion"]   = std::string(Version);
     j["language"]      = "cpp";
@@ -234,7 +235,7 @@ std::string render_json(const TraceResult& result,
         entry["id"]          = req.id;
         entry["title"]       = req.title;
         entry["severity"]    = req.severity;
-        entry["standardRef"] = req.standard_ref;
+        entry["standard"]    = req.standard_ref;
         if (!req.asil.empty()) entry["asil"] = req.asil;
         j["requirements"].push_back(entry);
     }

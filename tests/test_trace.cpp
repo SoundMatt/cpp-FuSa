@@ -136,7 +136,7 @@ TEST_CASE("trace: render_matrix contains req IDs when present", "[trace][trace00
     REQUIRE(txt.find("REQ-001") != std::string::npos);
 }
 
-// ─── render_json (§5 trace-report) ───────────────────────────────────────────
+// ─── render_json (§5 trace-matrix) ───────────────────────────────────────────
 
 TEST_CASE("trace: render_json produces valid JSON", "[trace][trace006]") {
     TempDir tmp;
@@ -151,7 +151,7 @@ TEST_CASE("trace: render_json has spec v1.10 envelope", "[trace][trace006]") {
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
     REQUIRE(j["schemaVersion"] == "1.10");
-    REQUIRE(j["kind"] == "trace-report");
+    REQUIRE(j["kind"] == "trace-matrix");
     REQUIRE(j["tool"] == "cpp-FuSa");
     REQUIRE(j["language"] == "cpp");
     REQUIRE(j["project"] == "TestProj");
@@ -167,6 +167,20 @@ TEST_CASE("trace: render_json requirements array contains req IDs", "[trace][tra
     REQUIRE(j["requirements"].is_array());
     REQUIRE(j["requirements"].size() == 1);
     REQUIRE(j["requirements"][0]["id"] == "REQ-001");
+}
+
+TEST_CASE("trace: render_json requirements use canonical standard key not standardRef", "[trace][trace006]") {
+    //fusa:test REQ-TRACE013
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json",
+        R"([{"id":"REQ-001","title":"T","severity":"safety","standard_ref":"iso26262"}])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j["requirements"].size() == 1);
+    REQUIRE(j["requirements"][0].contains("standard"));
+    REQUIRE_FALSE(j["requirements"][0].contains("standardRef"));
+    REQUIRE(j["requirements"][0]["standard"] == "iso26262");
 }
 
 TEST_CASE("trace: render_json tags is top-level flat array with impl and test kinds", "[trace][trace006]") {

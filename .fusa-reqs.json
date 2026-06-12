@@ -1366,6 +1366,22 @@
       "standard_ref": "x-FuSa spec \u00a74 MAY",
       "severity": "info",
       "asil": ""
+    },
+    {
+      "id": "REQ-TRACE016",
+      "title": "Trace JSON kind is trace-matrix",
+      "description": "The trace --format json document shall emit kind trace-matrix (not trace-report) per spec \u00a73.1 canonical kind table.",
+      "standard_ref": "x-FuSa spec \u00a73.1",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TRACE017",
+      "title": "Trace JSON requirements use canonical standard key",
+      "description": "Each entry in requirements[] shall use the key standard (not standardRef) per spec \u00a75 canonical requirements entry shape.",
+      "standard_ref": "x-FuSa spec \u00a75",
+      "severity": "safety",
+      "asil": ""
     }
   ]
 }
