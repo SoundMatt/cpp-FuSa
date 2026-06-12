@@ -13,6 +13,9 @@ constexpr std::string_view SBOMFile       = "sbom.json";
 constexpr std::string_view ProvenanceFile = "provenance.json";
 constexpr std::string_view ManifestFile   = "artifact-manifest.json";
 
+enum class SpdxVersion { V3_0_1, V2_3, V2_2 };
+SpdxVersion parse_spdx_version(const std::string& s); // "2.2" -> V2_2, "2.3" -> V2_3, else V3_0_1
+
 struct Component {
     std::string name;
     std::string version;
@@ -65,6 +68,10 @@ Result<Provenance> build_provenance(const std::filesystem::path& project_root,
 //
 //fusa:req REQ-RELEASE006
 Manifest hash_artifacts(const std::filesystem::path& dir);
+
+// write_sbom serialises an SBOM to a file in the given SPDX format.
+void write_sbom(const std::filesystem::path& out, const SBOM& sbom,
+                SpdxVersion ver = SpdxVersion::V3_0_1);
 
 // write_all serialises SBOM, Provenance, and Manifest to dir.
 Result<std::monostate> write_all(const std::filesystem::path& dir,

@@ -165,7 +165,24 @@ Deliverables: `cpfusa trace`, `cpfusa req`
 - ✅ `cpfusa unece` — UNECE R155 (9 threat categories) + R156 (6 SUMS requirements) gap reports
 - ✅ `cpfusa req show|import|export` — requirements lifecycle: CSV import/export with duplicate skip, canonical `{"requirements":[]}` save
 - ✅ Spec §9.3 objective status fix: `iso26262`, `iec61508`, `do178` now emit `"satisfied"` (not `"addressed"`)
-- ✅ 192 requirements, 545 tests
+- ✅ 167 requirements, 545 tests (v0.10.0 context: before go-FuSa parity additions)
+
+---
+
+## v0.11 — go-FuSa Parity Gaps ✅
+
+**Goal:** Close all remaining feature gaps vs go-FuSa v0.22/v0.23.
+
+- ✅ `cpfusa comp` — cyclomatic complexity (COMP001, DAL-A/B/C/D thresholds), `comp-report.json`
+- ✅ COUP003 engine rule — missing `coupling-report.json` on DO-178C projects
+- ✅ HARA005 engine rule — hazard ASIL exceeds project ASIL
+- ✅ ISO26262002/003 engine rules — missing `asil` field on reqs / qualify failures
+- ✅ `asil` field on requirements — optional ASIL field in `.fusa-reqs.json`, CSV, and trace JSON
+- ✅ SPDX 2.2 / 2.3 SBOM formats — `cpfusa release --spdx-version 2.2|2.3|3.0.1`
+- ✅ DOORS ReqIF XML import/export — `cpfusa trace import/export --format doors`
+- ✅ Polarion work-item XML import/export — `cpfusa trace import/export --format polarion`
+- ✅ Gap-assessment objective upgrades: iso26262 +2 objs, iec61508 +1 obj + 2 improved, do178 +3 improved
+- ✅ **175 requirements, 603 tests**
 
 ---
 

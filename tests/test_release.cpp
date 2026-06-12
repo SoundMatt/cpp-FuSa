@@ -148,3 +148,44 @@ TEST_CASE("release: sbom.json conforms to x-FuSa spec-7 format", "[release]") {
     REQUIRE(j.contains("module"));
     REQUIRE(j.contains("components"));
 }
+
+// ─── write_sbom SPDX 2.x format ──────────────────────────────────────────────
+
+TEST_CASE("release: SPDX 2.3 sbom has spdxVersion field", "[release]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.project = "TestProj";
+    auto sbom_r = release::build_sbom(tmp.path(), cfg);
+    REQUIRE(is_ok(sbom_r));
+    auto out = tmp.path() / "sbom-spdx23.json";
+    release::write_sbom(out, value_of(sbom_r), release::SpdxVersion::V2_3);
+    REQUIRE(std::filesystem::exists(out));
+    std::ifstream f(out);
+    json j;
+    REQUIRE_NOTHROW(f >> j);
+    REQUIRE(j["spdxVersion"] == "SPDX-2.3");
+    REQUIRE(j.contains("packages"));
+}
+
+TEST_CASE("release: SPDX 2.2 sbom has dataLicense field", "[release]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.project = "TestProj22";
+    auto sbom_r = release::build_sbom(tmp.path(), cfg);
+    REQUIRE(is_ok(sbom_r));
+    auto out = tmp.path() / "sbom-spdx22.json";
+    release::write_sbom(out, value_of(sbom_r), release::SpdxVersion::V2_2);
+    REQUIRE(std::filesystem::exists(out));
+    std::ifstream f(out);
+    json j;
+    REQUIRE_NOTHROW(f >> j);
+    REQUIRE(j["spdxVersion"] == "SPDX-2.2");
+    REQUIRE(j["dataLicense"] == "CC0-1.0");
+}
+
+TEST_CASE("release: parse_spdx_version parses 2.2, 2.3 and defaults", "[release]") {
+    REQUIRE(release::parse_spdx_version("2.2") == release::SpdxVersion::V2_2);
+    REQUIRE(release::parse_spdx_version("2.3") == release::SpdxVersion::V2_3);
+    REQUIRE(release::parse_spdx_version("3.0.1") == release::SpdxVersion::V3_0_1);
+    REQUIRE(release::parse_spdx_version("unknown") == release::SpdxVersion::V3_0_1);
+}

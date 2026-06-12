@@ -1,6 +1,6 @@
 # cpp-FuSa Tool Safety Manual
 
-**Version:** 0.9.2  
+**Version:** 0.10.0  
 **Binary:** `cpfusa`  
 **Repository:** `github.com/SoundMatt/cpp-FuSa`  
 **License:** Mozilla Public License 2.0  
@@ -31,7 +31,9 @@ Capabilities:
 | MISRA/AUTOSAR/JSF++ coding standard analysis | LINT001–010 | `cpfusa lint` |
 | Static analysis (clang-tidy, cppcheck, own passes) | ANAL001–007 | `cpfusa analyze` |
 | Requirements traceability and coverage | — | `cpfusa trace` |
-| Requirements import/export (CSV) | — | `cpfusa req import|export` |
+| Requirements import/export (CSV, DOORS ReqIF, Polarion XML) | — | `cpfusa req import|export` |
+| Cyclomatic complexity analysis (DO-178C §6.3.4) | COMP001 | `cpfusa comp` |
+| SPDX 2.2 / 2.3 / 3.0.1 SBOM, provenance, artifact manifest | — | `cpfusa release [--spdx-version 2.2|2.3|3.0.1]` |
 | Test evidence collection (CTest) | — | `cpfusa verify` |
 | Cybersecurity analysis — 20 CWE-mapped rules | CYBER001–020 | `cpfusa cyber` |
 | Hazard Analysis and Risk Assessment | HARA001–005 | `cpfusa hara` |
@@ -44,7 +46,7 @@ Capabilities:
 | Threat Analysis and Risk Assessment (ISO 21434) | — | `cpfusa tara` |
 | dFMEA generation from source declarations | — | `cpfusa fmea` |
 | GSN Safety case assembly | — | `cpfusa safety-case` |
-| SPDX 3.0.1 SBOM, provenance, artifact manifest | — | `cpfusa release` |
+| SBOM (SPDX 2.2/2.3/3.0.1), provenance, artifact manifest | — | `cpfusa release` |
 | Tool qualification suite | — | `cpfusa qualify` |
 | ZIP audit evidence bundle | — | `cpfusa audit-pack` |
 | Dependency vulnerability scan | — | `cpfusa vuln` |

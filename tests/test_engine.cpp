@@ -1,4 +1,4 @@
-//fusa:test REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005 REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004
+//fusa:test REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005 REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004 REQ-COUP003 REQ-HARA005 REQ-ISO26262002 REQ-ISO26262003
 #include <catch2/catch_all.hpp>
 #include "engine/engine.hpp"
 #include "engine/rules.hpp"
@@ -114,9 +114,9 @@ TEST_CASE("engine: FUSA005 passes when CHANGELOG.md exists with content", "[engi
 
 // ─── default engine ────────────────────────────────────────────────────────────
 
-TEST_CASE("engine: default engine has five built-in rules", "[engine]") {
+TEST_CASE("engine: default engine has nine built-in rules", "[engine]") {
     auto eng = engine::make_default_engine();
-    REQUIRE(eng.rules().size() == 5);
+    REQUIRE(eng.rules().size() == 9);
 }
 
 TEST_CASE("engine: default engine fires FUSA001 and FUSA004 on empty dir", "[engine]") {
@@ -157,4 +157,114 @@ TEST_CASE("engine: all findings have non-empty remediation", "[engine]") {
     REQUIRE_FALSE(findings.empty());
     for (const auto& f : findings)
         REQUIRE_FALSE(f.remediation.empty());
+}
+
+// ─── COUP003 — coupling evidence ──────────────────────────────────────────────
+
+TEST_CASE("engine: COUP003 fires on DO-178C project without coupling-report.json", "[engine][coup003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.standard = "DO-178C";
+    auto findings = engine::make_coup003().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "COUP003"));
+}
+
+TEST_CASE("engine: COUP003 passes when coupling-report.json exists", "[engine][coup003]") {
+    TempDir tmp;
+    tmp.write("coupling-report.json", R"({"kind":"coupling-report"})");
+    config::ProjectConfig cfg;
+    cfg.standard = "DO-178C";
+    REQUIRE(engine::make_coup003().check(tmp.path(), cfg).empty());
+}
+
+TEST_CASE("engine: COUP003 does not fire for non-DO178C projects", "[engine][coup003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.standard = "ISO26262";
+    REQUIRE(engine::make_coup003().check(tmp.path(), cfg).empty());
+}
+
+// ─── HARA005 — ASIL mismatch ──────────────────────────────────────────────────
+
+TEST_CASE("engine: HARA005 fires when hara has ASIL-D and project is ASIL-A", "[engine][hara005]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json", R"({
+        "hazards": [
+            {"id": "H-001", "risk": {"asil": "ASIL-D"}}
+        ]
+    })");
+    config::ProjectConfig cfg;
+    cfg.asil = "ASIL-A";
+    auto findings = engine::make_hara005().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "HARA005"));
+}
+
+TEST_CASE("engine: HARA005 passes when hara ASIL matches project ASIL", "[engine][hara005]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json", R"({
+        "hazards": [
+            {"id": "H-001", "risk": {"asil": "ASIL-B"}}
+        ]
+    })");
+    config::ProjectConfig cfg;
+    cfg.asil = "ASIL-D";
+    REQUIRE(engine::make_hara005().check(tmp.path(), cfg).empty());
+}
+
+TEST_CASE("engine: HARA005 skips when no asil in config", "[engine][hara005]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json", R"({"hazards": []})");
+    config::ProjectConfig cfg;
+    cfg.asil = "";
+    REQUIRE(engine::make_hara005().check(tmp.path(), cfg).empty());
+}
+
+// ─── ISO26262002 — ASIL on requirements ───────────────────────────────────────
+
+TEST_CASE("engine: ISO26262002 fires when req has no asil field in ISO26262 project", "[engine][iso26262002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"({"requirements":[{"id":"REQ-001","title":"T"}]})");
+    config::ProjectConfig cfg;
+    cfg.standard = "ISO26262";
+    auto findings = engine::make_iso26262002().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "ISO26262002"));
+}
+
+TEST_CASE("engine: ISO26262002 passes when all reqs have asil field", "[engine][iso26262002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"({"requirements":[{"id":"REQ-001","title":"T","asil":"ASIL-B"}]})");
+    config::ProjectConfig cfg;
+    cfg.standard = "ISO26262";
+    REQUIRE(engine::make_iso26262002().check(tmp.path(), cfg).empty());
+}
+
+TEST_CASE("engine: ISO26262002 does not fire for non-ISO26262 standard", "[engine][iso26262002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"({"requirements":[{"id":"REQ-001","title":"T"}]})");
+    config::ProjectConfig cfg;
+    cfg.standard = "IEC61508";
+    REQUIRE(engine::make_iso26262002().check(tmp.path(), cfg).empty());
+}
+
+// ─── ISO26262003 — tool qualification failures ────────────────────────────────
+
+TEST_CASE("engine: ISO26262003 fires when qualify-report has failures", "[engine][iso26262003]") {
+    TempDir tmp;
+    tmp.write("qualify-report.json", R"({"passed":5,"failed":1,"total":6})");
+    config::ProjectConfig cfg;
+    auto findings = engine::make_iso26262003().check(tmp.path(), cfg);
+    REQUIRE(has_finding(findings, "ISO26262003"));
+}
+
+TEST_CASE("engine: ISO26262003 passes when qualify-report has zero failures", "[engine][iso26262003]") {
+    TempDir tmp;
+    tmp.write("qualify-report.json", R"({"passed":8,"failed":0,"total":8})");
+    config::ProjectConfig cfg;
+    REQUIRE(engine::make_iso26262003().check(tmp.path(), cfg).empty());
+}
+
+TEST_CASE("engine: ISO26262003 does not fire when qualify-report.json absent", "[engine][iso26262003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    REQUIRE(engine::make_iso26262003().check(tmp.path(), cfg).empty());
 }

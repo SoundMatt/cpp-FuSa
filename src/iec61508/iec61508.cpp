@@ -50,6 +50,7 @@ std::vector<Objective> baseline_objectives() {
         {"3-B.3",  "Part 3", "Annex B","Dynamic analysis / coverage",              false, false, true,  true},
         {"3-B.4",  "Part 3", "Annex B","Requirements traceability",                true,  true,  true,  true},
         {"3-B.5",  "Part 3", "Annex B","Tool qualification",                       false, false, true,  true},
+        {"3-B.6",  "Part 3", "Annex B","Software configuration index",            false, true,  true,  true},
         {"2-7.1",  "Part 2", "§7.1",  "Hardware safety requirements",              true,  true,  true,  true},
         {"2-8.1",  "Part 2", "§8.1",  "Safety case",                              true,  true,  true,  true},
     };
@@ -65,15 +66,20 @@ bool is_required(const Objective& obj, SIL sil) {
 }
 
 Status detect_status(const std::string& id, const fs::path& dir) {
+    if (id == "1-7.2") return fs::exists(dir / ".fusa-hara.json") ? Status::Addressed : Status::Gap;
     if (id == "3-7.1") return fs::exists(dir / ".fusa-reqs.json") ? Status::Partial : Status::Gap;
     if (id == "3-7.3") return fs::exists(dir / ".fusa.json")      ? Status::Partial : Status::Gap;
-    if (id == "3-7.4") return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
+    if (id == "3-7.4") {
+        if (fs::exists(dir / "fmea.json") && fs::exists(dir / ".fusa-evidence.json")) return Status::Addressed;
+        return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
+    }
     if (id == "3-7.5") return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
     if (id == "3-B.1") return fs::exists(dir / ".fusa.json")      ? Status::Partial : Status::Gap;
     if (id == "3-B.2") return fs::exists(dir / "cyber-report.json")? Status::Partial : Status::Gap;
     if (id == "3-B.3") return fs::exists(dir / "coverage-report.json") ? Status::Addressed : Status::Gap;
     if (id == "3-B.4") return fs::exists(dir / ".fusa-reqs.json") ? Status::Addressed : Status::Gap;
     if (id == "3-B.5") return fs::exists(dir / "qualify-report.json") ? Status::Addressed : Status::Gap;
+    if (id == "3-B.6") return fs::exists(dir / "sci.json") ? Status::Addressed : Status::Gap;
     if (id == "2-8.1") return fs::exists(dir / "safety-case.json") ? Status::Partial : Status::Gap;
     return Status::Gap;
 }

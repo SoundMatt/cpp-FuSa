@@ -40,6 +40,7 @@
 #include "../iso21434/iso21434.hpp"
 #include "../unece/unece.hpp"
 #include "../ast/ast.hpp"
+#include "../comp/comp.hpp"
 #include "cpfusa/fusa.hpp"
 
 #include <CLI/CLI.hpp>
@@ -424,7 +425,9 @@ int run(int argc, char* argv[]) {
     // ── release ───────────────────────────────────────────────────────────────
     auto* release_cmd = app.add_subcommand("release", "Generate SBOM, provenance, and artifact manifest");
     bool release_full = false;
+    std::string spdx_ver_str = "3.0.1";
     release_cmd->add_flag("--full", release_full, "Also run tara, fmea, safety-case before packaging");
+    release_cmd->add_option("--spdx-version", spdx_ver_str, "SBOM SPDX version: 3.0.1 (default), 2.3, 2.2");
     release_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
@@ -447,8 +450,41 @@ int run(int argc, char* argv[]) {
         auto prov_r = release::build_provenance(dir, *cfg_opt);
         if (!is_ok(prov_r)) { print_err(error_of(prov_r)); std::exit(1); }
         auto manifest = release::hash_artifacts(dir);
-        auto wr = release::write_all(dir, value_of(sbom_r), value_of(prov_r), manifest);
-        if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
+        auto spdx_ver = release::parse_spdx_version(spdx_ver_str);
+        if (spdx_ver != release::SpdxVersion::V3_0_1) {
+            release::write_sbom(dir / std::string(release::SBOMFile), value_of(sbom_r), spdx_ver);
+            auto prov_manifest = release::hash_artifacts(dir);
+            (void)prov_manifest;
+            // Write provenance and manifest separately
+            nlohmann::json pj;
+            pj["schemaVersion"] = std::string(SpecVersion);
+            pj["kind"]          = "provenance";
+            pj["tool"]          = "cpp-FuSa";
+            pj["generatedAt"]   = value_of(prov_r).generated_at;
+            pj["format"]        = "x-FuSa provenance v1";
+            pj["module"]        = "github.com/SoundMatt/cpp-FuSa";
+            pj["builder"]       = "local";
+            pj["vcsRevision"]   = value_of(prov_r).vcs_revision;
+            pj["vcsModified"]   = value_of(prov_r).vcs_modified;
+            pj["os"]            = value_of(prov_r).platform;
+            std::ofstream pf(dir / std::string(release::ProvenanceFile));
+            pf << pj.dump(2) << "\n";
+            nlohmann::json mj;
+            mj["schemaVersion"] = std::string(SpecVersion);
+            mj["kind"]          = "artifact-manifest";
+            mj["tool"]          = "cpp-FuSa";
+            mj["generatedAt"]   = manifest.generated_at;
+            mj["format"]        = "x-FuSa manifest v1";
+            nlohmann::json ar = nlohmann::json::array();
+            for (const auto& a : manifest.artifacts)
+                ar.push_back({{"path", a.path}, {"sha256", a.sha256}});
+            mj["artifacts"] = ar;
+            std::ofstream mf(dir / std::string(release::ManifestFile));
+            mf << mj.dump(2) << "\n";
+        } else {
+            auto wr = release::write_all(dir, value_of(sbom_r), value_of(prov_r), manifest);
+            if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
+        }
         print_ok("sbom.json written");
         print_ok("provenance.json written");
         print_ok("artifact-manifest.json written");
@@ -1119,6 +1155,25 @@ int run(int argc, char* argv[]) {
         if (!ast_out.empty())   ropts.output  = ast_out;
         (void)report::write_report(findings, *cfg_opt, ropts);
         std::exit(report::exit_code(findings, false));
+    });
+
+    // ── comp ──────────────────────────────────────────────────────────────────
+    auto* comp_cmd = app.add_subcommand("comp", "Cyclomatic complexity analysis (DO-178C)");
+    int comp_threshold = comp::THRESHOLD_DAL_B;
+    std::string comp_output;
+    comp_cmd->add_option("--threshold", comp_threshold, "Max V(G) before violation (default 10)");
+    comp_cmd->add_option("--output", comp_output, "Write JSON report to file");
+    comp_cmd->callback([&]() -> void {
+        fs::path dir{dir_str};
+        auto cfg_opt = load_config(dir);
+        if (!cfg_opt) { std::exit(3); }
+        auto r = comp::analyse(dir, cfg_opt->project, comp_threshold);
+        if (!comp_output.empty()) {
+            comp::write_json(fs::path(comp_output), r);
+            print_ok(std::string(comp::COMP_REPORT_FILE) + " written");
+        }
+        comp::render_text(r);
+        if (r.violations > 0) std::exit(1);
     });
 
     // §2.3: usage errors → exit 2; parse success (including --help/--version) → 0

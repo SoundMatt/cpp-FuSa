@@ -212,3 +212,139 @@ TEST_CASE("trace: render_req includes req ID in output", "[trace][trace007]") {
     auto anns = trace::scan_annotations(TempDir{}.path());
     REQUIRE(trace::render_req(req, anns).find("REQ-042") != std::string::npos);
 }
+
+// ─── asil field round-trip ───────────────────────────────────────────────────
+
+TEST_CASE("trace: requirement asil field round-trips through save and load", "[trace]") {
+    TempDir tmp;
+    trace::Requirement r;
+    r.id       = "REQ-ASIL-001";
+    r.title    = "ASIL test requirement";
+    r.severity = "safety";
+    r.asil     = "ASIL-B";
+    std::vector<trace::Requirement> reqs{r};
+    REQUIRE(trace::save_requirements(tmp.path(), reqs));
+    auto result = trace::load_requirements(tmp.path());
+    REQUIRE(is_ok(result));
+    const auto& loaded = value_of(result);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].asil == "ASIL-B");
+}
+
+TEST_CASE("trace: export csv includes asil column", "[trace]") {
+    trace::Requirement r;
+    r.id       = "REQ-001";
+    r.title    = "Test req";
+    r.severity = "safety";
+    r.asil     = "ASIL-B";
+    std::vector<trace::Requirement> reqs{r};
+    std::string csv = trace::export_csv(reqs);
+    REQUIRE(csv.find("asil") != std::string::npos);
+    REQUIRE(csv.find("ASIL-B") != std::string::npos);
+}
+
+// ─── DOORS ReqIF import/export ───────────────────────────────────────────────
+
+TEST_CASE("trace: import doors reads SPEC-OBJECT elements", "[trace]") {
+    TempDir tmp;
+    tmp.write("reqs.reqif", R"(<?xml version="1.0"?>
+<REQ-IF>
+  <CORE-CONTENT>
+    <SPEC-OBJECTS>
+      <SPEC-OBJECT>
+        <VALUES>
+          <ATTRIBUTE-VALUE-STRING THE-VALUE="REQ-DOORS-001"/>
+          <ATTRIBUTE-VALUE-STRING THE-VALUE="Doors requirement one"/>
+        </VALUES>
+      </SPEC-OBJECT>
+      <SPEC-OBJECT>
+        <VALUES>
+          <ATTRIBUTE-VALUE-STRING THE-VALUE="REQ-DOORS-002"/>
+          <ATTRIBUTE-VALUE-STRING THE-VALUE="Doors requirement two"/>
+        </VALUES>
+      </SPEC-OBJECT>
+    </SPEC-OBJECTS>
+  </CORE-CONTENT>
+</REQ-IF>
+)");
+    std::vector<trace::Requirement> reqs;
+    auto result = trace::import_doors(tmp.path() / "reqs.reqif", reqs);
+    REQUIRE(is_ok(result));
+    REQUIRE(value_of(result) == 2);
+    REQUIRE(reqs.size() == 2);
+    REQUIRE(reqs[0].id == "REQ-DOORS-001");
+    REQUIRE(reqs[0].title == "Doors requirement one");
+}
+
+TEST_CASE("trace: import doors skips duplicates", "[trace]") {
+    TempDir tmp;
+    tmp.write("reqs.reqif", R"(<?xml version="1.0"?>
+<REQ-IF>
+  <CORE-CONTENT>
+    <SPEC-OBJECTS>
+      <SPEC-OBJECT>
+        <VALUES>
+          <ATTRIBUTE-VALUE-STRING THE-VALUE="REQ-001"/>
+          <ATTRIBUTE-VALUE-STRING THE-VALUE="Already exists"/>
+        </VALUES>
+      </SPEC-OBJECT>
+    </SPEC-OBJECTS>
+  </CORE-CONTENT>
+</REQ-IF>
+)");
+    trace::Requirement existing;
+    existing.id = "REQ-001";
+    std::vector<trace::Requirement> reqs{existing};
+    auto result = trace::import_doors(tmp.path() / "reqs.reqif", reqs);
+    REQUIRE(is_ok(result));
+    REQUIRE(value_of(result) == 0);
+    REQUIRE(reqs.size() == 1);
+}
+
+TEST_CASE("trace: export doors produces valid XML", "[trace]") {
+    trace::Requirement r;
+    r.id    = "REQ-001";
+    r.title = "Safety boot check";
+    r.asil  = "ASIL-B";
+    std::vector<trace::Requirement> reqs{r};
+    std::string xml = trace::export_doors(reqs);
+    REQUIRE(xml.find("REQ-IF") != std::string::npos);
+    REQUIRE(xml.find("REQ-001") != std::string::npos);
+    REQUIRE(xml.find("Safety boot check") != std::string::npos);
+}
+
+// ─── Polarion XML import/export ──────────────────────────────────────────────
+
+TEST_CASE("trace: import polarion reads workItem elements", "[trace]") {
+    TempDir tmp;
+    tmp.write("polarion.xml", R"(<?xml version="1.0"?>
+<workItems>
+  <workItem id="REQ-POL-001">
+    <title>Polarion requirement one</title>
+  </workItem>
+  <workItem id="REQ-POL-002">
+    <title>Polarion requirement two</title>
+  </workItem>
+</workItems>
+)");
+    std::vector<trace::Requirement> reqs;
+    auto result = trace::import_polarion(tmp.path() / "polarion.xml", reqs);
+    REQUIRE(is_ok(result));
+    REQUIRE(value_of(result) == 2);
+    REQUIRE(reqs.size() == 2);
+    REQUIRE(reqs[0].id == "REQ-POL-001");
+    REQUIRE(reqs[0].title == "Polarion requirement one");
+}
+
+TEST_CASE("trace: export polarion produces XML with workItem elements", "[trace]") {
+    trace::Requirement r;
+    r.id    = "REQ-001";
+    r.title = "Safety requirement";
+    r.asil  = "ASIL-C";
+    std::vector<trace::Requirement> reqs{r};
+    std::string xml = trace::export_polarion(reqs);
+    REQUIRE(xml.find("workItem") != std::string::npos);
+    REQUIRE(xml.find("REQ-001") != std::string::npos);
+    REQUIRE(xml.find("Safety requirement") != std::string::npos);
+    REQUIRE(xml.find("ASIL-C") != std::string::npos);
+}

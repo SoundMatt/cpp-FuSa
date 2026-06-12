@@ -39,6 +39,10 @@ Engine make_default_engine() {
     e.register_rule(make_fusa003());
     e.register_rule(make_fusa004());
     e.register_rule(make_fusa005());
+    e.register_rule(make_coup003());
+    e.register_rule(make_hara005());
+    e.register_rule(make_iso26262002());
+    e.register_rule(make_iso26262003());
     return e;
 }
 

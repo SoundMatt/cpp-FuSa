@@ -5,7 +5,6 @@
 #include <regex>
 #include <set>
 #include <sstream>
-#include <algorithm>
 #include <iomanip>
 
 namespace fs = std::filesystem;
@@ -40,6 +39,7 @@ Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
             r.description  = item.value("description", "");
             r.standard_ref = item.value("standard_ref", "");
             r.severity     = item.value("severity", "safety");
+            r.asil         = item.value("asil", "");
             reqs.push_back(std::move(r));
         }
         return reqs;
@@ -231,6 +231,7 @@ std::string render_json(const TraceResult& result,
         entry["title"]       = req.title;
         entry["severity"]    = req.severity;
         entry["standardRef"] = req.standard_ref;
+        if (!req.asil.empty()) entry["asil"] = req.asil;
 
         json impls = json::array();
         json tests = json::array();
@@ -297,18 +298,19 @@ Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
     for (const auto& r : reqs) existing.insert(r.id);
 
     std::string line;
-    std::getline(f, line); // skip header: id,title,description,standard_ref,severity
+    std::getline(f, line); // skip header: id,title,description,standard_ref,severity,asil
     int added = 0;
     while (std::getline(f, line)) {
         if (line.empty()) continue;
-        // Minimal CSV parse: split on first 4 commas, rest is description.
+        // Minimal CSV parse: split on first 5 commas, rest is asil.
         std::istringstream ss(line);
-        std::string id, title, desc, std_ref, sev;
+        std::string id, title, desc, std_ref, sev, asil;
         std::getline(ss, id,      ',');
         std::getline(ss, title,   ',');
         std::getline(ss, desc,    ',');
         std::getline(ss, std_ref, ',');
-        std::getline(ss, sev);
+        std::getline(ss, sev,     ',');
+        std::getline(ss, asil);
         if (id.empty()) continue;
         if (existing.count(id)) continue;
         Requirement r;
@@ -317,6 +319,7 @@ Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
         r.description  = desc;
         r.standard_ref = std_ref;
         r.severity     = sev.empty() ? "safety" : sev;
+        r.asil         = asil;
         reqs.push_back(std::move(r));
         existing.insert(id);
         ++added;
@@ -326,7 +329,7 @@ Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
 
 std::string export_csv(const std::vector<Requirement>& reqs) {
     std::ostringstream out;
-    out << "id,title,description,standard_ref,severity\n";
+    out << "id,title,description,standard_ref,severity,asil\n";
     for (const auto& r : reqs) {
         // Minimal escaping: replace comma in fields with semicolon.
         auto esc = [](const std::string& s) {
@@ -338,7 +341,8 @@ std::string export_csv(const std::vector<Requirement>& reqs) {
             << esc(r.title)        << ','
             << esc(r.description)  << ','
             << esc(r.standard_ref) << ','
-            << esc(r.severity)     << '\n';
+            << esc(r.severity)     << ','
+            << esc(r.asil)         << '\n';
     }
     return out.str();
 }
@@ -347,13 +351,15 @@ bool save_requirements(const fs::path& dir, const std::vector<Requirement>& reqs
     auto path = dir / ".fusa-reqs.json";
     json arr  = json::array();
     for (const auto& r : reqs) {
-        arr.push_back({
+        json obj = {
             {"id",           r.id},
             {"title",        r.title},
             {"description",  r.description},
             {"standard_ref", r.standard_ref},
             {"severity",     r.severity}
-        });
+        };
+        if (!r.asil.empty()) obj["asil"] = r.asil;
+        arr.push_back(obj);
     }
     json doc;
     doc["requirements"] = arr;
@@ -361,6 +367,157 @@ bool save_requirements(const fs::path& dir, const std::vector<Requirement>& reqs
     if (!f) return false;
     f << doc.dump(2) << "\n";
     return true;
+}
+
+// DOORS ReqIF XML import/export
+//fusa:req REQ-TRACE008
+Result<int> import_doors(const fs::path& file, std::vector<Requirement>& reqs) {
+    std::ifstream f(file);
+    if (!f) return std::string("cannot open: ") + file.string();
+
+    std::set<std::string> existing;
+    for (const auto& r : reqs) existing.insert(r.id);
+
+    std::string content((std::istreambuf_iterator<char>(f)), {});
+    int added = 0;
+
+    // Line-by-line approach: look for THE-VALUE="..." attributes
+    // Each SPEC-OBJECT has two key attribute values: the ID and the title
+    std::istringstream ss(content);
+    std::string line;
+    bool in_spec_object = false;
+    std::vector<std::string> vals;
+
+    static const std::regex open_re(R"X(<SPEC-OBJECT[\s>])X");
+    static const std::regex close_re(R"X(</SPEC-OBJECT>)X");
+    static const std::regex val_re(R"X(THE-VALUE="([^"]+)")X");
+
+    while (std::getline(ss, line)) {
+        if (std::regex_search(line, open_re)) {
+            in_spec_object = true;
+            vals.clear();
+        }
+        if (in_spec_object) {
+            std::sregex_iterator it(line.begin(), line.end(), val_re);
+            std::sregex_iterator end;
+            for (; it != end; ++it) {
+                vals.push_back((*it)[1].str());
+            }
+        }
+        if (in_spec_object && std::regex_search(line, close_re)) {
+            in_spec_object = false;
+            if (!vals.empty()) {
+                std::string id    = vals[0];
+                std::string title = vals.size() > 1 ? vals[1] : id;
+                if (!id.empty() && !existing.count(id)) {
+                    Requirement r;
+                    r.id       = id;
+                    r.title    = title;
+                    r.severity = "safety";
+                    reqs.push_back(r);
+                    existing.insert(id);
+                    ++added;
+                }
+            }
+            vals.clear();
+        }
+    }
+    return added;
+}
+
+std::string export_doors(const std::vector<Requirement>& reqs) {
+    std::ostringstream out;
+    out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        << "<REQ-IF xmlns=\"http://www.omg.org/spec/ReqIF/20110401/reqif.xsd\">\n"
+        << "  <CORE-CONTENT>\n"
+        << "    <SPEC-OBJECTS>\n";
+    for (const auto& r : reqs) {
+        out << "      <SPEC-OBJECT>\n"
+            << "        <VALUES>\n"
+            << "          <ATTRIBUTE-VALUE-STRING THE-VALUE=\"" << r.id << "\"/>\n"
+            << "          <ATTRIBUTE-VALUE-STRING THE-VALUE=\"" << r.title << "\"/>\n";
+        if (!r.asil.empty()) {
+            out << "          <ATTRIBUTE-VALUE-STRING THE-VALUE=\"" << r.asil << "\"/>\n";
+        }
+        out << "        </VALUES>\n"
+            << "      </SPEC-OBJECT>\n";
+    }
+    out << "    </SPEC-OBJECTS>\n"
+        << "  </CORE-CONTENT>\n"
+        << "</REQ-IF>\n";
+    return out.str();
+}
+
+// Polarion work-item XML import/export
+//fusa:req REQ-TRACE009
+Result<int> import_polarion(const fs::path& file, std::vector<Requirement>& reqs) {
+    std::ifstream f(file);
+    if (!f) return std::string("cannot open: ") + file.string();
+
+    std::set<std::string> existing;
+    for (const auto& r : reqs) existing.insert(r.id);
+
+    std::string content((std::istreambuf_iterator<char>(f)), {});
+    int added = 0;
+
+    // Look for <workItem id="REQ-001"> ... <title>Title text</title> ... </workItem>
+    static const std::regex wi_re(R"X(<workItem[^>]*id="([^"]+)"[^>]*>)X");
+    static const std::regex title_re(R"X(<title>([^<]+)</title>)X");
+    static const std::regex close_wi_re(R"X(</workItem>)X");
+
+    std::istringstream ss(content);
+    std::string line;
+    bool in_wi = false;
+    std::string current_id;
+    std::string current_title;
+
+    while (std::getline(ss, line)) {
+        std::smatch m;
+        if (!in_wi && std::regex_search(line, m, wi_re)) {
+            in_wi = true;
+            current_id = m[1].str();
+            current_title.clear();
+        }
+        if (in_wi) {
+            std::smatch tm;
+            if (std::regex_search(line, tm, title_re)) {
+                current_title = tm[1].str();
+            }
+        }
+        if (in_wi && std::regex_search(line, close_wi_re)) {
+            in_wi = false;
+            if (!current_id.empty() && !existing.count(current_id)) {
+                Requirement r;
+                r.id       = current_id;
+                r.title    = current_title.empty() ? current_id : current_title;
+                r.severity = "safety";
+                reqs.push_back(r);
+                existing.insert(current_id);
+                ++added;
+            }
+            current_id.clear();
+            current_title.clear();
+        }
+    }
+    return added;
+}
+
+std::string export_polarion(const std::vector<Requirement>& reqs) {
+    std::ostringstream out;
+    out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        << "<workItems>\n";
+    for (const auto& r : reqs) {
+        out << "  <workItem id=\"" << r.id << "\">\n"
+            << "    <title>" << r.title << "</title>\n"
+            << "    <description>" << r.description << "</description>\n"
+            << "    <severity>" << r.severity << "</severity>\n";
+        if (!r.asil.empty()) {
+            out << "    <asil>" << r.asil << "</asil>\n";
+        }
+        out << "  </workItem>\n";
+    }
+    out << "</workItems>\n";
+    return out.str();
 }
 
 } // namespace cpfusa::trace

@@ -54,6 +54,8 @@ std::vector<Objective> baseline_objectives() {
         {"8-6.2",  "Part 8", "§6.2",  "Safety manual",                            true,  true,  true,  true,  Status::Gap, ""},
         {"9-1.1",  "Part 9", "§1.1",  "ASIL-B verification independence",         false, true,  false, false, Status::Gap, ""},
         {"9-2.1",  "Part 9", "§2.1",  "Safety case",                              true,  true,  true,  true,  Status::Gap, ""},
+        {"10.4",   "Part 6", "§10.4", "Software configuration index (SCI)",       false, true,  true,  true,  Status::Gap, ""},
+        {"11.3",   "Part 6", "§11.3", "Data and control coupling analysis",       false, false, true,  true,  Status::Gap, ""},
     };
 }
 
@@ -101,6 +103,12 @@ Status detect_status(const std::string& obj_id, const fs::path& dir) {
     }
     if (obj_id == "6-4.9") {
         return fs::exists(dir / "qualify-report.json") ? Status::Addressed : Status::Gap;
+    }
+    if (obj_id == "10.4") {
+        return fs::exists(dir / "sci.json") ? Status::Addressed : Status::Gap;
+    }
+    if (obj_id == "11.3") {
+        return fs::exists(dir / "coupling-report.json") ? Status::Addressed : Status::Gap;
     }
     return Status::Gap;
 }

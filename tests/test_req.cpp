@@ -21,8 +21,8 @@ TEST_CASE("req: load from empty dir returns empty vector", "[req][req001]") {
 TEST_CASE("req: save then load round-trips requirements", "[req][req001]") {
     TempDir tmp;
     std::vector<trace::Requirement> reqs;
-    reqs.push_back({"REQ-001", "Title One", "Desc one", "ISO 26262", "safety"});
-    reqs.push_back({"REQ-002", "Title Two", "Desc two", "IEC 61508", "info"});
+    reqs.push_back({"REQ-001", "Title One", "Desc one", "ISO 26262", "safety", ""});
+    reqs.push_back({"REQ-002", "Title Two", "Desc two", "IEC 61508", "info", ""});
     REQUIRE(trace::save_requirements(tmp.path(), reqs));
     auto loaded = trace::load_requirements(tmp.path());
     REQUIRE(is_ok(loaded));
@@ -37,7 +37,7 @@ TEST_CASE("req: save then load round-trips requirements", "[req][req001]") {
 TEST_CASE("req: save writes canonical {requirements:[]} format (spec 1.2.2)", "[req][req001]") {
     TempDir tmp;
     std::vector<trace::Requirement> reqs;
-    reqs.push_back({"REQ-007", "My req", "", "", "safety"});
+    reqs.push_back({"REQ-007", "My req", "", "", "safety", ""});
     REQUIRE(trace::save_requirements(tmp.path(), reqs));
     std::ifstream f(tmp.path() / ".fusa-reqs.json");
     auto j = nlohmann::json::parse(f);
@@ -76,8 +76,8 @@ TEST_CASE("req: export_csv has header row", "[req][req002]") {
 
 TEST_CASE("req: export_csv produces one row per requirement", "[req][req002]") {
     std::vector<trace::Requirement> reqs;
-    reqs.push_back({"REQ-A", "Alpha", "Desc alpha", "ISO 26262", "safety"});
-    reqs.push_back({"REQ-B", "Beta",  "Desc beta",  "IEC 61508", "info"});
+    reqs.push_back({"REQ-A", "Alpha", "Desc alpha", "ISO 26262", "safety", ""});
+    reqs.push_back({"REQ-B", "Beta",  "Desc beta",  "IEC 61508", "info", ""});
     auto csv = trace::export_csv(reqs);
     // 1 header + 2 data rows + trailing newline = 3 non-empty lines
     std::istringstream ss(csv);
@@ -89,7 +89,7 @@ TEST_CASE("req: export_csv produces one row per requirement", "[req][req002]") {
 
 TEST_CASE("req: export_csv escapes commas in field values", "[req][req002]") {
     std::vector<trace::Requirement> reqs;
-    reqs.push_back({"REQ-C", "Title,with,commas", "Desc", "", "safety"});
+    reqs.push_back({"REQ-C", "Title,with,commas", "Desc", "", "safety", ""});
     auto csv = trace::export_csv(reqs);
     // id field must be intact
     REQUIRE(csv.find("REQ-C") != std::string::npos);
@@ -120,8 +120,8 @@ TEST_CASE("req: export_csv empty requirements yields only header", "[req][req002
 TEST_CASE("req: import_csv round-trips through export_csv", "[req][req003]") {
     TempDir tmp;
     std::vector<trace::Requirement> original;
-    original.push_back({"REQ-X", "X title", "X desc", "DO-178C", "safety"});
-    original.push_back({"REQ-Y", "Y title", "Y desc", "ISO 26262", "info"});
+    original.push_back({"REQ-X", "X title", "X desc", "DO-178C", "safety", ""});
+    original.push_back({"REQ-Y", "Y title", "Y desc", "ISO 26262", "info", ""});
 
     auto csv = trace::export_csv(original);
     auto csv_path = tmp.path() / "reqs.csv";
@@ -148,7 +148,7 @@ TEST_CASE("req: import_csv skips duplicate ids", "[req][req003]") {
     tmp.write("reqs.csv", csv);
 
     std::vector<trace::Requirement> existing;
-    existing.push_back({"REQ-DUP", "Pre-existing", "", "", "safety"});
+    existing.push_back({"REQ-DUP", "Pre-existing", "", "", "safety", ""});
 
     auto result = trace::import_csv(tmp.path() / "reqs.csv", existing);
     REQUIRE(is_ok(result));
@@ -196,8 +196,8 @@ TEST_CASE("req: import_csv default severity is safety when field missing", "[req
 TEST_CASE("req: full round-trip save to export to import to load", "[req][req001][req002][req003]") {
     TempDir tmp;
     std::vector<trace::Requirement> original;
-    original.push_back({"REQ-RT1", "Round-trip one", "Desc 1", "ISO 26262", "safety"});
-    original.push_back({"REQ-RT2", "Round-trip two", "Desc 2", "IEC 61508", "info"});
+    original.push_back({"REQ-RT1", "Round-trip one", "Desc 1", "ISO 26262", "safety", ""});
+    original.push_back({"REQ-RT2", "Round-trip two", "Desc 2", "IEC 61508", "info", ""});
 
     // Export to CSV
     auto csv = trace::export_csv(original);

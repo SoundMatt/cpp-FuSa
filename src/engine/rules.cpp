@@ -3,6 +3,9 @@
 #include <fstream>
 #include <regex>
 #include <string>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace fs = std::filesystem;
 
@@ -117,6 +120,121 @@ Rule make_fusa005() {
                             "CHANGELOG.md missing or empty — add a release history",
                             "CHANGELOG.md", 0,
                             "Create CHANGELOG.md with at least one version entry", "config"}};
+        }};
+}
+
+// COUP003 — coupling-report.json absent in DO-178C project
+//fusa:req REQ-COUP003
+Rule make_coup003() {
+    return Rule{
+        RuleInfo{"COUP003", "Coupling evidence missing",
+                 "coupling-report.json absent — run 'cpfusa coupling' for DO-178C evidence.",
+                 Severity::INFO},
+        [](const fs::path& dir, const config::ProjectConfig& cfg) -> std::vector<Finding> {
+            if (cfg.standard != "DO178C" && cfg.standard != "DO-178C") return {};
+            if (fs::exists(dir / "coupling-report.json")) return {};
+            return {Finding{"COUP003", Severity::INFO,
+                            "coupling-report.json not found — run 'cpfusa coupling'",
+                            "", 0, "cpfusa coupling", "traceability"}};
+        }};
+}
+
+// HARA005 — highest ASIL in hara exceeds project ASIL
+//fusa:req REQ-HARA005
+Rule make_hara005() {
+    return Rule{
+        RuleInfo{"HARA005", "ASIL under-allocation",
+                 "Highest hazard ASIL in .fusa-hara.json exceeds project ASIL in .fusa.json.",
+                 Severity::WARNING},
+        [](const fs::path& dir, const config::ProjectConfig& cfg) -> std::vector<Finding> {
+            auto hara_path = dir / ".fusa-hara.json";
+            if (!fs::exists(hara_path) || cfg.asil.empty()) return {};
+            // ASIL ranking: QM<A<B<C<D
+            auto rank = [](const std::string& a) -> int {
+                if (a == "ASIL-D" || a == "D") return 4;
+                if (a == "ASIL-C" || a == "C") return 3;
+                if (a == "ASIL-B" || a == "B") return 2;
+                if (a == "ASIL-A" || a == "A") return 1;
+                return 0;
+            };
+            try {
+                std::ifstream f(hara_path);
+                json j = json::parse(f);
+                int max_rank = 0;
+                std::string max_asil;
+                for (const auto& hz : j.value("hazards", json::array())) {
+                    std::string ha = hz.value("risk", json{}).value("asil", "QM");
+                    if (rank(ha) > max_rank) {
+                        max_rank = rank(ha);
+                        max_asil = ha;
+                    }
+                }
+                if (max_rank > rank(cfg.asil)) {
+                    return {Finding{"HARA005", Severity::WARNING,
+                                    "Hazard ASIL " + max_asil + " exceeds project ASIL " + cfg.asil +
+                                    " — update .fusa.json or re-evaluate hazard",
+                                    ".fusa-hara.json", 0,
+                                    "Raise project asil in .fusa.json or decompose the hazard",
+                                    "safety"}};
+                }
+            } catch (...) {}
+            return {};
+        }};
+}
+
+// ISO26262002 — requirements without asil field in ISO 26262 project
+//fusa:req REQ-ISO26262002
+Rule make_iso26262002() {
+    return Rule{
+        RuleInfo{"ISO26262002", "Requirements missing ASIL field",
+                 "Requirements in .fusa-reqs.json have no asil field (ISO 26262 project).",
+                 Severity::INFO},
+        [](const fs::path& dir, const config::ProjectConfig& cfg) -> std::vector<Finding> {
+            if (cfg.standard != "ISO26262" && cfg.standard != "ISO 26262") return {};
+            auto path = dir / ".fusa-reqs.json";
+            if (!fs::exists(path)) return {};
+            try {
+                std::ifstream f(path);
+                json j = json::parse(f);
+                const json& arr = j.is_array() ? j : j.at("requirements");
+                for (const auto& item : arr) {
+                    std::string asil = item.value("asil", "");
+                    if (asil.empty()) {
+                        return {Finding{"ISO26262002", Severity::INFO,
+                                        "One or more requirements lack an 'asil' field — add asil to .fusa-reqs.json",
+                                        ".fusa-reqs.json", 0,
+                                        "Add \"asil\": \"ASIL-B\" (or appropriate level) to each requirement",
+                                        "requirement"}};
+                    }
+                }
+            } catch (...) {}
+            return {};
+        }};
+}
+
+// ISO26262003 — qualify-report.json has failures
+//fusa:req REQ-ISO26262003
+Rule make_iso26262003() {
+    return Rule{
+        RuleInfo{"ISO26262003", "Tool qualification failures",
+                 "qualify-report.json reports one or more test failures.",
+                 Severity::WARNING},
+        [](const fs::path& dir, const config::ProjectConfig&) -> std::vector<Finding> {
+            auto path = dir / "qualify-report.json";
+            if (!fs::exists(path)) return {};
+            try {
+                std::ifstream f(path);
+                json j = json::parse(f);
+                int failed = j.value("failed", 0);
+                if (failed > 0) {
+                    return {Finding{"ISO26262003", Severity::WARNING,
+                                    std::to_string(failed) + " tool qualification case(s) failed — requalify before release",
+                                    "qualify-report.json", 0,
+                                    "Run 'cpfusa qualify' and ensure all cases pass",
+                                    "safety"}};
+                }
+            } catch (...) {}
+            return {};
         }};
 }
 

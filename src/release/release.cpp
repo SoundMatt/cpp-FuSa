@@ -142,6 +142,60 @@ std::vector<Component> parse_cmake_deps(const fs::path& cmake_file) {
 
 } // namespace
 
+SpdxVersion parse_spdx_version(const std::string& s) {
+    if (s == "2.2") return SpdxVersion::V2_2;
+    if (s == "2.3") return SpdxVersion::V2_3;
+    return SpdxVersion::V3_0_1;
+}
+
+//fusa:req REQ-RELEASE009
+void write_sbom(const fs::path& out, const SBOM& sbom, SpdxVersion ver) {
+    json j;
+    if (ver == SpdxVersion::V2_2 || ver == SpdxVersion::V2_3) {
+        std::string ver_str = (ver == SpdxVersion::V2_2) ? "SPDX-2.2" : "SPDX-2.3";
+        j["spdxVersion"]  = ver_str;
+        j["SPDXID"]       = "SPDXRef-DOCUMENT";
+        j["name"]         = sbom.project;
+        j["dataLicense"]  = "CC0-1.0";
+        j["documentNamespace"] = "https://github.com/SoundMatt/cpp-FuSa/sbom/" + sbom.project;
+        j["creationInfo"] = {{"created", sbom.generated_at},
+                              {"creators", json::array({"Tool: cpp-FuSa"})}};
+        json pkgs = json::array();
+        for (const auto& c : sbom.components) {
+            pkgs.push_back({
+                {"SPDXID",       "SPDXRef-" + c.name},
+                {"name",         c.name},
+                {"versionInfo",  c.version},
+                {"downloadLocation", "NOASSERTION"},
+                {"filesAnalyzed", false}
+            });
+        }
+        j["packages"]      = pkgs;
+        j["relationships"] = json::array();
+    } else {
+        // SPDX 3.0.1 / cpp-FuSa SBOM v1 format
+        j["schemaVersion"] = std::string(SpecVersion);
+        j["kind"]          = "sbom";
+        j["tool"]          = "cpp-FuSa";
+        j["toolVersion"]   = std::string(Version);
+        j["language"]      = "cpp";
+        j["generatedAt"]   = sbom.generated_at;
+        j["format"]        = "x-FuSa SBOM v1";
+        j["module"]        = "github.com/SoundMatt/cpp-FuSa";
+        json cs = json::array();
+        for (const auto& c : sbom.components) {
+            json cj;
+            cj["name"]    = c.name;
+            cj["version"] = c.version;
+            cj["hash"]    = c.hash.empty() ? "" : ("sha256:" + c.hash);
+            cs.push_back(cj);
+        }
+        j["components"] = cs;
+    }
+    std::ofstream f(out);
+    f << j.dump(2) << "\n";
+}
+
 //fusa:req REQ-RELEASE001 REQ-RELEASE002 REQ-RELEASE003 REQ-RELEASE004 REQ-RELEASE007 REQ-RELEASE008
 Result<SBOM> build_sbom(const fs::path& project_root, const config::ProjectConfig& cfg) {
     SBOM sbom;

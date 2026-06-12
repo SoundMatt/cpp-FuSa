@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.10.0] — 2026-06-12
+
+### Added
+- `cpfusa comp` — cyclomatic complexity analysis (DO-178C §6.3.4): COMP001 flags functions
+  exceeding the DAL-level threshold (DAL-A ≤4, DAL-B ≤10, DAL-C ≤15, DAL-D ≤20).
+  Writes `comp-report.json`. CLI: `cpfusa comp [--threshold N] [--output file]`
+- COUP003 engine rule — fires INFO when `coupling-report.json` is absent in a DO-178C project
+- HARA005 engine rule — fires WARNING when the highest hazard ASIL in `.fusa-hara.json`
+  exceeds the project ASIL declared in `.fusa.json`
+- ISO26262002 engine rule — fires INFO when any requirement lacks an `asil` field in an ISO 26262 project
+- ISO26262003 engine rule — fires WARNING when `qualify-report.json` reports test failures
+- `asil` field on `trace::Requirement` — `.fusa-reqs.json` entries accept optional `"asil": "ASIL-B"`;
+  round-trips through load/save, CSV export/import, and trace JSON output
+- SPDX 2.2 / 2.3 SBOM formats — `cpfusa release --spdx-version 2.2|2.3|3.0.1`
+- DOORS ReqIF XML import/export — `cpfusa trace import --format doors` / `export --format doors`
+- Polarion work-item XML import/export — `cpfusa trace import --format polarion` / `export --format polarion`
+- Gap-assessment objective upgrades:
+  - ISO 26262: obj `10.4` (SCI, ASIL-B+) and `11.3` (coupling, ASIL-C/D)
+  - IEC 61508: obj `3-B.6` (SCI, SIL-2+); `1-7.2` now checks `.fusa-hara.json`; `3-7.4` checks `fmea.json`
+  - DO-178C: A-2.2 detects `level: LLR` in reqs; A-6.2 maps to `check-report.json`; A-6.3 maps to `coupling-report.json`
+- 8 new requirements: REQ-COMP001, REQ-COUP003, REQ-HARA005, REQ-ISO26262002, REQ-ISO26262003,
+  REQ-TRACE008, REQ-TRACE009, REQ-RELEASE009 (total: **175 requirements**)
+
+### Tests
+- 32 new tests across `comp`, `engine`, `trace`, `release` modules
+- Total: **603 tests** (was 571)
+
 ## [0.9.2] — 2026-06-11
 
 ### Fixed

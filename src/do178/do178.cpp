@@ -100,11 +100,26 @@ bool is_required(const Objective& obj, DAL dal) {
 }
 
 Status detect_status(const std::string& id, const fs::path& dir) {
-    if (id.find("A-2.2") != std::string::npos || id.find("A-2.3") != std::string::npos ||
-        id.find("A-2.4") != std::string::npos)
+    if (id.find("A-2.2") != std::string::npos) {
+        if (!fs::exists(dir / ".fusa-reqs.json")) return Status::Gap;
+        try {
+            std::ifstream f(dir / ".fusa-reqs.json");
+            json j = json::parse(f);
+            const json& arr = j.is_array() ? j : j.at("requirements");
+            for (const auto& item : arr) {
+                if (item.value("level", "") == "LLR") return Status::Addressed;
+            }
+        } catch (...) {}
+        return Status::Partial;
+    }
+    if (id.find("A-2.3") != std::string::npos || id.find("A-2.4") != std::string::npos)
         return fs::exists(dir / ".fusa-reqs.json") ? Status::Partial : Status::Gap;
     if (id.find("A-4") != std::string::npos)
         return fs::exists(dir / "coverage-report.json") ? Status::Addressed : Status::Gap;
+    if (id.find("A-6.2") != std::string::npos)
+        return fs::exists(dir / "check-report.json") ? Status::Addressed : Status::Gap;
+    if (id.find("A-6.3") != std::string::npos)
+        return fs::exists(dir / "coupling-report.json") ? Status::Addressed : Status::Gap;
     if (id.find("A-7.2") != std::string::npos)
         return fs::exists(dir / ".fusa-problems.json") ? Status::Partial : Status::Gap;
     if (id.find("A-8") != std::string::npos)

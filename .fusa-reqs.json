@@ -192,5 +192,14 @@
 
   {"id":"REQ-REQ001","title":"CSV import with duplicate skipping","description":"import_csv() shall parse id,title,description,standard_ref,severity rows and skip any IDs already present in the target vector.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
   {"id":"REQ-REQ002","title":"CSV export with comma escaping","description":"export_csv() shall write a header row followed by one row per requirement, replacing commas inside field values with semicolons.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
-  {"id":"REQ-REQ003","title":"Canonical requirements save","description":"save_requirements() shall write {requirements:[...]} in the canonical §1.2.2 format, and load_requirements() shall read it back correctly.","standard_ref":"IEC 61508 §7.4","severity":"safety"}
+  {"id":"REQ-REQ003","title":"Canonical requirements save","description":"save_requirements() shall write {requirements:[...]} in the canonical §1.2.2 format, and load_requirements() shall read it back correctly.","standard_ref":"IEC 61508 §7.4","severity":"safety"},
+
+  {"id":"REQ-COMP001","title":"Cyclomatic complexity analysis","description":"The comp subcommand shall analyse C++ source files for cyclomatic complexity and flag functions exceeding the configured threshold.","standard_ref":"DO-178C","severity":"safety","asil":"ASIL-B"},
+  {"id":"REQ-COUP003","title":"Coupling evidence required for DO-178C","description":"COUP003 shall fire when coupling-report.json is absent in a DO-178C project, requiring the user to run cpfusa coupling.","standard_ref":"DO-178C §6.4.4.3","severity":"safety"},
+  {"id":"REQ-HARA005","title":"ASIL mismatch detection","description":"HARA005 shall fire when the highest hazard ASIL in .fusa-hara.json exceeds the project ASIL in .fusa.json.","standard_ref":"ISO 26262-3","severity":"safety"},
+  {"id":"REQ-ISO26262002","title":"ASIL field on requirements","description":"ISO26262002 shall fire when any requirement in .fusa-reqs.json lacks an asil field in an ISO 26262 project.","standard_ref":"ISO 26262-6 §6.4.6","severity":"safety"},
+  {"id":"REQ-ISO26262003","title":"Tool qualification failures","description":"ISO26262003 shall fire when qualify-report.json reports one or more test failures.","standard_ref":"ISO 26262-8 §11","severity":"safety"},
+  {"id":"REQ-TRACE008","title":"DOORS ReqIF XML import/export","description":"import_doors() shall parse SPEC-OBJECT elements from ReqIF XML. export_doors() shall produce a minimal ReqIF XML.","standard_ref":"DOORS ReqIF 1.2","severity":"info"},
+  {"id":"REQ-TRACE009","title":"Polarion work-item XML import/export","description":"import_polarion() shall parse workItem elements from Polarion XML. export_polarion() shall produce minimal Polarion XML.","standard_ref":"Polarion XML","severity":"info"},
+  {"id":"REQ-RELEASE009","title":"SPDX 2.2 and 2.3 SBOM formats","description":"write_sbom() shall support SPDX-2.2 and SPDX-2.3 formats in addition to the native cpp-FuSa SBOM v1 format.","standard_ref":"SPDX 2.3","severity":"info"}
 ]
