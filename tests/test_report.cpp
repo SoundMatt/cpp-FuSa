@@ -1,4 +1,4 @@
-//fusa:test REQ-RPT001 REQ-RPT002 REQ-RPT003 REQ-RPT004 REQ-RPT005
+//fusa:test REQ-RPT001 REQ-RPT002 REQ-RPT003 REQ-RPT004 REQ-RPT005 REQ-RPT006
 #include <catch2/catch_all.hpp>
 #include "report/report.hpp"
 #include <nlohmann/json.hpp>
@@ -61,11 +61,11 @@ TEST_CASE("report: render_text summary counts are correct", "[report][rpt001]") 
     REQUIRE(txt.find("1 info(s)") != std::string::npos);
 }
 
-// ─── render_json — spec v1.9 envelope and finding schema ─────────────────────
+// ─── render_json — spec v1.10 envelope and finding schema ─────────────────────
 
-TEST_CASE("render_json: schemaVersion is 1.9", "[report][rpt002]") {
+TEST_CASE("render_json: schemaVersion is 1.10", "[report][rpt002]") {
     auto j = json::parse(report::render_json({}, make_cfg()));
-    REQUIRE(j["schemaVersion"] == "1.9");
+    REQUIRE(j["schemaVersion"] == "1.10");
 }
 
 TEST_CASE("render_json: kind is check-report", "[report][rpt002]") {
@@ -171,6 +171,35 @@ TEST_CASE("report: render_sarif has physicalLocation on results", "[report][rpt0
     auto& locs = sarif["runs"][0]["results"][0]["locations"];
     REQUIRE(locs.is_array());
     REQUIRE(locs[0].contains("physicalLocation"));
+}
+
+// ─── endLine / endColumn (§4 MAY) ────────────────────────────────────────────
+
+TEST_CASE("render_json: finding with end_line emits endLine in location", "[report][rpt006]") {
+    Finding f = make_finding();
+    f.end_line   = 44;
+    f.end_column = 12;
+    auto j = json::parse(report::render_json({f}, make_cfg()));
+    auto& loc = j["findings"][0]["location"];
+    REQUIRE(loc["endLine"]   == 44);
+    REQUIRE(loc["endColumn"] == 12);
+}
+
+TEST_CASE("render_json: finding without end_line omits endLine", "[report][rpt006]") {
+    auto j = json::parse(report::render_json({make_finding()}, make_cfg()));
+    auto& loc = j["findings"][0]["location"];
+    REQUIRE_FALSE(loc.contains("endLine"));
+    REQUIRE_FALSE(loc.contains("endColumn"));
+}
+
+TEST_CASE("render_sarif: finding with end_line emits region endLine", "[report][rpt006]") {
+    Finding f = make_finding();
+    f.end_line   = 44;
+    f.end_column = 12;
+    auto sarif = json::parse(report::render_sarif({f}, make_cfg()));
+    auto& region = sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"];
+    REQUIRE(region["endLine"]   == 44);
+    REQUIRE(region["endColumn"] == 12);
 }
 
 // ─── exit_code ────────────────────────────────────────────────────────────────

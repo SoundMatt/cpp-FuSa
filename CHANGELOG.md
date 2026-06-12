@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.2] — 2026-06-12
+
+### Fixed
+- `trace --format json` now emits a spec §5 **top-level flat** `tags[]` array (not nested inside each requirement entry). `kind` values are now `impl`, `test`, or `sec-test`; `sec-test` is used for test annotations on cybersecurity requirements and counts toward both `testedRequirements` and `secTestedRequirements`.
+- `trace --format json` coverage block renamed from `summary` to `coverage`; field names updated to `totalRequirements`, `tracedRequirements`, `testedRequirements`, `secTestedRequirements` (spec §5 canonical names).
+- `schemaVersion` updated from `"1.9"` to `"1.10"` across all JSON outputs to reflect the current x-FuSa spec.
+- Findings JSON `location` object now emits `endLine`/`endColumn` when present (spec §4 MAY); SARIF `region` likewise emits `endLine`/`endColumn`. Fields are omitted (not emitted as `0`) when only a point location is known.
+
+### Requirements
+- 4 new requirements: REQ-TRACE013, REQ-TRACE014, REQ-TRACE015, REQ-RPT006 — total: **193 requirements**
+
+### Tests
+- 3 new tests for top-level `tags[]`, `coverage` block field names, `sec-test` kind detection
+- 3 new tests for `endLine`/`endColumn` in JSON and SARIF
+- Total: **633 tests** (was 630)
+
 ## [0.12.1] — 2026-06-12
 
 ### Fixed

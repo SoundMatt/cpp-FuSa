@@ -9,11 +9,11 @@
 
 namespace cpfusa {
 
-constexpr std::string_view Version      = "0.12.1";
+constexpr std::string_view Version      = "0.12.2";
 constexpr std::string_view VersionMajor = "0";
 constexpr std::string_view VersionMinor = "12";
-constexpr std::string_view VersionPatch = "1";
-constexpr std::string_view SpecVersion  = "1.9";
+constexpr std::string_view VersionPatch = "2";
+constexpr std::string_view SpecVersion  = "1.10";
 
 enum class Severity { INFO, WARNING, ERROR };
 
@@ -37,6 +37,8 @@ struct Finding {
     std::string standard_id;   // canonical standard id (§2.4.1)
     std::string clause;
     int         column{0};
+    int         end_line{0};    // §4 MAY — end of affected span
+    int         end_column{0};  // §4 MAY — end of affected span
     std::string fingerprint;   // sha256:… (§4.2)
 
     Finding() = default;
