@@ -1382,6 +1382,14 @@
       "standard_ref": "x-FuSa spec \u00a75",
       "severity": "safety",
       "asil": ""
+    },
+    {
+      "id": "REQ-ANAL013",
+      "title": "Analyze findings emit project-relative file paths",
+      "description": "All findings produced by analyze own passes and clang-tidy integration shall emit project-relative file paths (not absolute OS paths) per spec \u00a74 MUST portable fingerprints.",
+      "standard_ref": "x-FuSa spec \u00a74",
+      "severity": "safety",
+      "asil": ""
     }
   ]
 }
