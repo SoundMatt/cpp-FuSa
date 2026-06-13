@@ -1,4 +1,4 @@
-//fusa:test REQ-ANAL001 REQ-ANAL002 REQ-ANAL003 REQ-ANAL004 REQ-ANAL005 REQ-ANAL008 REQ-ANAL009 REQ-ANAL010 REQ-ANAL011 REQ-ANAL012
+//fusa:test REQ-ANAL001 REQ-ANAL002 REQ-ANAL003 REQ-ANAL004 REQ-ANAL005 REQ-ANAL008 REQ-ANAL009 REQ-ANAL010 REQ-ANAL011 REQ-ANAL012 REQ-ANAL013
 #include <catch2/catch_all.hpp>
 #include "analyze/analyze.hpp"
 #include "testutil/testutil.hpp"
@@ -246,4 +246,28 @@ TEST_CASE("analyze: ANAL012 passes with 3 or fewer return points", "[analyze][an
         "}\n");
     auto f = analyze::check_multiple_returns(tmp.path());
     REQUIRE(f.empty());
+}
+
+// ─── §4 MUST: findings emit project-relative file paths ──────────────────────
+
+TEST_CASE("analyze: own-pass findings emit relative not absolute paths", "[analyze][anal013]") {
+    //fusa:test REQ-ANAL013
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "int g_counter = 0;\nvoid inc() { g_counter = 1; }\n");
+    auto f = analyze::check_thread_unsafe_global(tmp.path());
+    REQUIRE(has_finding(f, "ANAL003"));
+    for (const auto& finding : f) {
+        if (finding.rule_id == "ANAL003") {
+            // Must not be an absolute path.
+            REQUIRE_FALSE(finding.file.empty());
+            REQUIRE(finding.file[0] != '/');
+#ifdef _WIN32
+            REQUIRE(finding.file.size() < 3 || finding.file[1] != ':');
+#endif
+            // Must be just the relative portion.
+            bool has_rel = (finding.file.find("src/bad.cpp") != std::string::npos ||
+                            finding.file.find("src\\bad.cpp") != std::string::npos);
+            REQUIRE(has_rel);
+        }
+    }
 }

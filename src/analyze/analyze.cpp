@@ -30,6 +30,7 @@ using Lines = std::vector<std::pair<int, std::string>>;
     return result;
 }
 
+//fusa:req REQ-ANAL013
 void for_each_source(const fs::path& dir,
                      const std::function<void(const fs::path&, const Lines&)>& fn) {
     if (!fs::exists(dir)) return;
@@ -38,7 +39,9 @@ void for_each_source(const fs::path& dir,
              dir, fs::directory_options::skip_permission_denied)) {
         if (!entry.is_regular_file()) continue;
         if (!std::regex_search(entry.path().string(), ext_re)) continue;
-        fn(entry.path(), read_lines(entry.path()));
+        // §4 MUST: emit project-relative paths so findings are portable.
+        fs::path rel = fs::relative(entry.path(), dir);
+        fn(rel, read_lines(entry.path()));
     }
 }
 
@@ -144,9 +147,13 @@ std::vector<Finding> run_clang_tidy(const fs::path& dir, const std::string& bin)
         if (!std::regex_search(line, m, diag_re) || m.size() < 6) continue;
         Severity sev = (m[3] == "error") ? Severity::ERROR
                      : (m[3] == "warning") ? Severity::WARNING : Severity::INFO;
+        // §4 MUST: relativize clang-tidy's absolute file path.
+        std::string rel_file;
+        try { rel_file = fs::relative(fs::path(m[1].str()), dir).generic_string(); }
+        catch (...) { rel_file = m[1].str(); }
         out.push_back({"ANAL001", sev,
                        "[clang-tidy:" + m[5].str() + "] " + m[4].str(),
-                       m[1].str(), std::stoi(m[2].str()), ""});
+                       rel_file, std::stoi(m[2].str()), ""});
     }
     return out;
 }
