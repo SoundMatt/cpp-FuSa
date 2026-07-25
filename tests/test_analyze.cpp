@@ -262,7 +262,7 @@ TEST_CASE("analyze: own-pass findings emit relative not absolute paths", "[analy
             REQUIRE_FALSE(finding.file.empty());
             REQUIRE(finding.file[0] != '/');
 #ifdef _WIN32
-            REQUIRE(finding.file.size() < 3 || finding.file[1] != ':');
+            REQUIRE((finding.file.size() < 3 || finding.file[1] != ':'));
 #endif
             // Must be just the relative portion.
             bool has_rel = (finding.file.find("src/bad.cpp") != std::string::npos ||
