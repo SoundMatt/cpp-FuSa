@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.6] — 2026-07-25
+
+### Fixed
+- `SpecVersion` constant updated from `"1.10"` to `"1.10.4"` (x-FuSa spec alignment)
+- MSVC C2338 compile error in `test_analyze.cpp`: wrap compound `REQUIRE` expression in parentheses
+
 ## [0.12.3] — 2026-06-12
 
 ### Fixed
