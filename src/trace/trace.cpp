@@ -80,7 +80,7 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
 }
 
 Result<TraceResult> run(const fs::path& dir,
-                        const config::ProjectConfig& /*cfg*/,
+                        const config::ProjectConfig& cfg,
                         const TraceOptions& opts) {
     auto reqs_result = load_requirements(dir);
     if (!is_ok(reqs_result)) return error_of(reqs_result);
