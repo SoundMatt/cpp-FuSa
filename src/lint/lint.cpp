@@ -1,5 +1,6 @@
 #include "lint.hpp"
 #include <filesystem>
+#include <functional>
 #include <fstream>
 #include <regex>
 #include <string>

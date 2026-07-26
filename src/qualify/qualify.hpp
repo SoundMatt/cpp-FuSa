@@ -6,8 +6,6 @@
 // SHA-256 integrity hash — suitable as tool qualification evidence per
 // ISO 26262 Part 8 / IEC 61508 Part 6 tool confidence requirements.
 #include "cpfusa/fusa.hpp"
-#include "../config/config.hpp"
-#include "../engine/engine.hpp"
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -41,6 +39,26 @@ struct QualifyReport {
     int                      failed{0};
     std::vector<CaseResult>  results;
     std::string              hash; // SHA-256 of report sans hash field
+
+    // Feature 2 — Tool Qualification Display (REQ-QUALIFY005..REQ-QUALIFY007)
+    std::string              qualification_method;     // "self" | "independent" | ""
+    std::string              qualification_record_uri; // URI to dossier
+    std::string              qualifier_identity;       // name/org of qualifier
+
+    // Feature 4 — V&V Independence (REQ-QUALIFY008..REQ-QUALIFY010)
+    std::string              implementation_author;       // author of implementation
+    std::string              independent_reviewer;        // reviewer (different from author = independent)
+    std::string              independent_test_executor;   // independent test executor
+    std::string              achievable_asil;             // achievable ASIL level
+
+    // Derived: "independent" when reviewer != author (and both non-empty)
+    [[nodiscard]] std::string independence_status() const {
+        if (implementation_author.empty() || independent_reviewer.empty())
+            return "unqualified";
+        if (independent_reviewer != implementation_author)
+            return "independent";
+        return "self";
+    }
 };
 
 // builtin_cases returns positive+negative cases for all engine rules.

@@ -4,7 +4,6 @@
 #include "runtime/safe_state.hpp"
 #include "runtime/heartbeat.hpp"
 #include <atomic>
-#include <chrono>
 #include <thread>
 
 using namespace cpfusa::runtime;

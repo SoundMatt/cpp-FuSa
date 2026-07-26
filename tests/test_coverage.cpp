@@ -1,4 +1,4 @@
-//fusa:test REQ-COV001 REQ-COV002 REQ-COV003
+//fusa:test REQ-COV001 REQ-COV002 REQ-COV003 REQ-COV004 REQ-COV005
 #include <catch2/catch_all.hpp>
 #include "coverage/coverage.hpp"
 #include "testutil/testutil.hpp"
@@ -108,4 +108,135 @@ TEST_CASE("coverage: JSON has correct dal field", "[coverage][cov003]") {
     std::ifstream f(tmp.path() / coverage::COVERAGE_REPORT_FILE);
     json j; f >> j;
     REQUIRE(j["dal"].get<std::string>() == "DAL-C");
+}
+
+// ─── MC/DC coverage (REQ-COV004, REQ-COV005) ──────────────────────────────────
+
+static const char* MCDC_JSON_COVERED =
+    R"({"mcdc_records":[{"function_name":"compute","conditions":[{"covered_true_count":3,"covered_false_count":2},{"covered_true_count":1,"covered_false_count":4}]}]})";
+
+static const char* MCDC_JSON_PARTIAL =
+    R"({"mcdc_records":[{"function_name":"risky","conditions":[{"covered_true_count":1,"covered_false_count":0}]}]})";
+
+static const char* MCDC_JSON_EMPTY =
+    R"({"mcdc_records":[]})";
+
+TEST_CASE("coverage: MCDCCondition is_covered when both sides > 0", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    coverage::MCDCCondition c;
+    c.covered_true_count  = 1;
+    c.covered_false_count = 2;
+    REQUIRE(c.is_covered());
+}
+
+TEST_CASE("coverage: MCDCCondition not covered when false side is 0", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    coverage::MCDCCondition c;
+    c.covered_true_count  = 1;
+    c.covered_false_count = 0;
+    REQUIRE_FALSE(c.is_covered());
+}
+
+TEST_CASE("coverage: apply_mcdc parses covered conditions", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    TempDir tmp;
+    tmp.write(coverage::COVERAGE_FILE, LCOV_SAMPLE);
+    tmp.write("mcdc.json", MCDC_JSON_COVERED);
+    auto r = coverage::build_from_lcov(tmp.path() / coverage::COVERAGE_FILE, coverage::DAL::A);
+    coverage::apply_mcdc(r, tmp.path() / "mcdc.json", 100.0);
+    REQUIRE(r.mcdc_enabled);
+    REQUIRE(r.mcdc_conditions_total == 2);
+    REQUIRE(r.mcdc_conditions_covered == 2);
+    REQUIRE(r.mcdc_pct == Catch::Approx(100.0).epsilon(0.01));
+    REQUIRE(r.meets_mcdc);
+}
+
+TEST_CASE("coverage: apply_mcdc fails when condition not covered on both sides", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    TempDir tmp;
+    tmp.write(coverage::COVERAGE_FILE, LCOV_SAMPLE);
+    tmp.write("mcdc.json", MCDC_JSON_PARTIAL);
+    auto r = coverage::build_from_lcov(tmp.path() / coverage::COVERAGE_FILE, coverage::DAL::A);
+    coverage::apply_mcdc(r, tmp.path() / "mcdc.json", 100.0);
+    REQUIRE(r.mcdc_enabled);
+    REQUIRE(r.mcdc_conditions_total == 1);
+    REQUIRE(r.mcdc_conditions_covered == 0);
+    REQUIRE_FALSE(r.meets_mcdc);
+}
+
+TEST_CASE("coverage: apply_mcdc empty records yields 0% and meets_mcdc false at 100 threshold", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    TempDir tmp;
+    tmp.write(coverage::COVERAGE_FILE, LCOV_SAMPLE);
+    tmp.write("mcdc.json", MCDC_JSON_EMPTY);
+    auto r = coverage::build_from_lcov(tmp.path() / coverage::COVERAGE_FILE, coverage::DAL::A);
+    coverage::apply_mcdc(r, tmp.path() / "mcdc.json", 100.0);
+    REQUIRE(r.mcdc_conditions_total == 0);
+    REQUIRE(r.mcdc_pct == Catch::Approx(0.0).epsilon(0.01));
+    // 0/0 → 0%, threshold 100 → does not meet
+    REQUIRE_FALSE(r.meets_mcdc);
+}
+
+TEST_CASE("coverage: write_json includes mcdc block when enabled", "[coverage][cov005]") {
+    //fusa:test REQ-COV005
+    TempDir tmp;
+    tmp.write(coverage::COVERAGE_FILE, LCOV_SAMPLE);
+    tmp.write("mcdc.json", MCDC_JSON_COVERED);
+    auto r = coverage::build_from_lcov(tmp.path() / coverage::COVERAGE_FILE, coverage::DAL::A);
+    coverage::apply_mcdc(r, tmp.path() / "mcdc.json", 100.0);
+    auto json_out = tmp.path() / coverage::COVERAGE_REPORT_FILE;
+    REQUIRE_NOTHROW(coverage::write_json(json_out, r));
+    std::ifstream f(json_out);
+    json j; f >> j;
+    REQUIRE(j.contains("mcdc"));
+    REQUIRE(j["mcdc"]["enabled"] == true);
+    REQUIRE(j["mcdc"]["conditionsTotal"] == 2);
+    REQUIRE(j["mcdc"]["conditionsCovered"] == 2);
+    REQUIRE(j["mcdc"]["meetsMcdc"] == true);
+}
+
+TEST_CASE("coverage: write_json mcdc records have per-condition coverage", "[coverage][cov005]") {
+    //fusa:test REQ-COV005
+    TempDir tmp;
+    tmp.write(coverage::COVERAGE_FILE, LCOV_SAMPLE);
+    tmp.write("mcdc.json", MCDC_JSON_COVERED);
+    auto r = coverage::build_from_lcov(tmp.path() / coverage::COVERAGE_FILE, coverage::DAL::A);
+    coverage::apply_mcdc(r, tmp.path() / "mcdc.json", 100.0);
+    auto json_out = tmp.path() / coverage::COVERAGE_REPORT_FILE;
+    coverage::write_json(json_out, r);
+    std::ifstream f(json_out);
+    json j; f >> j;
+    REQUIRE(j["mcdc"]["records"].is_array());
+    REQUIRE(j["mcdc"]["records"].size() == 1);
+    REQUIRE(j["mcdc"]["records"][0]["functionName"] == "compute");
+    REQUIRE(j["mcdc"]["records"][0]["conditionsTotal"] == 2);
+    REQUIRE(j["mcdc"]["records"][0]["fullyCovered"] == true);
+}
+
+TEST_CASE("coverage: apply_mcdc throws when file missing", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    TempDir tmp;
+    tmp.write(coverage::COVERAGE_FILE, LCOV_SAMPLE);
+    auto r = coverage::build_from_lcov(tmp.path() / coverage::COVERAGE_FILE, coverage::DAL::D);
+    REQUIRE_THROWS(coverage::apply_mcdc(r, tmp.path() / "nonexistent.json", 100.0));
+}
+
+TEST_CASE("coverage: MCDCRecord fully_covered when all conditions covered", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    coverage::MCDCRecord rec;
+    coverage::MCDCCondition c1; c1.covered_true_count = 1; c1.covered_false_count = 1;
+    coverage::MCDCCondition c2; c2.covered_true_count = 2; c2.covered_false_count = 3;
+    rec.conditions = {c1, c2};
+    REQUIRE(rec.fully_covered());
+    REQUIRE(rec.covered_conditions() == 2);
+}
+
+TEST_CASE("coverage: MCDCRecord not fully_covered when one condition missing", "[coverage][cov004]") {
+    //fusa:test REQ-COV004
+    coverage::MCDCRecord rec;
+    coverage::MCDCCondition c1; c1.covered_true_count = 1; c1.covered_false_count = 1;
+    coverage::MCDCCondition c2; c2.covered_true_count = 1; c2.covered_false_count = 0; // not covered
+    rec.conditions = {c1, c2};
+    REQUIRE_FALSE(rec.fully_covered());
+    REQUIRE(rec.covered_conditions() == 1);
 }

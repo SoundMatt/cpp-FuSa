@@ -16,6 +16,7 @@ struct Requirement {
     std::string standard_ref;
     std::string severity;  // safety / info / cybersecurity
     std::string asil;      // ASIL-A..D or empty
+    std::string parent_id; // empty = HLR; non-empty = LLR pointing to parent HLR
 };
 
 struct Annotation {
@@ -23,6 +24,12 @@ struct Annotation {
     std::string file;
     int         line;
     bool        is_test; // true = //fusa:test, false = //fusa:req
+};
+
+struct HLRViolation {
+    std::string hlr_id;  // empty = LLR-references-unknown-HLR; non-empty = HLR-with-no-children
+    std::string llr_id;  // populated when an LLR references unknown HLR
+    std::string message;
 };
 
 struct TraceResult {
@@ -35,13 +42,19 @@ struct TraceResult {
     int sec_tested{0};  // cybersecurity requirements with at least one //fusa:test annotation
     double annotation_coverage{0.0};
     double test_coverage{0.0};
+    // HLR/LLR hierarchy metrics
+    int hlr_count{0};
+    int llr_count{0};
+    int hlr_covered{0};   // HLRs that have at least one LLR child
+    std::vector<HLRViolation> hlr_violations;
 };
 
 struct TraceOptions {
     bool show_gaps{false};
     int  min_annotation_pct{0};
     int  min_test_pct{0};
-    std::string req_id; // if non-empty, show only this req
+    std::string req_id;  // if non-empty, show only this req
+    bool strict_hlr_llr{false}; // force HLR/LLR errors regardless of ASIL/DAL
 };
 
 [[nodiscard]] Result<TraceResult> run(

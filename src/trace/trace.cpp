@@ -40,6 +40,7 @@ Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
             r.standard_ref = item.value("standard_ref", "");
             r.severity     = item.value("severity", "safety");
             r.asil         = item.value("asil", "");
+            r.parent_id    = item.value("parent_id", "");
             reqs.push_back(std::move(r));
         }
         return reqs;
@@ -79,7 +80,7 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
 }
 
 Result<TraceResult> run(const fs::path& dir,
-                        const config::ProjectConfig& /*cfg*/,
+                        const config::ProjectConfig& cfg,
                         const TraceOptions& opts) {
     auto reqs_result = load_requirements(dir);
     if (!is_ok(reqs_result)) return error_of(reqs_result);
@@ -116,6 +117,60 @@ Result<TraceResult> run(const fs::path& dir,
     if (result.total > 0) {
         result.annotation_coverage = 100.0 * result.annotated / result.total;
         result.test_coverage       = 100.0 * result.tested    / result.total;
+    }
+
+    // ── HLR/LLR hierarchy validation (REQ-HLR001..REQ-HLR005) ─────────────────
+    {
+        std::set<std::string> hlr_ids;
+        for (const auto& req : reqs) {
+            if (req.parent_id.empty()) hlr_ids.insert(req.id);
+        }
+
+        for (const auto& req : reqs) {
+            if (req.parent_id.empty()) {
+                ++result.hlr_count;
+            } else {
+                ++result.llr_count;
+                // Validate: LLR must reference existing HLR.
+                if (hlr_ids.find(req.parent_id) == hlr_ids.end()) {
+                    result.hlr_violations.push_back({
+                        req.parent_id, req.id,
+                        "LLR " + req.id + " references unknown HLR " + req.parent_id
+                    });
+                }
+            }
+        }
+
+        // Validate: every HLR must have at least one LLR child.
+        std::set<std::string> hlrs_with_children;
+        for (const auto& req : reqs) {
+            if (!req.parent_id.empty() && hlr_ids.count(req.parent_id))
+                hlrs_with_children.insert(req.parent_id);
+        }
+        result.hlr_covered = static_cast<int>(hlrs_with_children.size());
+        for (const auto& hid : hlr_ids) {
+            if (!hlrs_with_children.count(hid)) {
+                result.hlr_violations.push_back({
+                    hid, "", "HLR " + hid + " has no LLR children"
+                });
+            }
+        }
+
+        // Determine gate level: strict flag or project ASIL-C/D (REQ-HLR004 / REQ-HLR005).
+        // Use the project's ASIL from config, not individual requirement ASIL fields.
+        const auto& pa = cfg.asil;
+        bool any_high_asil = (pa == "ASIL-C" || pa == "ASIL-D");
+
+        if (!result.hlr_violations.empty()) {
+            bool do_error = opts.strict_hlr_llr || any_high_asil;
+            if (do_error) {
+                std::string msg = "HLR/LLR violations:";
+                for (const auto& v : result.hlr_violations)
+                    msg += "\n  " + v.message;
+                return msg;
+            }
+            // warn-only for lower ASIL levels — violations are recorded in result
+        }
     }
 
     // Gate checks — only apply when there are actual requirements to measure.
@@ -190,6 +245,18 @@ std::string render_matrix(const TraceResult& result, const TraceOptions& opts) {
                            << result.annotation_coverage << "%)"
         << "  Tested: " << result.tested
                         << " (" << result.test_coverage << "%)\n";
+
+    // HLR/LLR hierarchy summary
+    if (result.hlr_count > 0 || result.llr_count > 0) {
+        out << "HLR: " << result.hlr_count
+            << "  LLR: " << result.llr_count
+            << "  HLR-covered: " << result.hlr_covered << "/" << result.hlr_count << "\n";
+    }
+    if (!result.hlr_violations.empty()) {
+        out << "HLR/LLR Violations:\n";
+        for (const auto& v : result.hlr_violations)
+            out << "  WARN: " << v.message << "\n";
+    }
     return out.str();
 }
 
@@ -236,7 +303,8 @@ std::string render_json(const TraceResult& result,
         entry["title"]       = req.title;
         entry["severity"]    = req.severity;
         entry["standard"]    = req.standard_ref;
-        if (!req.asil.empty()) entry["asil"] = req.asil;
+        if (!req.asil.empty())      entry["asil"]     = req.asil;
+        if (!req.parent_id.empty()) entry["parentId"] = req.parent_id;
         j["requirements"].push_back(entry);
     }
 
@@ -271,6 +339,26 @@ std::string render_json(const TraceResult& result,
         {"testedRequirements",   result.tested},
         {"secTestedRequirements", result.sec_tested}
     };
+
+    // HLR/LLR hierarchy block (only when hierarchy is present)
+    if (result.hlr_count > 0 || result.llr_count > 0) {
+        json hier;
+        hier["hlrCount"]     = result.hlr_count;
+        hier["llrCount"]     = result.llr_count;
+        hier["hlrCovered"]   = result.hlr_covered;
+        if (!result.hlr_violations.empty()) {
+            json varr = json::array();
+            for (const auto& v : result.hlr_violations) {
+                json vobj;
+                if (!v.hlr_id.empty()) vobj["hlrId"] = v.hlr_id;
+                if (!v.llr_id.empty()) vobj["llrId"] = v.llr_id;
+                vobj["message"] = v.message;
+                varr.push_back(vobj);
+            }
+            hier["violations"] = varr;
+        }
+        j["hierarchy"] = hier;
+    }
     return j.dump(2);
 }
 
@@ -308,19 +396,20 @@ Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
     for (const auto& r : reqs) existing.insert(r.id);
 
     std::string line;
-    std::getline(f, line); // skip header: id,title,description,standard_ref,severity,asil
+    std::getline(f, line); // skip header: id,title,description,standard_ref,severity,asil,parent_id
     int added = 0;
     while (std::getline(f, line)) {
         if (line.empty()) continue;
-        // Minimal CSV parse: split on first 5 commas, rest is asil.
+        // Minimal CSV parse: split on first 6 commas, rest is parent_id.
         std::istringstream ss(line);
-        std::string id, title, desc, std_ref, sev, asil;
-        std::getline(ss, id,      ',');
-        std::getline(ss, title,   ',');
-        std::getline(ss, desc,    ',');
-        std::getline(ss, std_ref, ',');
-        std::getline(ss, sev,     ',');
-        std::getline(ss, asil);
+        std::string id, title, desc, std_ref, sev, asil, parent_id;
+        std::getline(ss, id,        ',');
+        std::getline(ss, title,     ',');
+        std::getline(ss, desc,      ',');
+        std::getline(ss, std_ref,   ',');
+        std::getline(ss, sev,       ',');
+        std::getline(ss, asil,      ',');
+        std::getline(ss, parent_id);
         if (id.empty()) continue;
         if (existing.count(id)) continue;
         Requirement r;
@@ -330,6 +419,7 @@ Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
         r.standard_ref = std_ref;
         r.severity     = sev.empty() ? "safety" : sev;
         r.asil         = asil;
+        r.parent_id    = parent_id;
         reqs.push_back(std::move(r));
         existing.insert(id);
         ++added;
@@ -339,7 +429,7 @@ Result<int> import_csv(const fs::path& file, std::vector<Requirement>& reqs) {
 
 std::string export_csv(const std::vector<Requirement>& reqs) {
     std::ostringstream out;
-    out << "id,title,description,standard_ref,severity,asil\n";
+    out << "id,title,description,standard_ref,severity,asil,parent_id\n";
     for (const auto& r : reqs) {
         // Minimal escaping: replace comma in fields with semicolon.
         auto esc = [](const std::string& s) {
@@ -352,7 +442,8 @@ std::string export_csv(const std::vector<Requirement>& reqs) {
             << esc(r.description)  << ','
             << esc(r.standard_ref) << ','
             << esc(r.severity)     << ','
-            << esc(r.asil)         << '\n';
+            << esc(r.asil)         << ','
+            << esc(r.parent_id)    << '\n';
     }
     return out.str();
 }
@@ -368,7 +459,8 @@ bool save_requirements(const fs::path& dir, const std::vector<Requirement>& reqs
             {"standard_ref", r.standard_ref},
             {"severity",     r.severity}
         };
-        if (!r.asil.empty()) obj["asil"] = r.asil;
+        if (!r.asil.empty())      obj["asil"]      = r.asil;
+        if (!r.parent_id.empty()) obj["parent_id"] = r.parent_id;
         arr.push_back(obj);
     }
     json doc;

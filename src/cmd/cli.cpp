@@ -224,14 +224,16 @@ int run(int argc, char* argv[]) {
 
     // ── trace ─────────────────────────────────────────────────────────────────
     auto* trace_cmd = app.add_subcommand("trace", "Show requirements traceability matrix");
-    bool show_gaps  = false;
+    bool show_gaps      = false;
+    bool strict_hlr_llr = false;
     int  req_cov = 0, sec_tested = 0;
     std::string trace_fmt, trace_out;
-    trace_cmd->add_flag("--gaps",           show_gaps,  "Show only gaps");
-    trace_cmd->add_option("--req-coverage", req_cov,    "Fail if annotation coverage < N%");
-    trace_cmd->add_option("--sec-tested",   sec_tested, "Fail if test coverage < N%");
-    trace_cmd->add_option("--format",       trace_fmt,  "text|json (default: text)");
-    trace_cmd->add_option("--output",       trace_out,  "Write output to file instead of stdout");
+    trace_cmd->add_flag("--gaps",           show_gaps,       "Show only gaps");
+    trace_cmd->add_flag("--strict-hlr-llr", strict_hlr_llr,  "Fail on any HLR/LLR violation regardless of ASIL");
+    trace_cmd->add_option("--req-coverage", req_cov,         "Fail if annotation coverage < N%");
+    trace_cmd->add_option("--sec-tested",   sec_tested,      "Fail if test coverage < N%");
+    trace_cmd->add_option("--format",       trace_fmt,       "text|json (default: text)");
+    trace_cmd->add_option("--output",       trace_out,       "Write output to file instead of stdout");
     trace_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
@@ -241,6 +243,7 @@ int run(int argc, char* argv[]) {
         topts.show_gaps          = show_gaps;
         topts.min_annotation_pct = req_cov;
         topts.min_test_pct       = sec_tested;
+        topts.strict_hlr_llr     = strict_hlr_llr;
         auto r = trace::run(dir, *cfg_opt, topts);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         const bool as_json = (trace_fmt == "json");
@@ -394,19 +397,59 @@ int run(int argc, char* argv[]) {
 
     // ── qualify ───────────────────────────────────────────────────────────────
     auto* qualify_cmd = app.add_subcommand("qualify", "Run tool qualification suite");
+    std::string qualify_method, qualify_record_uri, qualifier_identity;
+    std::string impl_author, ind_reviewer, ind_test_executor, achievable_asil;
+    qualify_cmd->add_option("--qualification-method",  qualify_method,
+                            "Qualification method: self|independent");
+    qualify_cmd->add_option("--record-uri",            qualify_record_uri,
+                            "URI to qualification dossier");
+    qualify_cmd->add_option("--qualifier",             qualifier_identity,
+                            "Name/org of qualifier");
+    qualify_cmd->add_option("--implementation-author", impl_author,
+                            "Author of the implementation");
+    qualify_cmd->add_option("--independent-reviewer",  ind_reviewer,
+                            "Independent reviewer (must differ from author for independence)");
+    qualify_cmd->add_option("--independent-test-executor", ind_test_executor,
+                            "Independent test executor");
+    qualify_cmd->add_option("--achievable-asil",       achievable_asil,
+                            "Achievable ASIL level given independence");
     qualify_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         std::cout << "Running qualification suite for cpfusa v" << Version << "...\n";
         auto cases  = qualify::builtin_cases();
         auto r = qualify::run(cases);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
-        const auto& rpt = value_of(r);
+        auto rpt = value_of(r);
+
+        // Propagate CLI flags into report
+        rpt.qualification_method     = qualify_method;
+        rpt.qualification_record_uri = qualify_record_uri;
+        rpt.qualifier_identity       = qualifier_identity;
+        rpt.implementation_author    = impl_author;
+        rpt.independent_reviewer     = ind_reviewer;
+        rpt.independent_test_executor = ind_test_executor;
+        rpt.achievable_asil          = achievable_asil;
+
         auto wr = qualify::save(dir / std::string(qualify::ReportFile), rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
         std::cout << "Cases: " << rpt.total
                   << "  Passed: " << rpt.passed
                   << "  Failed: " << rpt.failed << "\n"
                   << "Hash: " << rpt.hash << "\n";
+
+        // Show badge and independence status
+        std::string status = rpt.independence_status();
+        std::string badge;
+        if (rpt.qualification_method == "independent" || status == "independent")
+            badge = "independently-qualified";
+        else if (rpt.qualification_method == "self" || status == "self")
+            badge = "self-qualified";
+        else
+            badge = "unqualified";
+        std::cout << "Badge: [" << badge << "]\n";
+        if (!rpt.achievable_asil.empty())
+            std::cout << "Achievable ASIL: " << rpt.achievable_asil << "\n";
+
         if (rpt.failed > 0) {
             for (const auto& cr : rpt.results)
                 if (!cr.passed)
@@ -839,10 +882,15 @@ int run(int argc, char* argv[]) {
 
     // ── coverage ──────────────────────────────────────────────────────────────
     auto* cov_cmd = app.add_subcommand("coverage", "Parse LCOV coverage profile and report DO-178C compliance");
-    std::string cov_dal = "DAL-B", cov_profile, cov_out;
-    cov_cmd->add_option("--dal",     cov_dal,     "DAL-A|DAL-B|DAL-C|DAL-D");
-    cov_cmd->add_option("--profile", cov_profile, "LCOV coverage.info file (default: coverage.info)");
-    cov_cmd->add_option("--output",  cov_out,     "Write JSON report to file");
+    std::string cov_dal = "DAL-B", cov_profile, cov_out, cov_mcdc_file;
+    bool        cov_mcdc = false;
+    double      cov_mcdc_threshold = 100.0;
+    cov_cmd->add_option("--dal",            cov_dal,            "DAL-A|DAL-B|DAL-C|DAL-D");
+    cov_cmd->add_option("--profile",        cov_profile,        "LCOV coverage.info file (default: coverage.info)");
+    cov_cmd->add_option("--output",         cov_out,            "Write JSON report to file");
+    cov_cmd->add_flag  ("--mcdc",           cov_mcdc,           "Enable MC/DC coverage analysis");
+    cov_cmd->add_option("--mcdc-file",      cov_mcdc_file,      "Path to LLVM MC/DC JSON export");
+    cov_cmd->add_option("--mcdc-threshold", cov_mcdc_threshold, "MC/DC threshold %% (default: 100)");
     cov_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         fs::path profile = cov_profile.empty() ? dir / coverage::COVERAGE_FILE
@@ -850,12 +898,18 @@ int run(int argc, char* argv[]) {
         auto dal = coverage::parse_dal(cov_dal);
         try {
             auto rep = coverage::build_from_lcov(profile, dal);
+            // MC/DC analysis
+            if (cov_mcdc && !cov_mcdc_file.empty()) {
+                coverage::apply_mcdc(rep, fs::path(cov_mcdc_file), cov_mcdc_threshold);
+            }
             auto json_out = cov_out.empty() ? dir / coverage::COVERAGE_REPORT_FILE
                                             : fs::path(cov_out);
             coverage::write_json(json_out, rep);
             coverage::render_text(rep);
             print_ok("coverage-report.json written");
-            if (!rep.meets_dal) std::exit(1);
+            bool ok = rep.meets_dal;
+            if (rep.mcdc_enabled && !rep.meets_mcdc) ok = false;
+            if (!ok) std::exit(1);
         } catch (const std::exception& ex) {
             print_err(std::string(ex.what()));
             std::cerr << "Tip: generate LCOV with: cmake --build build && lcov --capture "

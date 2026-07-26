@@ -1,4 +1,5 @@
 //fusa:test REQ-QUALIFY001 REQ-QUALIFY002 REQ-QUALIFY003 REQ-QUALIFY004
+//fusa:test REQ-QUALIFY005 REQ-QUALIFY006 REQ-QUALIFY007 REQ-QUALIFY008 REQ-QUALIFY009 REQ-QUALIFY010
 #include <catch2/catch_all.hpp>
 #include "qualify/qualify.hpp"
 #include "testutil/testutil.hpp"
@@ -116,4 +117,148 @@ TEST_CASE("qualify: saved hash matches computed hash", "[qualify][qualify002]") 
     json j;
     f >> j;
     REQUIRE(j["hash"].get<std::string>() == report.hash);
+}
+
+// ─── Tool Qualification Display (REQ-QUALIFY005..REQ-QUALIFY007) ──────────────
+
+TEST_CASE("qualify: qualification_method field serialised to JSON", "[qualify][qualify005]") {
+    //fusa:test REQ-QUALIFY005
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.qualification_method = "independent";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j.contains("qualificationMethod"));
+    REQUIRE(j["qualificationMethod"] == "independent");
+}
+
+TEST_CASE("qualify: qualification_record_uri serialised to JSON", "[qualify][qualify006]") {
+    //fusa:test REQ-QUALIFY006
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.qualification_record_uri = "https://example.com/dossier/v1";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j.contains("qualificationRecordUri"));
+    REQUIRE(j["qualificationRecordUri"] == "https://example.com/dossier/v1");
+}
+
+TEST_CASE("qualify: qualifier_identity serialised to JSON", "[qualify][qualify007]") {
+    //fusa:test REQ-QUALIFY007
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.qualifier_identity = "Safety Corp Ltd";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j.contains("qualifierIdentity"));
+    REQUIRE(j["qualifierIdentity"] == "Safety Corp Ltd");
+}
+
+TEST_CASE("qualify: independently-qualified badge emitted when method=independent", "[qualify][qualify005]") {
+    //fusa:test REQ-QUALIFY005
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.qualification_method = "independent";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j.contains("badge"));
+    REQUIRE(j["badge"] == "independently-qualified");
+}
+
+TEST_CASE("qualify: self-qualified badge emitted when method=self", "[qualify][qualify005]") {
+    //fusa:test REQ-QUALIFY005
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.qualification_method = "self";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j["badge"] == "self-qualified");
+}
+
+// ─── V&V Independence (REQ-QUALIFY008..REQ-QUALIFY010) ───────────────────────
+
+TEST_CASE("qualify: independence_status is independent when reviewer differs from author", "[qualify][qualify008]") {
+    //fusa:test REQ-QUALIFY008
+    qualify::QualifyReport r;
+    r.implementation_author  = "Alice";
+    r.independent_reviewer   = "Bob";
+    REQUIRE(r.independence_status() == "independent");
+}
+
+TEST_CASE("qualify: independence_status is self when reviewer equals author", "[qualify][qualify008]") {
+    //fusa:test REQ-QUALIFY008
+    qualify::QualifyReport r;
+    r.implementation_author = "Alice";
+    r.independent_reviewer  = "Alice";
+    REQUIRE(r.independence_status() == "self");
+}
+
+TEST_CASE("qualify: independence_status is unqualified when fields are empty", "[qualify][qualify008]") {
+    //fusa:test REQ-QUALIFY008
+    qualify::QualifyReport r;
+    REQUIRE(r.independence_status() == "unqualified");
+}
+
+TEST_CASE("qualify: independence fields serialised to JSON", "[qualify][qualify009]") {
+    //fusa:test REQ-QUALIFY009
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.implementation_author       = "Alice";
+    report.independent_reviewer        = "Bob";
+    report.independent_test_executor   = "Charlie";
+    report.achievable_asil             = "ASIL-B";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j["implementationAuthor"]    == "Alice");
+    REQUIRE(j["independentReviewer"]     == "Bob");
+    REQUIRE(j["independentTestExecutor"] == "Charlie");
+    REQUIRE(j["achievableAsil"]          == "ASIL-B");
+}
+
+TEST_CASE("qualify: independently-qualified badge from reviewer != author", "[qualify][qualify010]") {
+    //fusa:test REQ-QUALIFY010
+    TempDir tmp;
+    auto cases = qualify::builtin_cases();
+    auto rr = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto report = value_of(rr);
+    report.implementation_author = "Alice";
+    report.independent_reviewer  = "Bob";
+    auto path = tmp.path() / "qualify-report.json";
+    REQUIRE(is_ok(qualify::save(path, report)));
+    std::ifstream f(path);
+    json j; f >> j;
+    REQUIRE(j.contains("badge"));
+    REQUIRE(j["badge"] == "independently-qualified");
+    REQUIRE(j["independenceStatus"] == "independent");
 }
