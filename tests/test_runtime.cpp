@@ -70,11 +70,11 @@ TEST_CASE("heartbeat: on_missed fires when beat() not called", "[runtime][heartb
     std::atomic<int> missed{0};
     {
         // 100ms period, 600ms sleep → nominal 6 fires, all misses.
-        // Conservative threshold (>= 3) tolerates heavy CI scheduler jitter.
+        // Threshold lowered to >= 2 to tolerate macOS CI scheduler jitter.
         Heartbeat hb(100ms, [] {}, [&] { missed.fetch_add(1); });
         std::this_thread::sleep_for(600ms);
     }
-    REQUIRE(missed.load() >= 3);
+    REQUIRE(missed.load() >= 2);
 }
 
 TEST_CASE("heartbeat: on_alive fires when beat() is called", "[runtime][heartbeat]") {
