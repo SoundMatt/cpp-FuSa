@@ -497,9 +497,9 @@ TEST_CASE("trace: ASIL-D HLR violation causes error without strict flag", "[trac
     tmp.write(".fusa-reqs.json", R"([
       {"id":"REQ-HLR-001","title":"HLR no children","severity":"safety","asil":"ASIL-D"}
     ])");
-    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0"; cfg.asil = "ASIL-D";
     auto r = trace::run(tmp.path(), cfg);
-    // ASIL-D → should return error
+    // ASIL-D project → gate is error (REQ-HLR004)
     REQUIRE_FALSE(is_ok(r));
 }
 
