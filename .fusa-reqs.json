@@ -1390,6 +1390,110 @@
       "standard_ref": "x-FuSa spec \u00a74",
       "severity": "safety",
       "asil": ""
+    },
+    {
+      "id": "REQ-HLR001",
+      "title": "Parent-ID field on Requirement",
+      "description": "The Requirement struct shall include a parent_id field; empty parent_id identifies an HLR; non-empty parent_id identifies an LLR with that HLR as parent.",
+      "standard_ref": "iso26262-6",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-HLR002",
+      "title": "Every HLR must have at least one LLR child",
+      "description": "Validation shall report a violation for any HLR that has no LLR children.",
+      "standard_ref": "iso26262-6",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-HLR003",
+      "title": "Every LLR must reference an existing HLR",
+      "description": "Validation shall report a violation when an LLR parent_id does not match any known HLR id.",
+      "standard_ref": "iso26262-6",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-HLR004",
+      "title": "HLR/LLR gate: error at ASIL-C/D or with --strict-hlr-llr",
+      "description": "trace run shall return an error when HLR/LLR violations exist and ASIL is ASIL-C or ASIL-D, or when --strict-hlr-llr is set.",
+      "standard_ref": "iso26262-6",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-HLR005",
+      "title": "HLR/LLR gate: warn-only for ASIL-A/B",
+      "description": "trace run shall succeed with violations recorded (warn level) for ASIL-A and ASIL-B when --strict-hlr-llr is not set.",
+      "standard_ref": "iso26262-6",
+      "severity": "safety",
+      "asil": "ASIL-B"
+    },
+    {
+      "id": "REQ-QUALIFY005",
+      "title": "qualification_method field in QualifyReport",
+      "description": "QualifyReport shall carry a qualification_method field ('self' or 'independent') and shall emit a badge in JSON output.",
+      "standard_ref": "iso26262-8",
+      "severity": "safety",
+      "asil": "ASIL-B"
+    },
+    {
+      "id": "REQ-QUALIFY006",
+      "title": "qualification_record_uri field in QualifyReport",
+      "description": "QualifyReport shall carry a qualification_record_uri field pointing to the qualification dossier.",
+      "standard_ref": "iso26262-8",
+      "severity": "safety",
+      "asil": "ASIL-B"
+    },
+    {
+      "id": "REQ-QUALIFY007",
+      "title": "qualifier_identity field in QualifyReport",
+      "description": "QualifyReport shall carry a qualifier_identity field identifying the qualifying organisation.",
+      "standard_ref": "iso26262-8",
+      "severity": "safety",
+      "asil": "ASIL-B"
+    },
+    {
+      "id": "REQ-QUALIFY008",
+      "title": "Independence status derived from reviewer vs author",
+      "description": "independence_status() shall return 'independent' when independent_reviewer differs from implementation_author and both are non-empty.",
+      "standard_ref": "iso26262-8",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-QUALIFY009",
+      "title": "V&V independence fields in QualifyReport",
+      "description": "QualifyReport shall carry implementation_author, independent_reviewer, independent_test_executor, and achievable_asil fields.",
+      "standard_ref": "iso26262-8",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-QUALIFY010",
+      "title": "independently-qualified badge emitted when reviewer != author",
+      "description": "save() shall emit badge='independently-qualified' in JSON when independence_status() returns 'independent'.",
+      "standard_ref": "iso26262-8",
+      "severity": "safety",
+      "asil": "ASIL-C"
+    },
+    {
+      "id": "REQ-COV004",
+      "title": "MC/DC coverage analysis from LLVM JSON",
+      "description": "apply_mcdc() shall parse LLVM MC/DC JSON records and compute per-condition coverage; a condition is covered if covered_true_count > 0 AND covered_false_count > 0.",
+      "standard_ref": "do178c",
+      "severity": "safety",
+      "asil": "ASIL-D"
+    },
+    {
+      "id": "REQ-COV005",
+      "title": "Structured MC/DC report in JSON output",
+      "description": "write_json() shall emit a structured mcdc block including records, per-condition coverage, and meets_mcdc gate when MC/DC is enabled.",
+      "standard_ref": "do178c",
+      "severity": "safety",
+      "asil": "ASIL-D"
     }
   ]
 }

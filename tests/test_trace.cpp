@@ -1,4 +1,5 @@
 //fusa:test REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007 REQ-TRACE008 REQ-TRACE010 REQ-TRACE011 REQ-TRACE012 REQ-TRACE013 REQ-TRACE014 REQ-TRACE015
+//fusa:test REQ-HLR001 REQ-HLR002 REQ-HLR003 REQ-HLR004 REQ-HLR005
 #include <catch2/catch_all.hpp>
 #include "trace/trace.hpp"
 #include "testutil/testutil.hpp"
@@ -400,4 +401,178 @@ TEST_CASE("trace: export polarion produces XML with workItem elements", "[trace]
     REQUIRE(xml.find("REQ-001") != std::string::npos);
     REQUIRE(xml.find("Safety requirement") != std::string::npos);
     REQUIRE(xml.find("ASIL-C") != std::string::npos);
+}
+
+// ─── HLR/LLR Decomposition (REQ-HLR001..REQ-HLR005) ──────────────────────────
+
+TEST_CASE("trace: parent_id round-trips through save and load", "[trace][hlr]") {
+    //fusa:test REQ-HLR001
+    TempDir tmp;
+    trace::Requirement hlr;
+    hlr.id       = "REQ-HLR-001";
+    hlr.title    = "HLR safety requirement";
+    hlr.severity = "safety";
+
+    trace::Requirement llr;
+    llr.id        = "REQ-LLR-001";
+    llr.title     = "LLR sub-requirement";
+    llr.severity  = "safety";
+    llr.parent_id = "REQ-HLR-001";
+
+    std::vector<trace::Requirement> reqs{hlr, llr};
+    REQUIRE(trace::save_requirements(tmp.path(), reqs));
+
+    auto result = trace::load_requirements(tmp.path());
+    REQUIRE(is_ok(result));
+    const auto& loaded = value_of(result);
+    REQUIRE(loaded.size() == 2);
+    REQUIRE(loaded[0].parent_id.empty());  // HLR has no parent
+    REQUIRE(loaded[1].parent_id == "REQ-HLR-001");
+}
+
+TEST_CASE("trace: run counts hlr_count and llr_count", "[trace][hlr]") {
+    //fusa:test REQ-HLR001
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR","severity":"safety"},
+      {"id":"REQ-LLR-001","title":"LLR","severity":"safety","parent_id":"REQ-HLR-001"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto r = trace::run(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).hlr_count == 1);
+    REQUIRE(value_of(r).llr_count == 1);
+}
+
+TEST_CASE("trace: run hlr_covered counts HLRs with at least one LLR child", "[trace][hlr]") {
+    //fusa:test REQ-HLR002
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR covered","severity":"safety"},
+      {"id":"REQ-HLR-002","title":"HLR orphan","severity":"safety"},
+      {"id":"REQ-LLR-001","title":"LLR","severity":"safety","parent_id":"REQ-HLR-001"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto r = trace::run(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).hlr_covered == 1);
+    // REQ-HLR-002 has no children — expect a violation (warn level)
+    REQUIRE_FALSE(value_of(r).hlr_violations.empty());
+}
+
+TEST_CASE("trace: run reports violation when LLR references unknown HLR", "[trace][hlr]") {
+    //fusa:test REQ-HLR003
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-LLR-001","title":"Orphan LLR","severity":"safety","parent_id":"REQ-HLR-NONEXISTENT"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto r = trace::run(tmp.path(), cfg);
+    // No ASIL-C/D, no strict flag → warn not error
+    REQUIRE(is_ok(r));
+    REQUIRE_FALSE(value_of(r).hlr_violations.empty());
+    bool found_llr_viol = false;
+    for (const auto& v : value_of(r).hlr_violations)
+        if (!v.llr_id.empty()) { found_llr_viol = true; break; }
+    REQUIRE(found_llr_viol);
+}
+
+TEST_CASE("trace: strict_hlr_llr flag errors on violations", "[trace][hlr]") {
+    //fusa:test REQ-HLR004
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR no children","severity":"safety"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    trace::TraceOptions opts;
+    opts.strict_hlr_llr = true;
+    auto r = trace::run(tmp.path(), cfg, opts);
+    // strict mode → should return error
+    REQUIRE_FALSE(is_ok(r));
+}
+
+TEST_CASE("trace: ASIL-D HLR violation causes error without strict flag", "[trace][hlr]") {
+    //fusa:test REQ-HLR004
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR no children","severity":"safety","asil":"ASIL-D"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto r = trace::run(tmp.path(), cfg);
+    // ASIL-D → should return error
+    REQUIRE_FALSE(is_ok(r));
+}
+
+TEST_CASE("trace: ASIL-B HLR violation is warn not error without strict flag", "[trace][hlr]") {
+    //fusa:test REQ-HLR005
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR no children","severity":"safety","asil":"ASIL-B"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto r = trace::run(tmp.path(), cfg);
+    // ASIL-B → should succeed with violations recorded
+    REQUIRE(is_ok(r));
+    REQUIRE_FALSE(value_of(r).hlr_violations.empty());
+}
+
+TEST_CASE("trace: render_matrix shows HLR/LLR summary", "[trace][hlr]") {
+    //fusa:test REQ-HLR001
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR","severity":"safety"},
+      {"id":"REQ-LLR-001","title":"LLR","severity":"safety","parent_id":"REQ-HLR-001"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto txt = trace::render_matrix(res, {});
+    REQUIRE(txt.find("HLR") != std::string::npos);
+}
+
+TEST_CASE("trace: render_json includes parentId for LLR requirements", "[trace][hlr]") {
+    //fusa:test REQ-HLR001
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR","severity":"safety"},
+      {"id":"REQ-LLR-001","title":"LLR","severity":"safety","parent_id":"REQ-HLR-001"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    bool found_parent = false;
+    for (const auto& r : j["requirements"]) {
+        if (r.contains("parentId") && r["parentId"] == "REQ-HLR-001") {
+            found_parent = true; break;
+        }
+    }
+    REQUIRE(found_parent);
+}
+
+TEST_CASE("trace: render_json includes hierarchy block", "[trace][hlr]") {
+    //fusa:test REQ-HLR002
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR","severity":"safety"},
+      {"id":"REQ-LLR-001","title":"LLR","severity":"safety","parent_id":"REQ-HLR-001"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j.contains("hierarchy"));
+    REQUIRE(j["hierarchy"]["hlrCount"] == 1);
+    REQUIRE(j["hierarchy"]["llrCount"] == 1);
+    REQUIRE(j["hierarchy"]["hlrCovered"] == 1);
+}
+
+TEST_CASE("trace: export_csv includes parent_id column", "[trace][hlr]") {
+    //fusa:test REQ-HLR001
+    trace::Requirement r;
+    r.id        = "REQ-LLR-001";
+    r.title     = "LLR req";
+    r.severity  = "safety";
+    r.parent_id = "REQ-HLR-001";
+    std::vector<trace::Requirement> reqs{r};
+    std::string csv = trace::export_csv(reqs);
+    REQUIRE(csv.find("parent_id") != std::string::npos);
+    REQUIRE(csv.find("REQ-HLR-001") != std::string::npos);
 }

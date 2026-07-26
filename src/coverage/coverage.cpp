@@ -140,6 +140,39 @@ void write_json(const fs::path& out, const CoverageReport& r) {
             {"branchPct", fc.branch_pct}
         });
     }
+
+    // MC/DC report (REQ-COV004, REQ-COV005)
+    if (r.mcdc_enabled) {
+        json mcdc;
+        mcdc["enabled"]            = true;
+        mcdc["file"]               = r.mcdc_file;
+        mcdc["threshold"]          = r.mcdc_threshold;
+        mcdc["conditionsTotal"]    = r.mcdc_conditions_total;
+        mcdc["conditionsCovered"]  = r.mcdc_conditions_covered;
+        mcdc["mcdcPct"]            = r.mcdc_pct;
+        mcdc["meetsMcdc"]          = r.meets_mcdc;
+        json recs = json::array();
+        for (const auto& rec : r.mcdc_records) {
+            json rj;
+            if (!rec.function_name.empty()) rj["functionName"] = rec.function_name;
+            rj["conditionsTotal"]   = rec.total_conditions();
+            rj["conditionsCovered"] = rec.covered_conditions();
+            rj["fullyCovered"]      = rec.fully_covered();
+            json conds = json::array();
+            for (const auto& c : rec.conditions) {
+                conds.push_back({
+                    {"coveredTrueCount",  c.covered_true_count},
+                    {"coveredFalseCount", c.covered_false_count},
+                    {"covered",          c.is_covered()}
+                });
+            }
+            rj["conditions"] = conds;
+            recs.push_back(rj);
+        }
+        mcdc["records"] = recs;
+        j["mcdc"] = mcdc;
+    }
+
     std::ofstream f(out);
     f << j.dump(2);
 }
@@ -151,7 +184,15 @@ void render_text(const CoverageReport& r) {
               << r.line_pct << "% (threshold: " << r.threshold_line << "%)\n";
     std::cout << "Branch coverage:    " << r.branch_pct
               << "% (threshold: " << r.threshold_branch << "%)\n";
-    std::cout << "Meets DAL: " << (r.meets_dal ? "YES" : "NO") << "\n\n";
+    std::cout << "Meets DAL: " << (r.meets_dal ? "YES" : "NO") << "\n";
+    if (r.mcdc_enabled) {
+        std::cout << "MC/DC coverage:     " << r.mcdc_pct
+                  << "% (threshold: " << r.mcdc_threshold << "%)"
+                  << "  [" << r.mcdc_conditions_covered << "/"
+                  << r.mcdc_conditions_total << " conditions]\n";
+        std::cout << "Meets MC/DC: " << (r.meets_mcdc ? "YES" : "NO") << "\n";
+    }
+    std::cout << "\n";
     if (!r.files.empty()) {
         std::cout << std::left << std::setw(50) << "File"
                   << std::setw(10) << "Lines%" << "Branches%\n";
@@ -161,6 +202,55 @@ void render_text(const CoverageReport& r) {
                       << fc.branch_pct << "\n";
         }
     }
+}
+
+//fusa:req REQ-COV004 REQ-COV005
+void apply_mcdc(CoverageReport& r, const fs::path& mcdc_json, double threshold) {
+    r.mcdc_enabled   = true;
+    r.mcdc_file      = mcdc_json.string();
+    r.mcdc_threshold = threshold;
+
+    std::ifstream f(mcdc_json);
+    if (!f) {
+        throw std::runtime_error("Cannot open MC/DC JSON: " + mcdc_json.string());
+    }
+
+    json j;
+    try {
+        j = json::parse(f);
+    } catch (const json::exception& ex) {
+        throw std::runtime_error(std::string("MC/DC JSON parse error: ") + ex.what());
+    }
+
+    // Parse: {mcdc_records:[{function_name?, conditions:[{covered_true_count, covered_false_count}]}]}
+    const json* records_ptr = nullptr;
+    if (j.contains("mcdc_records") && j["mcdc_records"].is_array()) {
+        records_ptr = &j["mcdc_records"];
+    } else if (j.is_array()) {
+        records_ptr = &j;
+    }
+
+    if (records_ptr) {
+        for (const auto& rec : *records_ptr) {
+            MCDCRecord mr;
+            mr.function_name = rec.value("function_name", "");
+            if (rec.contains("conditions") && rec["conditions"].is_array()) {
+                for (const auto& cond : rec["conditions"]) {
+                    MCDCCondition mc;
+                    mc.covered_true_count  = cond.value("covered_true_count",  0);
+                    mc.covered_false_count = cond.value("covered_false_count", 0);
+                    mr.conditions.push_back(mc);
+                }
+            }
+            r.mcdc_conditions_total   += mr.total_conditions();
+            r.mcdc_conditions_covered += mr.covered_conditions();
+            r.mcdc_records.push_back(std::move(mr));
+        }
+    }
+
+    r.mcdc_pct = r.mcdc_conditions_total > 0
+        ? 100.0 * r.mcdc_conditions_covered / r.mcdc_conditions_total : 0.0;
+    r.meets_mcdc = (r.mcdc_pct >= threshold);
 }
 
 } // namespace cpfusa::coverage

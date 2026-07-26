@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.13.0] — 2026-07-26
+
+### Added
+- **HLR/LLR Decomposition** (Feature 1, closes #19): `Requirement` struct gains `parent_id` field; empty = HLR, non-empty = LLR. `trace run` validates hierarchy: LLRs must reference known HLRs; HLRs must have at least one LLR child. Gate: warn for ASIL-A/B, error for ASIL-C/D; `--strict-hlr-llr` forces error at any level. `render_matrix` and `render_json` show hierarchy metrics and a `hierarchy` block.
+- **Tool Qualification Display** (Feature 2, closes #20): `QualifyReport` gains `qualification_method` ("self" | "independent"), `qualification_record_uri`, and `qualifier_identity` fields. `qualify` command gains `--qualification-method`, `--qualifier`, `--record-uri` flags. JSON output includes badge: "independently-qualified" | "self-qualified" | "unqualified".
+- **MC/DC Coverage** (Feature 3, closes #21): `coverage.hpp` gains `MCDCCondition`, `MCDCRecord` structs and `apply_mcdc()` function. Parses LLVM MC/DC JSON (`mcdc_records[]`). A condition is covered when `covered_true_count > 0 AND covered_false_count > 0`. Hard gate: `meets_mcdc` fails if any condition is uncovered (at threshold). `write_json` emits structured `mcdc` block. CLI adds `--mcdc`, `--mcdc-file`, `--mcdc-threshold` to `coverage` subcommand.
+- **V&V Independence** (Feature 4, closes #22): `QualifyReport` gains `implementation_author`, `independent_reviewer`, `independent_test_executor`, `achievable_asil` fields. `independence_status()` returns "independent" when reviewer differs from author, "self" when same, "unqualified" when empty. CLI adds `--implementation-author`, `--independent-reviewer`, `--independent-test-executor`, `--achievable-asil` flags.
+
+### Requirements
+- 13 new requirements: REQ-HLR001..REQ-HLR005, REQ-QUALIFY005..REQ-QUALIFY010, REQ-COV004..REQ-COV005 — total: **209 requirements**
+
+### Tests
+- 35 new tests across test_trace.cpp, test_qualify.cpp, test_coverage.cpp
+- Total: **670 tests**
+
 ## [0.12.6] — 2026-07-25
 
 ### Fixed

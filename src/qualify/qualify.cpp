@@ -340,6 +340,39 @@ Result<std::monostate> save(const fs::path& path, const QualifyReport& r) {
     j["results"] = ra;
     j["hash"]    = r.hash;
 
+    // Feature 2: tool qualification display fields (REQ-QUALIFY005..REQ-QUALIFY007)
+    if (!r.qualification_method.empty())
+        j["qualificationMethod"]    = r.qualification_method;
+    if (!r.qualification_record_uri.empty())
+        j["qualificationRecordUri"] = r.qualification_record_uri;
+    if (!r.qualifier_identity.empty())
+        j["qualifierIdentity"]      = r.qualifier_identity;
+
+    // Feature 4: V&V independence fields (REQ-QUALIFY008..REQ-QUALIFY010)
+    if (!r.implementation_author.empty())
+        j["implementationAuthor"]     = r.implementation_author;
+    if (!r.independent_reviewer.empty())
+        j["independentReviewer"]      = r.independent_reviewer;
+    if (!r.independent_test_executor.empty())
+        j["independentTestExecutor"]  = r.independent_test_executor;
+    if (!r.achievable_asil.empty())
+        j["achievableAsil"]           = r.achievable_asil;
+
+    // Always emit independence status and badge when identity info is present
+    std::string status = r.independence_status();
+    if (status != "unqualified" || !r.qualification_method.empty()) {
+        j["independenceStatus"] = status;
+        // Badge: independently-qualified > self-qualified > unqualified
+        std::string badge;
+        if (r.qualification_method == "independent" || status == "independent")
+            badge = "independently-qualified";
+        else if (r.qualification_method == "self" || status == "self")
+            badge = "self-qualified";
+        else
+            badge = "unqualified";
+        j["badge"] = badge;
+    }
+
     try {
         std::ofstream out(path);
         out << j.dump(2) << "\n";
