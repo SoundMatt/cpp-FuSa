@@ -1,4 +1,6 @@
 #include "qualify.hpp"
+#include "../config/config.hpp"
+#include "../engine/engine.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>

@@ -156,13 +156,10 @@ Result<TraceResult> run(const fs::path& dir,
             }
         }
 
-        // Determine gate level: strict flag or ASIL-D/ASIL-C check.
-        bool any_high_asil = false;
-        for (const auto& req : reqs) {
-            if (req.asil == "ASIL-D" || req.asil == "ASIL-C") {
-                any_high_asil = true; break;
-            }
-        }
+        // Determine gate level: strict flag or project ASIL-C/D (REQ-HLR004 / REQ-HLR005).
+        // Use the project's ASIL from config, not individual requirement ASIL fields.
+        const auto& pa = cfg.asil;
+        bool any_high_asil = (pa == "ASIL-C" || pa == "ASIL-D");
 
         if (!result.hlr_violations.empty()) {
             bool do_error = opts.strict_hlr_llr || any_high_asil;

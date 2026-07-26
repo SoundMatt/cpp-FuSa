@@ -6,8 +6,6 @@
 // SHA-256 integrity hash — suitable as tool qualification evidence per
 // ISO 26262 Part 8 / IEC 61508 Part 6 tool confidence requirements.
 #include "cpfusa/fusa.hpp"
-#include "../config/config.hpp"
-#include "../engine/engine.hpp"
 #include <filesystem>
 #include <string>
 #include <vector>
