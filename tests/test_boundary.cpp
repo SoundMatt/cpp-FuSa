@@ -1,4 +1,6 @@
-//fusa:test REQ-BOUNDARY001 REQ-BOUNDARY002 REQ-BOUNDARY003
+//fusa:test REQ-BOUNDARY001
+//fusa:test REQ-BOUNDARY002
+//fusa:test REQ-BOUNDARY003
 #include <catch2/catch_all.hpp>
 #include "boundary/boundary.hpp"
 #include "testutil/testutil.hpp"

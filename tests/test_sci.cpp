@@ -1,4 +1,5 @@
-//fusa:test REQ-SCI001 REQ-SCI002
+//fusa:test REQ-SCI001
+//fusa:test REQ-SCI002
 #include <catch2/catch_all.hpp>
 #include "sci/sci.hpp"
 #include "testutil/testutil.hpp"

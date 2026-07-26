@@ -1,5 +1,13 @@
-//fusa:test REQ-QUALIFY001 REQ-QUALIFY002 REQ-QUALIFY003 REQ-QUALIFY004
-//fusa:test REQ-QUALIFY005 REQ-QUALIFY006 REQ-QUALIFY007 REQ-QUALIFY008 REQ-QUALIFY009 REQ-QUALIFY010
+//fusa:test REQ-QUALIFY001
+//fusa:test REQ-QUALIFY002
+//fusa:test REQ-QUALIFY003
+//fusa:test REQ-QUALIFY004
+//fusa:test REQ-QUALIFY005
+//fusa:test REQ-QUALIFY006
+//fusa:test REQ-QUALIFY007
+//fusa:test REQ-QUALIFY008
+//fusa:test REQ-QUALIFY009
+//fusa:test REQ-QUALIFY010
 #include <catch2/catch_all.hpp>
 #include "qualify/qualify.hpp"
 #include "testutil/testutil.hpp"

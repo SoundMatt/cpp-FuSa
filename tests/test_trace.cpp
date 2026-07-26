@@ -1,5 +1,22 @@
-//fusa:test REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007 REQ-TRACE008 REQ-TRACE010 REQ-TRACE011 REQ-TRACE012 REQ-TRACE013 REQ-TRACE014 REQ-TRACE015
-//fusa:test REQ-HLR001 REQ-HLR002 REQ-HLR003 REQ-HLR004 REQ-HLR005
+//fusa:test REQ-TRACE001
+//fusa:test REQ-TRACE002
+//fusa:test REQ-TRACE003
+//fusa:test REQ-TRACE004
+//fusa:test REQ-TRACE005
+//fusa:test REQ-TRACE006
+//fusa:test REQ-TRACE007
+//fusa:test REQ-TRACE008
+//fusa:test REQ-TRACE010
+//fusa:test REQ-TRACE011
+//fusa:test REQ-TRACE012
+//fusa:test REQ-TRACE013
+//fusa:test REQ-TRACE014
+//fusa:test REQ-TRACE015
+//fusa:test REQ-HLR001
+//fusa:test REQ-HLR002
+//fusa:test REQ-HLR003
+//fusa:test REQ-HLR004
+//fusa:test REQ-HLR005
 #include <catch2/catch_all.hpp>
 #include "trace/trace.hpp"
 #include "testutil/testutil.hpp"
@@ -500,6 +517,18 @@ TEST_CASE("trace: ASIL-D HLR violation causes error without strict flag", "[trac
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0"; cfg.asil = "ASIL-D";
     auto r = trace::run(tmp.path(), cfg);
     // ASIL-D project → gate is error (REQ-HLR004)
+    REQUIRE_FALSE(is_ok(r));
+}
+
+TEST_CASE("trace: ASIL-C HLR violation causes error without strict flag", "[trace][hlr]") {
+    //fusa:test REQ-HLR004
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([
+      {"id":"REQ-HLR-001","title":"HLR no children ASIL-C","severity":"safety","asil":"ASIL-C"}
+    ])");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0"; cfg.asil = "ASIL-C";
+    auto r = trace::run(tmp.path(), cfg);
+    // ASIL-C project → gate is error (REQ-HLR004), same as ASIL-D
     REQUIRE_FALSE(is_ok(r));
 }
 

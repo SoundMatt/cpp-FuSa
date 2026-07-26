@@ -1,4 +1,6 @@
-//fusa:test REQ-DO178-001 REQ-DO178-002 REQ-DO178-003
+//fusa:test REQ-DO178-001
+//fusa:test REQ-DO178-002
+//fusa:test REQ-DO178-003
 #include <catch2/catch_all.hpp>
 #include "do178/do178.hpp"
 #include "testutil/testutil.hpp"

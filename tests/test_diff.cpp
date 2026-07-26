@@ -1,4 +1,7 @@
-//fusa:test REQ-DIFF001 REQ-DIFF002 REQ-DIFF003 REQ-DIFF004
+//fusa:test REQ-DIFF001
+//fusa:test REQ-DIFF002
+//fusa:test REQ-DIFF003
+//fusa:test REQ-DIFF004
 #include <catch2/catch_all.hpp>
 #include "diff/diff.hpp"
 #include "testutil/testutil.hpp"

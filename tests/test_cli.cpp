@@ -1,4 +1,13 @@
-//fusa:test REQ-CLI001 REQ-CLI002 REQ-CLI003 REQ-CLI004 REQ-CLI005 REQ-CLI006 REQ-CLI007 REQ-CLI008 REQ-CLI009 REQ-CLI010
+//fusa:test REQ-CLI001
+//fusa:test REQ-CLI002
+//fusa:test REQ-CLI003
+//fusa:test REQ-CLI004
+//fusa:test REQ-CLI005
+//fusa:test REQ-CLI006
+//fusa:test REQ-CLI007
+//fusa:test REQ-CLI008
+//fusa:test REQ-CLI009
+//fusa:test REQ-CLI010
 #include <catch2/catch_all.hpp>
 #include "report/report.hpp"
 #include "engine/engine.hpp"

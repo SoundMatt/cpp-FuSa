@@ -1,4 +1,8 @@
-//fusa:test REQ-UNECE-001 REQ-UNECE-002 REQ-UNECE-003 REQ-UNECE-004 REQ-UNECE-005
+//fusa:test REQ-UNECE-001
+//fusa:test REQ-UNECE-002
+//fusa:test REQ-UNECE-003
+//fusa:test REQ-UNECE-004
+//fusa:test REQ-UNECE-005
 #include <catch2/catch_all.hpp>
 #include "unece/unece.hpp"
 #include "testutil/testutil.hpp"

@@ -1,4 +1,5 @@
-//fusa:test REQ-FIX001 REQ-FIX002
+//fusa:test REQ-FIX001
+//fusa:test REQ-FIX002
 #include <catch2/catch_all.hpp>
 #include "fix/fix.hpp"
 

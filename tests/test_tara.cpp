@@ -1,4 +1,8 @@
-//fusa:test REQ-TARA001 REQ-TARA002 REQ-TARA003 REQ-TARA004 REQ-TARA005
+//fusa:test REQ-TARA001
+//fusa:test REQ-TARA002
+//fusa:test REQ-TARA003
+//fusa:test REQ-TARA004
+//fusa:test REQ-TARA005
 #include <catch2/catch_all.hpp>
 #include "tara/tara.hpp"
 #include "testutil/testutil.hpp"

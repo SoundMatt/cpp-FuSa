@@ -1,4 +1,8 @@
-//fusa:test REQ-VERIFY001 REQ-VERIFY002 REQ-VERIFY003 REQ-VERIFY004 REQ-VERIFY005
+//fusa:test REQ-VERIFY001
+//fusa:test REQ-VERIFY002
+//fusa:test REQ-VERIFY003
+//fusa:test REQ-VERIFY004
+//fusa:test REQ-VERIFY005
 #include <catch2/catch_all.hpp>
 #include "verify/verify.hpp"
 #include "testutil/testutil.hpp"

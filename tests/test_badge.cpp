@@ -1,4 +1,6 @@
-//fusa:test REQ-BADGE001 REQ-BADGE002 REQ-BADGE003
+//fusa:test REQ-BADGE001
+//fusa:test REQ-BADGE002
+//fusa:test REQ-BADGE003
 #include <catch2/catch_all.hpp>
 #include "badge/badge.hpp"
 

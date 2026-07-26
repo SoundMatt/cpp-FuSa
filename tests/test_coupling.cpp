@@ -1,4 +1,6 @@
-//fusa:test REQ-COUPLING001 REQ-COUPLING002 REQ-COUPLING003
+//fusa:test REQ-COUPLING001
+//fusa:test REQ-COUPLING002
+//fusa:test REQ-COUPLING003
 #include <catch2/catch_all.hpp>
 #include "coupling/coupling.hpp"
 #include "testutil/testutil.hpp"

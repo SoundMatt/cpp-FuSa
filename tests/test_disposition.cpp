@@ -1,4 +1,6 @@
-//fusa:test REQ-DISP001 REQ-DISP002 REQ-DISP003
+//fusa:test REQ-DISP001
+//fusa:test REQ-DISP002
+//fusa:test REQ-DISP003
 #include <catch2/catch_all.hpp>
 #include "disposition/disposition.hpp"
 #include "testutil/testutil.hpp"
