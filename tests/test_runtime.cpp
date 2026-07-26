@@ -1,4 +1,8 @@
-//fusa:test REQ-RT001 REQ-RT002 REQ-RT003 REQ-RT004 REQ-RT005
+//fusa:test REQ-RT001
+//fusa:test REQ-RT002
+//fusa:test REQ-RT003
+//fusa:test REQ-RT004
+//fusa:test REQ-RT005
 #include <catch2/catch_all.hpp>
 #include "runtime/watchdog.hpp"
 #include "runtime/safe_state.hpp"

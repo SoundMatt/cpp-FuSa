@@ -1,4 +1,6 @@
-//fusa:test REQ-IEC61508-001 REQ-IEC61508-002 REQ-IEC61508-003
+//fusa:test REQ-IEC61508-001
+//fusa:test REQ-IEC61508-002
+//fusa:test REQ-IEC61508-003
 #include <catch2/catch_all.hpp>
 #include "iec61508/iec61508.hpp"
 #include "testutil/testutil.hpp"

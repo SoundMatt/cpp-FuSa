@@ -1,4 +1,6 @@
-//fusa:test REQ-IEC62443-001 REQ-IEC62443-002 REQ-IEC62443-003
+//fusa:test REQ-IEC62443-001
+//fusa:test REQ-IEC62443-002
+//fusa:test REQ-IEC62443-003
 #include <catch2/catch_all.hpp>
 #include "iec62443/iec62443.hpp"
 #include "testutil/testutil.hpp"

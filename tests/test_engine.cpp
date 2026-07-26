@@ -1,4 +1,20 @@
-//fusa:test REQ-FUSA001 REQ-FUSA002 REQ-FUSA003 REQ-FUSA004 REQ-FUSA005 REQ-ENG001 REQ-ENG002 REQ-ENG003 REQ-ENG004 REQ-COUP003 REQ-HARA005 REQ-ISO26262002 REQ-ISO26262003 REQ-HARA002 REQ-HARA003 REQ-HARA004 REQ-VERIFY006
+//fusa:test REQ-FUSA001
+//fusa:test REQ-FUSA002
+//fusa:test REQ-FUSA003
+//fusa:test REQ-FUSA004
+//fusa:test REQ-FUSA005
+//fusa:test REQ-ENG001
+//fusa:test REQ-ENG002
+//fusa:test REQ-ENG003
+//fusa:test REQ-ENG004
+//fusa:test REQ-COUP003
+//fusa:test REQ-HARA005
+//fusa:test REQ-ISO26262002
+//fusa:test REQ-ISO26262003
+//fusa:test REQ-HARA002
+//fusa:test REQ-HARA003
+//fusa:test REQ-HARA004
+//fusa:test REQ-VERIFY006
 #include <catch2/catch_all.hpp>
 #include "engine/engine.hpp"
 #include "engine/rules.hpp"

@@ -1,4 +1,6 @@
-//fusa:test REQ-NF001 REQ-NF002 REQ-NF003
+//fusa:test REQ-NF001
+//fusa:test REQ-NF002
+//fusa:test REQ-NF003
 #include <catch2/catch_all.hpp>
 #include "config/config.hpp"
 #include "testutil/testutil.hpp"

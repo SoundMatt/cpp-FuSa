@@ -1,4 +1,8 @@
-//fusa:test REQ-COV001 REQ-COV002 REQ-COV003 REQ-COV004 REQ-COV005
+//fusa:test REQ-COV001
+//fusa:test REQ-COV002
+//fusa:test REQ-COV003
+//fusa:test REQ-COV004
+//fusa:test REQ-COV005
 #include <catch2/catch_all.hpp>
 #include "coverage/coverage.hpp"
 #include "testutil/testutil.hpp"

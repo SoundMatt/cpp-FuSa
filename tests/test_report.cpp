@@ -1,4 +1,9 @@
-//fusa:test REQ-RPT001 REQ-RPT002 REQ-RPT003 REQ-RPT004 REQ-RPT005 REQ-RPT006
+//fusa:test REQ-RPT001
+//fusa:test REQ-RPT002
+//fusa:test REQ-RPT003
+//fusa:test REQ-RPT004
+//fusa:test REQ-RPT005
+//fusa:test REQ-RPT006
 #include <catch2/catch_all.hpp>
 #include "report/report.hpp"
 #include <nlohmann/json.hpp>

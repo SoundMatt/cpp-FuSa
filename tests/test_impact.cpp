@@ -1,4 +1,5 @@
-//fusa:test REQ-IMPACT001 REQ-IMPACT002
+//fusa:test REQ-IMPACT001
+//fusa:test REQ-IMPACT002
 #include <catch2/catch_all.hpp>
 #include "impact/impact.hpp"
 #include "testutil/testutil.hpp"

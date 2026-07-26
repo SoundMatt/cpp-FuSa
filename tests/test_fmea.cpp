@@ -1,4 +1,10 @@
-//fusa:test REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006 REQ-FMEA007
+//fusa:test REQ-FMEA001
+//fusa:test REQ-FMEA002
+//fusa:test REQ-FMEA003
+//fusa:test REQ-FMEA004
+//fusa:test REQ-FMEA005
+//fusa:test REQ-FMEA006
+//fusa:test REQ-FMEA007
 #include <catch2/catch_all.hpp>
 #include "fmea/fmea.hpp"
 #include "testutil/testutil.hpp"

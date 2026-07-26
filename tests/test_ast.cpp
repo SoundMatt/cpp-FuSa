@@ -1,4 +1,8 @@
-//fusa:test REQ-AST001 REQ-AST002 REQ-AST003 REQ-AST004 REQ-AST005
+//fusa:test REQ-AST001
+//fusa:test REQ-AST002
+//fusa:test REQ-AST003
+//fusa:test REQ-AST004
+//fusa:test REQ-AST005
 #include <catch2/catch_all.hpp>
 #include "ast/ast.hpp"
 #include "config/config.hpp"

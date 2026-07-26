@@ -1,4 +1,6 @@
-//fusa:test REQ-ISO26262-001 REQ-ISO26262-002 REQ-ISO26262-003
+//fusa:test REQ-ISO26262-001
+//fusa:test REQ-ISO26262-002
+//fusa:test REQ-ISO26262-003
 #include <catch2/catch_all.hpp>
 #include "iso26262/iso26262.hpp"
 #include "testutil/testutil.hpp"

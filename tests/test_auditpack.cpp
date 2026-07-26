@@ -1,4 +1,7 @@
-//fusa:test REQ-AUDIT001 REQ-AUDIT002 REQ-AUDIT003 REQ-AUDIT004
+//fusa:test REQ-AUDIT001
+//fusa:test REQ-AUDIT002
+//fusa:test REQ-AUDIT003
+//fusa:test REQ-AUDIT004
 #include <catch2/catch_all.hpp>
 #include "auditpack/auditpack.hpp"
 #include "testutil/testutil.hpp"

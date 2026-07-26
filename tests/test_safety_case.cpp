@@ -1,4 +1,8 @@
-//fusa:test REQ-SAFETYCASE001 REQ-SAFETYCASE002 REQ-SAFETYCASE003 REQ-SAFETYCASE004 REQ-SAFETYCASE005
+//fusa:test REQ-SAFETYCASE001
+//fusa:test REQ-SAFETYCASE002
+//fusa:test REQ-SAFETYCASE003
+//fusa:test REQ-SAFETYCASE004
+//fusa:test REQ-SAFETYCASE005
 #include <catch2/catch_all.hpp>
 #include "safety_case/safety_case.hpp"
 #include "testutil/testutil.hpp"

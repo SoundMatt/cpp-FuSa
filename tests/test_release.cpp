@@ -1,4 +1,11 @@
-//fusa:test REQ-RELEASE001 REQ-RELEASE002 REQ-RELEASE003 REQ-RELEASE004 REQ-RELEASE005 REQ-RELEASE006 REQ-RELEASE007 REQ-RELEASE008
+//fusa:test REQ-RELEASE001
+//fusa:test REQ-RELEASE002
+//fusa:test REQ-RELEASE003
+//fusa:test REQ-RELEASE004
+//fusa:test REQ-RELEASE005
+//fusa:test REQ-RELEASE006
+//fusa:test REQ-RELEASE007
+//fusa:test REQ-RELEASE008
 #include <catch2/catch_all.hpp>
 #include "release/release.hpp"
 #include "testutil/testutil.hpp"

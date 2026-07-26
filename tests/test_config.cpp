@@ -1,4 +1,9 @@
-//fusa:test REQ-CFG001 REQ-CFG002 REQ-CFG003 REQ-CFG004 REQ-CFG005 REQ-CFG006
+//fusa:test REQ-CFG001
+//fusa:test REQ-CFG002
+//fusa:test REQ-CFG003
+//fusa:test REQ-CFG004
+//fusa:test REQ-CFG005
+//fusa:test REQ-CFG006
 #include <catch2/catch_all.hpp>
 #include "config/config.hpp"
 #include "testutil/testutil.hpp"

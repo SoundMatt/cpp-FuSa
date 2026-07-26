@@ -1,4 +1,8 @@
-//fusa:test REQ-ISO21434-001 REQ-ISO21434-002 REQ-ISO21434-003 REQ-ISO21434-004 REQ-ISO21434-005
+//fusa:test REQ-ISO21434-001
+//fusa:test REQ-ISO21434-002
+//fusa:test REQ-ISO21434-003
+//fusa:test REQ-ISO21434-004
+//fusa:test REQ-ISO21434-005
 #include <catch2/catch_all.hpp>
 #include "iso21434/iso21434.hpp"
 #include "testutil/testutil.hpp"

@@ -1,4 +1,13 @@
-//fusa:test REQ-CYBER001 REQ-CYBER002 REQ-CYBER003 REQ-CYBER004 REQ-CYBER005 REQ-CYBER006 REQ-CYBER007 REQ-CYBER008 REQ-CYBER009 REQ-CYBER010
+//fusa:test REQ-CYBER001
+//fusa:test REQ-CYBER002
+//fusa:test REQ-CYBER003
+//fusa:test REQ-CYBER004
+//fusa:test REQ-CYBER005
+//fusa:test REQ-CYBER006
+//fusa:test REQ-CYBER007
+//fusa:test REQ-CYBER008
+//fusa:test REQ-CYBER009
+//fusa:test REQ-CYBER010
 #include <catch2/catch_all.hpp>
 #include "cyber/cyber.hpp"
 #include "testutil/testutil.hpp"

@@ -1,4 +1,6 @@
-//fusa:test REQ-HOOKS001 REQ-HOOKS002 REQ-HOOKS003
+//fusa:test REQ-HOOKS001
+//fusa:test REQ-HOOKS002
+//fusa:test REQ-HOOKS003
 #include <catch2/catch_all.hpp>
 #include "hooks/hooks.hpp"
 #include "testutil/testutil.hpp"

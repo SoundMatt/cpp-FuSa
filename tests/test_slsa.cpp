@@ -1,4 +1,6 @@
-//fusa:test REQ-SLSA001 REQ-SLSA002 REQ-SLSA003
+//fusa:test REQ-SLSA001
+//fusa:test REQ-SLSA002
+//fusa:test REQ-SLSA003
 #include <catch2/catch_all.hpp>
 #include "slsa/slsa.hpp"
 #include "testutil/testutil.hpp"

@@ -1,4 +1,8 @@
-//fusa:test REQ-SIGN001 REQ-SIGN002 REQ-SIGN003 REQ-SIGN004 REQ-SIGN005
+//fusa:test REQ-SIGN001
+//fusa:test REQ-SIGN002
+//fusa:test REQ-SIGN003
+//fusa:test REQ-SIGN004
+//fusa:test REQ-SIGN005
 #include <catch2/catch_all.hpp>
 #include "sign/sign.hpp"
 #include "testutil/testutil.hpp"

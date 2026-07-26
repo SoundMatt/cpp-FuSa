@@ -1,4 +1,7 @@
-//fusa:test REQ-VULN001 REQ-VULN002 REQ-VULN003 REQ-VULN004
+//fusa:test REQ-VULN001
+//fusa:test REQ-VULN002
+//fusa:test REQ-VULN003
+//fusa:test REQ-VULN004
 #include <catch2/catch_all.hpp>
 #include "vuln/vuln.hpp"
 #include "testutil/testutil.hpp"

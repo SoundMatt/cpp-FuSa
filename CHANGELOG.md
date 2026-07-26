@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.0] — 2026-07-26
+
+### Fixed
+- **CMakeLists.txt version** (P0): `VERSION` in `project()` call corrected from `0.12.3` to `0.13.0`; header and cmake build banner are now in sync. Bumped to `0.14.0` for this release.
+- **Annotation convention** (P1): All 47 multi-ID `//fusa:test` header annotation lines across every test file have been split into individual single-ID lines, matching the go-FuSa authoritative model (one requirement ID per annotation line).
+- **ASIL-C HLR gate test** (P1): Added `trace: ASIL-C HLR violation causes error without strict flag` test case in `tests/test_trace.cpp`, providing full coverage of both sides of the `ASIL-C || ASIL-D` gate condition (REQ-HLR004).
+- **Compiler warning** (P2): `test_req.cpp` aggregate initialisers now include an explicit empty `parent_id` field, eliminating `-Wmissing-field-initializers` on the REQ-RT1 and REQ-RT2 lines.
+- **Dogfooding** (P2): `.fusa.json` project version updated to `0.14.0`; `strict: false` (already present) combined with `asil: ASIL-B` suppresses the HLR/LLR gate error until full HLR/LLR decomposition is applied to `.fusa-reqs.json` incrementally.
+
+### Version
+- `Version` constant in `include/cpfusa/fusa.hpp` bumped to `0.14.0`
+
 ## [0.13.0] — 2026-07-26
 
 ### Added

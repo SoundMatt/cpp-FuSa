@@ -1,4 +1,6 @@
-//fusa:test REQ-MISRA001 REQ-MISRA002 REQ-MISRA003
+//fusa:test REQ-MISRA001
+//fusa:test REQ-MISRA002
+//fusa:test REQ-MISRA003
 #include <catch2/catch_all.hpp>
 #include "misra/misra.hpp"
 #include "testutil/testutil.hpp"

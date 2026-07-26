@@ -1,4 +1,14 @@
-//fusa:test REQ-ANAL001 REQ-ANAL002 REQ-ANAL003 REQ-ANAL004 REQ-ANAL005 REQ-ANAL008 REQ-ANAL009 REQ-ANAL010 REQ-ANAL011 REQ-ANAL012 REQ-ANAL013
+//fusa:test REQ-ANAL001
+//fusa:test REQ-ANAL002
+//fusa:test REQ-ANAL003
+//fusa:test REQ-ANAL004
+//fusa:test REQ-ANAL005
+//fusa:test REQ-ANAL008
+//fusa:test REQ-ANAL009
+//fusa:test REQ-ANAL010
+//fusa:test REQ-ANAL011
+//fusa:test REQ-ANAL012
+//fusa:test REQ-ANAL013
 #include <catch2/catch_all.hpp>
 #include "analyze/analyze.hpp"
 #include "testutil/testutil.hpp"

@@ -1,4 +1,6 @@
-//fusa:test REQ-PR001 REQ-PR002 REQ-PR003
+//fusa:test REQ-PR001
+//fusa:test REQ-PR002
+//fusa:test REQ-PR003
 #include <catch2/catch_all.hpp>
 #include "pr/pr.hpp"
 #include "testutil/testutil.hpp"
