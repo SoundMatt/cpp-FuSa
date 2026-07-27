@@ -163,12 +163,12 @@ TEST_CASE("trace: render_json produces valid JSON", "[trace][trace006]") {
     REQUIRE_NOTHROW(json::parse(trace::render_json(res, cfg)));
 }
 
-TEST_CASE("trace: render_json has spec v1.10.4 envelope", "[trace][trace006]") {
+TEST_CASE("trace: render_json has spec v1.10.12 envelope", "[trace][trace006]") {
     TempDir tmp;
     config::ProjectConfig cfg; cfg.project = "TestProj"; cfg.version = "1.0.0";
     auto res = value_of(trace::run(tmp.path(), cfg));
     auto j = json::parse(trace::render_json(res, cfg));
-    REQUIRE(j["schemaVersion"] == "1.10.4");
+    REQUIRE(j["schemaVersion"] == "1.10.12");
     REQUIRE(j["kind"] == "trace-matrix");
     REQUIRE(j["tool"] == "cpp-FuSa");
     REQUIRE(j["language"] == "cpp");

@@ -281,3 +281,111 @@ TEST_CASE("analyze: own-pass findings emit relative not absolute paths", "[analy
         }
     }
 }
+
+// ─── run_clang_tidy — tool-not-found path ─────────────────────────────────────
+
+TEST_CASE("analyze: run_clang_tidy returns ANAL000 when tool not installed", "[analyze]") {
+    TempDir tmp;
+    // Use a non-existent binary name so tool_available returns false.
+    auto findings = analyze::run_clang_tidy(tmp.path(), "__cpfusa_no_such_tidy__");
+    REQUIRE(has_finding(findings, "ANAL000"));
+    REQUIRE(findings[0].severity == Severity::INFO);
+}
+
+TEST_CASE("analyze: run_clang_tidy ANAL000 has non-empty remediation", "[analyze]") {
+    TempDir tmp;
+    auto findings = analyze::run_clang_tidy(tmp.path(), "__cpfusa_no_such_tidy__");
+    REQUIRE_FALSE(findings.empty());
+    REQUIRE_FALSE(findings[0].remediation.empty());
+}
+
+// ─── run_cppcheck — tool-not-found path ──────────────────────────────────────
+
+TEST_CASE("analyze: run_cppcheck returns ANAL000 when tool not installed", "[analyze]") {
+    TempDir tmp;
+    auto findings = analyze::run_cppcheck(tmp.path(), "__cpfusa_no_such_check__");
+    REQUIRE(has_finding(findings, "ANAL000"));
+}
+
+TEST_CASE("analyze: run_cppcheck ANAL000 has non-empty remediation", "[analyze]") {
+    TempDir tmp;
+    auto findings = analyze::run_cppcheck(tmp.path(), "__cpfusa_no_such_check__");
+    REQUIRE_FALSE(findings.empty());
+    REQUIRE_FALSE(findings[0].remediation.empty());
+}
+
+// ─── run() dispatch ──────────────────────────────────────────────────────────
+
+TEST_CASE("analyze: run with all options false returns empty vector", "[analyze]") {
+    TempDir tmp;
+    tmp.write("src/foo.cpp", "int x = 0;\n");
+    config::ProjectConfig cfg;
+    analyze::AnalyzeOptions opts;
+    opts.run_clang_tidy = false;
+    opts.run_cppcheck   = false;
+    opts.run_own_passes = false;
+    auto findings = analyze::run(tmp.path(), cfg, opts);
+    REQUIRE(findings.empty());
+}
+
+TEST_CASE("analyze: run with only own passes enabled returns own-pass findings", "[analyze]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "int g_val = 0;\nvoid f() { g_val = 1; }\n");
+    config::ProjectConfig cfg;
+    analyze::AnalyzeOptions opts;
+    opts.run_clang_tidy = false;
+    opts.run_cppcheck   = false;
+    opts.run_own_passes = true;
+    auto findings = analyze::run(tmp.path(), cfg, opts);
+    REQUIRE(has_finding(findings, "ANAL003"));
+}
+
+TEST_CASE("analyze: run with clang_tidy enabled adds stub finding", "[analyze]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    analyze::AnalyzeOptions opts;
+    opts.run_clang_tidy  = true;
+    opts.clang_tidy_bin  = "__cpfusa_no_such_tidy__";
+    opts.run_cppcheck    = false;
+    opts.run_own_passes  = false;
+    auto findings = analyze::run(tmp.path(), cfg, opts);
+    REQUIRE(has_finding(findings, "ANAL000"));
+}
+
+TEST_CASE("analyze: run with cppcheck enabled adds stub finding", "[analyze]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    analyze::AnalyzeOptions opts;
+    opts.run_clang_tidy = false;
+    opts.run_cppcheck   = true;
+    opts.cppcheck_bin   = "__cpfusa_no_such_check__";
+    opts.run_own_passes = false;
+    auto findings = analyze::run(tmp.path(), cfg, opts);
+    REQUIRE(has_finding(findings, "ANAL000"));
+}
+
+TEST_CASE("analyze: run_clang_tidy returns ANAL000 when compile_commands.json absent", "[analyze]") {
+    // This test only applies when the tool IS installed but db is missing.
+    // If the tool is not installed, we still get ANAL000 (tool not found).
+    TempDir tmp;
+    // Try with "clang-tidy" — if it's not installed we get ANAL000 (tool),
+    // if it IS installed we get ANAL000 (no compile_commands.json).
+    auto findings = analyze::run_clang_tidy(tmp.path(), "clang-tidy");
+    REQUIRE(has_finding(findings, "ANAL000"));
+}
+
+// ─── ANAL006 – large stack allocation ────────────────────────────────────────
+
+TEST_CASE("analyze: ANAL006 detects large stack buffer", "[analyze]") {
+    TempDir tmp;
+    tmp.write("src/bad.cpp", "void f() { char buf[8192]; (void)buf; }\n");
+    auto f = analyze::check_large_stack_alloc(tmp.path());
+    REQUIRE(has_finding(f, "ANAL006"));
+}
+
+TEST_CASE("analyze: ANAL006 passes for buffer within limit", "[analyze]") {
+    TempDir tmp;
+    tmp.write("src/ok.cpp", "void f() { char buf[256]; (void)buf; }\n");
+    auto f = analyze::check_large_stack_alloc(tmp.path());
+    REQUIRE(f.empty());
+}

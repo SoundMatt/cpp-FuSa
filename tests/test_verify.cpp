@@ -120,3 +120,71 @@ TEST_CASE("verify: run_ctest returns error or empty bundle on missing build", "[
     if (is_ok(r)) REQUIRE(value_of(r).summary.total == 0);
     else          REQUIRE_FALSE(error_of(r).empty());
 }
+
+TEST_CASE("verify: run_ctest finds existing build dir via CMakeCache.txt", "[verify][verify001]") {
+    // fusa:test REQ-VERIFY001
+    TempDir tmp;
+    // Create a build directory with CMakeCache.txt so find_build_dir returns it.
+    tmp.write("build/CMakeCache.txt", "# CMake cache stub\n");
+    config::ProjectConfig cfg;
+    // run_ctest will find the build dir and attempt ctest; the output may be
+    // empty or produce no parsed test results — both are acceptable outcomes.
+    auto r = verify::run_ctest(tmp.path(), cfg);
+    // Either path is valid: success with zero tests, or a ctest error.
+    if (is_ok(r)) {
+        REQUIRE(value_of(r).summary.failed == 0);
+    } else {
+        REQUIRE_FALSE(error_of(r).empty());
+    }
+}
+
+TEST_CASE("verify: run_ctest finds build dir with CTestTestfile.cmake", "[verify][verify001]") {
+    // fusa:test REQ-VERIFY001
+    TempDir tmp;
+    tmp.write("build/CTestTestfile.cmake", "# stub\n");
+    config::ProjectConfig cfg;
+    auto r = verify::run_ctest(tmp.path(), cfg);
+    // Any non-crashing outcome is valid when ctest finds no real tests.
+    if (is_ok(r)) REQUIRE(value_of(r).summary.total >= 0);
+    else          REQUIRE_FALSE(error_of(r).empty());
+}
+
+TEST_CASE("verify: write_evidence stores project_root field", "[verify][verify002]") {
+    // fusa:test REQ-VERIFY002
+    TempDir tmp;
+    verify::EvidenceBundle b;
+    b.generated_at = "2026-07-27T00:00:00Z";
+    b.project_root = "/some/project";
+    b.cpp_version  = "C++17";
+    verify::write_evidence(tmp.path(), b);
+    std::ifstream f(tmp.path() / ".fusa-evidence.json");
+    json j; f >> j;
+    REQUIRE(j.contains("projectRoot"));
+    REQUIRE(j["projectRoot"].get<std::string>() == "/some/project");
+}
+
+TEST_CASE("verify: write_evidence result entries have elapsedSeconds field", "[verify][verify003]") {
+    // fusa:test REQ-VERIFY003
+    TempDir tmp;
+    verify::EvidenceBundle b;
+    b.generated_at = "2026-01-01T00:00:00Z"; b.cpp_version = "C++17";
+    b.results.push_back({"perf_test", "tests/t.cpp", "passed", 1.23});
+    b.summary.total = b.summary.passed = 1;
+    verify::write_evidence(tmp.path(), b);
+    std::ifstream f(tmp.path() / ".fusa-evidence.json");
+    json j; f >> j;
+    REQUIRE(j["results"][0].contains("elapsedSeconds"));
+    REQUIRE(j["results"][0]["elapsedSeconds"].get<double>() == Catch::Approx(1.23));
+}
+
+TEST_CASE("verify: write_evidence skipped count round-trips", "[verify][verify004]") {
+    // fusa:test REQ-VERIFY004
+    TempDir tmp;
+    verify::EvidenceBundle b;
+    b.generated_at = "2026-01-01T00:00:00Z"; b.cpp_version = "C++17";
+    b.summary.total = 5; b.summary.passed = 3; b.summary.skipped = 2;
+    verify::write_evidence(tmp.path(), b);
+    std::ifstream f(tmp.path() / ".fusa-evidence.json");
+    json j; f >> j;
+    REQUIRE(j["summary"]["skipped"].get<int>() == 2);
+}

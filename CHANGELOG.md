@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.14.1] — 2026-07-27
+
+### Fixed
+- **SpecVersion** (P0): Updated `SpecVersion` constant in `include/cpfusa/fusa.hpp` from `"1.10.4"` to `"1.10.12"`, aligning cpp-FuSa with the current x-FuSa spec. Updated four test cases (test_report.cpp, test_iso21434.cpp, test_unece.cpp, test_trace.cpp) that hard-coded the old value.
+
+### Coverage
+- **verify**: Added 5 new tests exercising `run_ctest` with a real build directory stub, `write_evidence` `project_root` field, `elapsedSeconds` field, and skipped-count round-trip.
+- **metrics**: Added 12 new tests covering `collect()` branches (check-report.json findings, .fusa-reqs.json requirements and coverage_pct, cyber-report.json), malformed-JSON graceful handling, `render_text` with empty and non-empty series, and full snapshot round-trip.
+- **sci**: Added 5 new tests covering `sha256_file` via `build()` with existing artifact files — present/absent flags, sha256 stability, and hash change on content change.
+- **diff**: Added 7 new tests covering nested `location`-object format in `load_findings`, snake_case `rule_id` key, empty `findings` key, `render_json` output shape, and key-only equality semantics in `compare`.
+- **impact**: Added 6 new tests covering `render_text` with populated changed files, impacted requirements, and stale artifacts; `staleArtifacts` JSON field; empty-ref defaults.
+- **analyze**: Added 10 new tests covering `run_clang_tidy` and `run_cppcheck` tool-not-found paths, `run()` dispatch with each option combination, and ANAL006 large-stack-allocation detection.
+- **fix**: Added 6 new tests covering `show()` for known rule, unknown rule, empty rule ID, and all catalog entries; `list_all()`; every catalog entry has non-empty before/after.
+- **report**: Added 12 new tests covering SIL/DAL/empty integrity-level key emission, `write_report` for all four formats (JSON, HTML, SARIF, TEXT) and the error path, `render_html` with findings.
+- **engine**: Added 6 new tests covering `run_ids()` with single rule, empty list, unknown ID, and multiple rules; `rules()` accessor and non-empty rule IDs.
+
+### Tests
+- 72 new tests; total: **739 tests** (up from 667)
+
+### Version
+- `Version` constant in `include/cpfusa/fusa.hpp` bumped to `0.14.1`
+
 ## [0.14.0] — 2026-07-26
 
 ### Fixed

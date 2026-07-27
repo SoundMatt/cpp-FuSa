@@ -93,14 +93,14 @@ TEST_CASE("iso21434: write_json creates valid JSON file", "[iso21434][iso2143400
     REQUIRE_NOTHROW(json::parse(f));
 }
 
-TEST_CASE("iso21434: write_json has spec v1.10.4 envelope", "[iso21434][iso21434004]") {
+TEST_CASE("iso21434: write_json has spec v1.10.12 envelope", "[iso21434][iso21434004]") {
     TempDir tmp;
     auto r = iso21434::assess(tmp.path(), "p", iso21434::CAL::CAL2);
     auto out = tmp.path() / "iso21434-gap-report.json";
     iso21434::write_json(out, r);
     std::ifstream f(out);
     auto j = json::parse(f);
-    REQUIRE(j["schemaVersion"] == "1.10.4");
+    REQUIRE(j["schemaVersion"] == "1.10.12");
     REQUIRE(j["kind"]          == "gap-report");
     REQUIRE(j["tool"]          == "cpp-FuSa");
     REQUIRE(j["language"]      == "cpp");

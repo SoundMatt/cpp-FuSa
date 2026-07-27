@@ -126,3 +126,74 @@ TEST_CASE("sci: JSON has version field", "[sci][sci001]") {
     json j; f >> j;
     REQUIRE(j["version"].get<std::string>() == "3.0");
 }
+
+// ─── build with existing artifacts (exercises sha256_file) ────────────────────
+
+TEST_CASE("sci: build sets present=true for existing artifact", "[sci][sci001]") {
+    TempDir tmp;
+    // Write one of the known lifecycle artifact files
+    tmp.write(".fusa.json", R"({"project":"p","version":"1.0"})");
+    auto s = sci::build(tmp.path(), "p", "1.0");
+    bool found = false;
+    for (const auto& item : s.items) {
+        if (item.artifact == ".fusa.json") {
+            REQUIRE(item.present == true);
+            found = true;
+            break;
+        }
+    }
+    REQUIRE(found);
+}
+
+TEST_CASE("sci: build computes non-empty sha256 for existing artifact", "[sci][sci002]") {
+    TempDir tmp;
+    tmp.write(".fusa.json", R"({"project":"p","version":"1.0"})");
+    auto s = sci::build(tmp.path(), "p", "1.0");
+    for (const auto& item : s.items) {
+        if (item.artifact == ".fusa.json") {
+            REQUIRE_FALSE(item.sha256.empty());
+            // sha256 should look like a 64-char hex string
+            REQUIRE(item.sha256.size() == 64);
+        }
+    }
+}
+
+TEST_CASE("sci: build sha256 changes when file content changes", "[sci][sci002]") {
+    TempDir tmp;
+    tmp.write("fmea.json", R"({"version":"1.0"})");
+    auto s1 = sci::build(tmp.path(), "p", "1.0");
+    tmp.write("fmea.json", R"({"version":"2.0","extra":"data"})");
+    auto s2 = sci::build(tmp.path(), "p", "1.0");
+    std::string hash1, hash2;
+    for (const auto& item : s1.items)
+        if (item.artifact == "fmea.json") hash1 = item.sha256;
+    for (const auto& item : s2.items)
+        if (item.artifact == "fmea.json") hash2 = item.sha256;
+    REQUIRE_FALSE(hash1.empty());
+    REQUIRE_FALSE(hash2.empty());
+    REQUIRE(hash1 != hash2);
+}
+
+TEST_CASE("sci: build sha256 is stable across calls with same content", "[sci][sci002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"({"requirements":[]})");
+    auto s1 = sci::build(tmp.path(), "p", "1.0");
+    auto s2 = sci::build(tmp.path(), "p", "1.0");
+    std::string h1, h2;
+    for (const auto& item : s1.items)
+        if (item.artifact == ".fusa-reqs.json") h1 = item.sha256;
+    for (const auto& item : s2.items)
+        if (item.artifact == ".fusa-reqs.json") h2 = item.sha256;
+    REQUIRE(h1 == h2);
+}
+
+TEST_CASE("sci: build sets present=false for missing artifact", "[sci][sci001]") {
+    TempDir tmp;
+    auto s = sci::build(tmp.path(), "p", "1.0");
+    for (const auto& item : s.items) {
+        if (item.artifact == ".fusa.json") {
+            REQUIRE(item.present == false);
+            REQUIRE(item.sha256.empty());
+        }
+    }
+}

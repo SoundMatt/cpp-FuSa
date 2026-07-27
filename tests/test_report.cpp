@@ -6,9 +6,13 @@
 //fusa:test REQ-RPT006
 #include <catch2/catch_all.hpp>
 #include "report/report.hpp"
+#include "testutil/testutil.hpp"
 #include <nlohmann/json.hpp>
+#include <fstream>
+#include <filesystem>
 
 using namespace cpfusa;
+using namespace cpfusa::testutil;
 using json = nlohmann::json;
 
 namespace {
@@ -66,11 +70,11 @@ TEST_CASE("report: render_text summary counts are correct", "[report][rpt001]") 
     REQUIRE(txt.find("1 info(s)") != std::string::npos);
 }
 
-// ─── render_json — spec v1.10.4 envelope and finding schema ───────────────────
+// ─── render_json — spec v1.10.12 envelope and finding schema ──────────────────
 
-TEST_CASE("render_json: schemaVersion is 1.10.4", "[report][rpt002]") {
+TEST_CASE("render_json: schemaVersion is 1.10.12", "[report][rpt002]") {
     auto j = json::parse(report::render_json({}, make_cfg()));
-    REQUIRE(j["schemaVersion"] == "1.10.4");
+    REQUIRE(j["schemaVersion"] == "1.10.12");
 }
 
 TEST_CASE("render_json: kind is check-report", "[report][rpt002]") {
@@ -227,4 +231,127 @@ TEST_CASE("report: strict mode returns 1 on warning", "[report]") {
 TEST_CASE("report: exit_code returns 0 with no findings", "[report]") {
     REQUIRE(report::exit_code({}, false) == 0);
     REQUIRE(report::exit_code({}, true)  == 0);
+}
+
+// ─── SIL / DAL integrity level keys (§1.2.1 / §3.2) ─────────────────────────
+
+TEST_CASE("render_json: SIL integrity level emits sil key", "[report][rpt002]") {
+    config::ProjectConfig cfg = make_cfg();
+    cfg.asil = "SIL-2";
+    auto j = json::parse(report::render_json({}, cfg));
+    REQUIRE(j.contains("sil"));
+    REQUIRE(j["sil"] == "SIL-2");
+    REQUIRE_FALSE(j.contains("asil"));
+}
+
+TEST_CASE("render_json: DAL integrity level emits dal key", "[report][rpt002]") {
+    config::ProjectConfig cfg = make_cfg();
+    cfg.asil = "DAL-A";
+    auto j = json::parse(report::render_json({}, cfg));
+    REQUIRE(j.contains("dal"));
+    REQUIRE(j["dal"] == "DAL-A");
+    REQUIRE_FALSE(j.contains("asil"));
+}
+
+TEST_CASE("render_json: empty asil omits integrity key", "[report][rpt002]") {
+    config::ProjectConfig cfg = make_cfg();
+    cfg.asil = "";
+    auto j = json::parse(report::render_json({}, cfg));
+    REQUIRE_FALSE(j.contains("asil"));
+    REQUIRE_FALSE(j.contains("sil"));
+    REQUIRE_FALSE(j.contains("dal"));
+}
+
+TEST_CASE("render_json: empty standard omits standard key", "[report][rpt002]") {
+    config::ProjectConfig cfg = make_cfg();
+    cfg.standard = "";
+    auto j = json::parse(report::render_json({}, cfg));
+    REQUIRE_FALSE(j.contains("standard"));
+}
+
+// ─── write_report ────────────────────────────────────────────────────────────
+
+TEST_CASE("report: write_report to file creates file", "[report][rpt001]") {
+    TempDir tmp;
+    report::ReportOptions opts;
+    opts.format = report::Format::JSON;
+    opts.output = (tmp.path() / "out.json").string();
+    auto r = report::write_report({make_finding()}, make_cfg(), opts);
+    REQUIRE(is_ok(r));
+    REQUIRE(std::filesystem::exists(tmp.path() / "out.json"));
+}
+
+TEST_CASE("report: write_report JSON file is valid JSON", "[report][rpt001]") {
+    TempDir tmp;
+    report::ReportOptions opts;
+    opts.format = report::Format::JSON;
+    opts.output = (tmp.path() / "report.json").string();
+    (void)report::write_report({make_finding()}, make_cfg(), opts);
+    std::ifstream f(opts.output);
+    json j;
+    REQUIRE_NOTHROW(f >> j);
+    REQUIRE(j.contains("findings"));
+}
+
+TEST_CASE("report: write_report HTML format creates html content", "[report][rpt001]") {
+    TempDir tmp;
+    report::ReportOptions opts;
+    opts.format = report::Format::HTML;
+    opts.output = (tmp.path() / "report.html").string();
+    auto r = report::write_report({make_finding()}, make_cfg(), opts);
+    REQUIRE(is_ok(r));
+    std::ifstream f(opts.output);
+    std::string content((std::istreambuf_iterator<char>(f)), {});
+    REQUIRE(content.find("DOCTYPE html") != std::string::npos);
+}
+
+TEST_CASE("report: write_report SARIF format creates valid output", "[report][rpt001]") {
+    TempDir tmp;
+    report::ReportOptions opts;
+    opts.format = report::Format::SARIF;
+    opts.output = (tmp.path() / "report.sarif").string();
+    auto r = report::write_report({make_finding()}, make_cfg(), opts);
+    REQUIRE(is_ok(r));
+    std::ifstream f(opts.output);
+    json j;
+    REQUIRE_NOTHROW(f >> j);
+    REQUIRE(j.contains("runs"));
+}
+
+TEST_CASE("report: write_report TEXT format creates text output", "[report][rpt001]") {
+    TempDir tmp;
+    report::ReportOptions opts;
+    opts.format = report::Format::TEXT;
+    opts.output = (tmp.path() / "report.txt").string();
+    auto r = report::write_report({make_finding()}, make_cfg(), opts);
+    REQUIRE(is_ok(r));
+    std::ifstream f(opts.output);
+    std::string content((std::istreambuf_iterator<char>(f)), {});
+    REQUIRE(content.find("LINT001") != std::string::npos);
+}
+
+TEST_CASE("report: write_report returns error for unwritable path", "[report][rpt001]") {
+    report::ReportOptions opts;
+    opts.format = report::Format::JSON;
+    opts.output = "/nonexistent_dir_xyz/report.json";
+    auto r = report::write_report({}, make_cfg(), opts);
+    REQUIRE_FALSE(is_ok(r));
+}
+
+// ─── render_html with findings ────────────────────────────────────────────────
+
+TEST_CASE("report: render_html with finding shows rule id", "[report][rpt001]") {
+    auto html = report::render_html({make_finding()}, make_cfg());
+    REQUIRE(html.find("LINT001") != std::string::npos);
+}
+
+TEST_CASE("report: render_html with empty finding has green check", "[report][rpt001]") {
+    auto html = report::render_html({}, make_cfg());
+    REQUIRE(html.find("No findings") != std::string::npos);
+}
+
+TEST_CASE("report: render_html finding includes file and line", "[report][rpt001]") {
+    auto html = report::render_html({make_finding()}, make_cfg());
+    REQUIRE(html.find("src/foo.cpp") != std::string::npos);
+    REQUIRE(html.find("42") != std::string::npos);
 }

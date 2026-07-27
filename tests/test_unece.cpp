@@ -87,14 +87,14 @@ TEST_CASE("unece: write_json R155 creates valid JSON", "[unece][unece004]") {
     REQUIRE_NOTHROW(json::parse(f));
 }
 
-TEST_CASE("unece: write_json R155 has spec v1.10.4 envelope", "[unece][unece004]") {
+TEST_CASE("unece: write_json R155 has spec v1.10.12 envelope", "[unece][unece004]") {
     TempDir tmp;
     auto r = unece::assess_r155(tmp.path(), "p");
     auto out = tmp.path() / "unece-r155-gap-report.json";
     unece::write_json(out, r);
     std::ifstream f(out);
     auto j = json::parse(f);
-    REQUIRE(j["schemaVersion"] == "1.10.4");
+    REQUIRE(j["schemaVersion"] == "1.10.12");
     REQUIRE(j["kind"]          == "gap-report");
     REQUIRE(j["tool"]          == "cpp-FuSa");
     REQUIRE(j["standard"]      == "unece-r155");

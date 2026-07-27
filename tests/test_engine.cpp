@@ -360,3 +360,56 @@ TEST_CASE("engine: VERIFY002 passes when all tests passed", "[engine][verify002]
     config::ProjectConfig cfg;
     REQUIRE(engine::make_verify002().check(tmp.path(), cfg).empty());
 }
+
+// ─── run_ids ──────────────────────────────────────────────────────────────────
+
+TEST_CASE("engine: run_ids runs only rules with matching id", "[engine][eng003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto eng = engine::make_default_engine();
+    // Request only FUSA001 — should fire because .fusa.json is absent.
+    auto findings = eng.run_ids(tmp.path(), cfg, {"FUSA001"});
+    REQUIRE(has_finding(findings, "FUSA001"));
+    // FUSA004 was NOT requested, so it must not appear.
+    REQUIRE_FALSE(has_finding(findings, "FUSA004"));
+}
+
+TEST_CASE("engine: run_ids with empty id list returns no findings", "[engine][eng003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto eng = engine::make_default_engine();
+    auto findings = eng.run_ids(tmp.path(), cfg, {});
+    REQUIRE(findings.empty());
+}
+
+TEST_CASE("engine: run_ids with unknown id returns no findings", "[engine][eng003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto eng = engine::make_default_engine();
+    auto findings = eng.run_ids(tmp.path(), cfg, {"NONEXISTENT999"});
+    REQUIRE(findings.empty());
+}
+
+TEST_CASE("engine: run_ids can run multiple rules by id", "[engine][eng003]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    cfg.version = "1.0.0";
+    auto eng = engine::make_default_engine();
+    // Request FUSA001 and FUSA004 — both should fire.
+    auto findings = eng.run_ids(tmp.path(), cfg, {"FUSA001", "FUSA004"});
+    REQUIRE(has_finding(findings, "FUSA001"));
+    REQUIRE(has_finding(findings, "FUSA004"));
+}
+
+// ─── rules() accessor ────────────────────────────────────────────────────────
+
+TEST_CASE("engine: rules() returns non-empty vector for default engine", "[engine]") {
+    auto eng = engine::make_default_engine();
+    REQUIRE_FALSE(eng.rules().empty());
+}
+
+TEST_CASE("engine: each rule has a non-empty id", "[engine]") {
+    auto eng = engine::make_default_engine();
+    for (const auto& rule : eng.rules())
+        REQUIRE_FALSE(rule.info.id.empty());
+}
