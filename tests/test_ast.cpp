@@ -3,6 +3,7 @@
 //fusa:test REQ-AST003
 //fusa:test REQ-AST004
 //fusa:test REQ-AST005
+//fusa:test REQ-AST006
 #include <catch2/catch_all.hpp>
 #include "ast/ast.hpp"
 #include "config/config.hpp"

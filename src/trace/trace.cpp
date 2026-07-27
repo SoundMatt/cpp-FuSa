@@ -293,6 +293,7 @@ Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
     }
 }
 
+//fusa:req REQ-TRACE020
 std::vector<Annotation> scan_annotations(const fs::path& dir) {
     std::vector<Annotation> out;
     if (!fs::exists(dir)) return out;

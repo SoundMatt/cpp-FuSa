@@ -1,6 +1,7 @@
 //fusa:test REQ-TMPL001
 //fusa:test REQ-TMPL002
 //fusa:test REQ-TMPL003
+//fusa:test REQ-TMPL004
 #include <catch2/catch_all.hpp>
 #include "template/template_gen.hpp"
 #include "config/config.hpp"

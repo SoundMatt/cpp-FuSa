@@ -3,6 +3,8 @@
 //fusa:test REQ-ANAL003
 //fusa:test REQ-ANAL004
 //fusa:test REQ-ANAL005
+//fusa:test REQ-ANAL006
+//fusa:test REQ-ANAL007
 //fusa:test REQ-ANAL008
 //fusa:test REQ-ANAL009
 //fusa:test REQ-ANAL010

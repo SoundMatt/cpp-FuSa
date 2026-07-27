@@ -7,6 +7,8 @@
 //fusa:test REQ-ENG002
 //fusa:test REQ-ENG003
 //fusa:test REQ-ENG004
+//fusa:test REQ-ENG005
+//fusa:test REQ-ENG006
 //fusa:test REQ-COUP003
 //fusa:test REQ-HARA005
 //fusa:test REQ-ISO26262002

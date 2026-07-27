@@ -3,6 +3,8 @@
 //fusa:test REQ-UNECE-003
 //fusa:test REQ-UNECE-004
 //fusa:test REQ-UNECE-005
+//fusa:test REQ-UNECE-006
+//fusa:test REQ-UNECE-007
 #include <catch2/catch_all.hpp>
 #include "unece/unece.hpp"
 #include "testutil/testutil.hpp"

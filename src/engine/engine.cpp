@@ -9,6 +9,7 @@ void Engine::register_rule(Rule rule) {
     rules_.push_back(std::move(rule));
 }
 
+//fusa:req REQ-ENG005
 std::vector<Finding> Engine::run(const std::filesystem::path& dir,
                                   const config::ProjectConfig& cfg) const {
     std::vector<Finding> all;
@@ -19,6 +20,7 @@ std::vector<Finding> Engine::run(const std::filesystem::path& dir,
     return all;
 }
 
+//fusa:req REQ-ENG006
 std::vector<Finding> Engine::run_ids(const std::filesystem::path& dir,
                                       const config::ProjectConfig& cfg,
                                       const std::vector<std::string>& ids) const {
@@ -32,6 +34,7 @@ std::vector<Finding> Engine::run_ids(const std::filesystem::path& dir,
     return all;
 }
 
+//fusa:req REQ-ENG004
 Engine make_default_engine() {
     Engine e;
     e.register_rule(make_fusa001());

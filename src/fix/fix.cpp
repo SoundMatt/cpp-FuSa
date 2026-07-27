@@ -101,6 +101,7 @@ std::vector<FixEntry> catalog() {
     };
 }
 
+//fusa:req REQ-FIX003
 void show(const std::string& rule_id) {
     for (auto& e : catalog()) {
         if (e.rule_id == rule_id) {

@@ -1702,6 +1702,142 @@
       "standard_ref": "x-FuSa spec \u00a71.4",
       "severity": "safety",
       "asil": ""
+    },
+    {
+      "id": "REQ-ANAL006",
+      "title": "Large stack allocation detection",
+      "description": "analyze::check_large_stack_alloc() shall flag char array declarations larger than 4096 bytes (ANAL006) as a stack-overflow risk.",
+      "standard_ref": "MISRA C++:2023",
+      "severity": "WARNING",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ANAL007",
+      "title": "memcpy/memset on non-trivial type detection",
+      "description": "analyze::check_memcpy_on_class() shall flag memcpy/memset/memmove calls (ANAL007) unless the line carries a fusa:unsafe suppression comment.",
+      "standard_ref": "MISRA C++:2023 A12-0-2",
+      "severity": "info",
+      "asil": ""
+    },
+    {
+      "id": "REQ-METRICS004",
+      "title": "Metrics time series load with legacy field defaults",
+      "description": "metrics::load() shall parse an existing .fusa-metrics.json file into a TimeSeries, defaulting any missing snapshot fields to zero/empty and tolerating a missing or corrupt file by returning an empty series.",
+      "standard_ref": "Internal",
+      "severity": "info",
+      "asil": ""
+    },
+    {
+      "id": "REQ-LINT032",
+      "title": "Lint rule orchestration",
+      "description": "lint::run() shall aggregate the findings of every MISRA/AUTOSAR-inspired rule check into a single vector.",
+      "standard_ref": "MISRA C++:2023",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TRACE020",
+      "title": "Requirement annotation scanning across source tree",
+      "description": "trace::scan_annotations() shall recursively scan source files for //fusa:req and //fusa:test tags and collect every REQ-xxx token found on each tagged line.",
+      "standard_ref": "x-FuSa spec \u00a71.4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-UNECE-006",
+      "title": "UNECE R155 compliance assessment",
+      "description": "unece::assess_r155() shall build a gap report scoring project evidence against the UNECE R155 cybersecurity management system threat catalog.",
+      "standard_ref": "UNECE R155",
+      "severity": "cybersecurity",
+      "asil": ""
+    },
+    {
+      "id": "REQ-UNECE-007",
+      "title": "UNECE R156 compliance assessment",
+      "description": "unece::assess_r156() shall build a gap report scoring project evidence against the UNECE R156 software update management system threat catalog.",
+      "standard_ref": "UNECE R156",
+      "severity": "cybersecurity",
+      "asil": ""
+    },
+    {
+      "id": "REQ-CFG007",
+      "title": "Config load accepts legacy and camelCase field variants",
+      "description": "config::load() shall parse .fusa.json accepting both nested {name,version} and legacy flat project fields, camelCase and snake_case sourceDirs/excludePatterns, and asil/sil/dal integrity keys.",
+      "standard_ref": "x-FuSa spec \u00a71.2.1",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-CFG008",
+      "title": "Config save selects integrity key by standard",
+      "description": "config::save() shall write only the integrity field relevant to the project standard \u2014 sil for iec61508/SIL values, dal for do178c/DAL values, otherwise asil \u2014 omitting the other two.",
+      "standard_ref": "x-FuSa spec \u00a71.2.1",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TMPL004",
+      "title": "Template generation dispatch by document type",
+      "description": "tmpl::generate() shall write the requested safety document (SAFETY_PLAN, TEST_EVIDENCE, HARA, SVP, SCMP, SQAP) to dir, or generate all of them when TemplateType::ALL is given.",
+      "standard_ref": "Internal",
+      "severity": "info",
+      "asil": ""
+    },
+    {
+      "id": "REQ-SAS004",
+      "title": "Software accomplishment summary evidence assembly",
+      "description": "sas::build() shall check each baseline evidence item's artifact for presence in dir and compute the total/complete evidence counts.",
+      "standard_ref": "DO-178C",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-FIX003",
+      "title": "Fix guidance lookup by rule id",
+      "description": "fix::show() shall print the FixEntry matching rule_id from the catalog, or report that no guidance is available when rule_id is not found.",
+      "standard_ref": "Internal",
+      "severity": "info",
+      "asil": ""
+    },
+    {
+      "id": "REQ-AST006",
+      "title": "AST analysis directory scan with exclude filtering",
+      "description": "ast::run() shall recursively scan dir for C++ source files, skip paths matching cfg.exclude_patterns, and run AST rule checks via libclang on each parsed translation unit.",
+      "standard_ref": "x-FuSa spec \u00a71.4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-RPT007",
+      "title": "Report output routing: stdout XOR file",
+      "description": "report::write_report() shall write to stdout when --output is absent, and MUST NOT also write to stdout when --output is given.",
+      "standard_ref": "x-FuSa spec \u00a72.2",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-RPT008",
+      "title": "Exit code derived from finding severity",
+      "description": "report::exit_code() shall return 1 when any finding is ERROR severity, or when strict mode is enabled and any finding is WARNING severity; otherwise 0.",
+      "standard_ref": "x-FuSa spec \u00a72",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ENG005",
+      "title": "Engine runs all registered rules",
+      "description": "Engine::run() shall execute every registered rule against dir/cfg and aggregate all findings into one vector.",
+      "standard_ref": "ISO 26262 \u00a76.6",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ENG006",
+      "title": "Engine runs only specified rule ids",
+      "description": "Engine::run_ids() shall execute only the registered rules whose id appears in the given ids list.",
+      "standard_ref": "ISO 26262 \u00a76.6",
+      "severity": "safety",
+      "asil": ""
     }
   ]
 }

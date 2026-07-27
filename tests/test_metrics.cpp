@@ -1,6 +1,7 @@
 //fusa:test REQ-METRICS001
 //fusa:test REQ-METRICS002
 //fusa:test REQ-METRICS003
+//fusa:test REQ-METRICS004
 #include <catch2/catch_all.hpp>
 #include "metrics/metrics.hpp"
 #include "testutil/testutil.hpp"

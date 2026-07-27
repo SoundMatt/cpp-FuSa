@@ -100,6 +100,7 @@ std::vector<FuncInfo> extract_functions(const std::string& src) {
 
 } // anonymous namespace
 
+//fusa:req REQ-COMP001
 CompReport analyse(const fs::path& dir, const std::string& project, int threshold) {
     CompReport rep;
     rep.project   = project;

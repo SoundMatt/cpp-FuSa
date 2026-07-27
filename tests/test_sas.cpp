@@ -1,6 +1,7 @@
 //fusa:test REQ-SAS001
 //fusa:test REQ-SAS002
 //fusa:test REQ-SAS003
+//fusa:test REQ-SAS004
 #include <catch2/catch_all.hpp>
 #include "sas/sas.hpp"
 #include "testutil/testutil.hpp"

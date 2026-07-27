@@ -140,10 +140,12 @@ Report build_report(const std::string& project,
 
 } // anonymous namespace
 
+//fusa:req REQ-UNECE-006
 Report assess_r155(const fs::path& dir, const std::string& project) {
     return build_report(project, "R155", r155_threats(), dir);
 }
 
+//fusa:req REQ-UNECE-007
 Report assess_r156(const fs::path& dir, const std::string& project) {
     return build_report(project, "R156", r156_threats(), dir);
 }

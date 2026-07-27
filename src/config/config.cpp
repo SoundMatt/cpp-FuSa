@@ -24,6 +24,7 @@ using json = nlohmann::json;
     return std::filesystem::exists(dir / ConfigFile);
 }
 
+//fusa:req REQ-CFG007
 [[nodiscard]] Result<ProjectConfig> load(const std::filesystem::path& dir) {
     auto path = dir / ConfigFile;
     if (!std::filesystem::exists(path)) {
@@ -79,6 +80,7 @@ using json = nlohmann::json;
     }
 }
 
+//fusa:req REQ-CFG008
 [[nodiscard]] Result<std::monostate> save(const std::filesystem::path& dir,
                                           const ProjectConfig& cfg) {
     auto path = dir / ConfigFile;

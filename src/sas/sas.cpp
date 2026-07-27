@@ -47,6 +47,7 @@ std::vector<EvidenceItem> baseline_items() {
 }
 } // anonymous namespace
 
+//fusa:req REQ-SAS004
 SAS build(const fs::path& dir, const std::string& project,
           const std::string& version, const std::string& dal) {
     SAS s;

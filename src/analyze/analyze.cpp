@@ -284,6 +284,7 @@ std::vector<Finding> check_unbounded_loop(const fs::path& dir) {
 }
 
 // ANAL006 – Large stack allocation
+//fusa:req REQ-ANAL006
 std::vector<Finding> check_large_stack_alloc(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bchar\s+\w+\s*\[\s*(\d+)\s*\])");
@@ -305,6 +306,7 @@ std::vector<Finding> check_large_stack_alloc(const fs::path& dir) {
 }
 
 // ANAL007 – memcpy/memset on non-trivial types
+//fusa:req REQ-ANAL007
 std::vector<Finding> check_memcpy_on_class(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(memcpy|memset|memmove)\s*\()");

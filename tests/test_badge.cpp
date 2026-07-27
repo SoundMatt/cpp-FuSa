@@ -3,8 +3,12 @@
 //fusa:test REQ-BADGE003
 #include <catch2/catch_all.hpp>
 #include "badge/badge.hpp"
+#include "testutil/testutil.hpp"
+#include <filesystem>
+#include <fstream>
 
 using namespace cpfusa;
+using namespace cpfusa::testutil;
 
 // ─── from_findings ────────────────────────────────────────────────────────────
 
@@ -65,4 +69,23 @@ TEST_CASE("badge: render SVG is well-formed (has closing tag)", "[badge][badge00
     auto b = badge::from_findings(0, 0, "0.6.0");
     auto svg = badge::render(b);
     REQUIRE(svg.find("</svg>") != std::string::npos);
+}
+
+// ─── write_badge ──────────────────────────────────────────────────────────────
+
+TEST_CASE("badge: write_badge writes fusa-badge.svg to dir", "[badge][badge003]") {
+    TempDir tmp;
+    auto b = badge::from_findings(0, 0, "0.6.0");
+    auto r = badge::write_badge(tmp.path(), b);
+    REQUIRE(is_ok(r));
+    REQUIRE(std::filesystem::exists(tmp.path() / "fusa-badge.svg"));
+}
+
+TEST_CASE("badge: write_badge output matches render()", "[badge][badge003]") {
+    TempDir tmp;
+    auto b = badge::from_findings(1, 2, "1.2.3");
+    REQUIRE(is_ok(badge::write_badge(tmp.path(), b)));
+    std::ifstream f(tmp.path() / "fusa-badge.svg");
+    std::string content((std::istreambuf_iterator<char>(f)), {});
+    REQUIRE(content == badge::render(b));
 }

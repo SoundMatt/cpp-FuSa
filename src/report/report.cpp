@@ -242,6 +242,7 @@ std::string render_sarif(const std::vector<Finding>& findings,
     return sarif.dump(2);
 }
 
+//fusa:req REQ-RPT007
 Result<std::monostate> write_report(const std::vector<Finding>& findings,
                                     const config::ProjectConfig& cfg,
                                     const ReportOptions& opts) {
@@ -265,6 +266,7 @@ Result<std::monostate> write_report(const std::vector<Finding>& findings,
     return std::monostate{};
 }
 
+//fusa:req REQ-RPT008
 int exit_code(const std::vector<Finding>& findings, bool strict) {
     for (const auto& f : findings) {
         if (f.severity == Severity::ERROR) return 1;

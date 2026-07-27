@@ -4,6 +4,8 @@
 //fusa:test REQ-CFG004
 //fusa:test REQ-CFG005
 //fusa:test REQ-CFG006
+//fusa:test REQ-CFG007
+//fusa:test REQ-CFG008
 #include <catch2/catch_all.hpp>
 #include "config/config.hpp"
 #include "testutil/testutil.hpp"

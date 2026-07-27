@@ -144,6 +144,7 @@ Result<std::monostate> gen_one(const fs::path& dir,
 
 } // anonymous namespace
 
+//fusa:req REQ-TMPL004
 Result<std::monostate> generate(const fs::path& dir,
                                 const config::ProjectConfig& cfg,
                                 TemplateType type) {

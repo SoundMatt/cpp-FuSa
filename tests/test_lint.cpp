@@ -29,6 +29,7 @@
 //fusa:test REQ-LINT029
 //fusa:test REQ-LINT030
 //fusa:test REQ-LINT031
+//fusa:test REQ-LINT032
 #include <catch2/catch_all.hpp>
 #include "lint/lint.hpp"
 #include "testutil/testutil.hpp"

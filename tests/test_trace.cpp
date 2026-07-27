@@ -17,6 +17,7 @@
 //fusa:test REQ-TRACE017
 //fusa:test REQ-TRACE018
 //fusa:test REQ-TRACE019
+//fusa:test REQ-TRACE020
 //fusa:test REQ-HLR001
 //fusa:test REQ-HLR002
 //fusa:test REQ-HLR003

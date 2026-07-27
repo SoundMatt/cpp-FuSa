@@ -813,6 +813,7 @@ std::vector<Finding> check_float_equality(const fs::path& dir) {
     return out;
 }
 
+//fusa:req REQ-LINT032
 std::vector<Finding> run(const fs::path& dir,
                          const config::ProjectConfig& cfg) {
     std::vector<Finding> all;

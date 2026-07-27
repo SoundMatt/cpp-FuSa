@@ -209,6 +209,7 @@ CXChildVisitResult fn_body_visitor(CXCursor c, CXCursor /*p*/, CXClientData data
 
 } // anonymous namespace
 
+//fusa:req REQ-AST006
 std::vector<Finding> run(const fs::path& dir, const config::ProjectConfig& cfg) {
     std::vector<Finding> all;
 
@@ -261,6 +262,7 @@ std::vector<Finding> run(const fs::path& dir, const config::ProjectConfig& cfg) 
 
 #else // !CPFUSA_HAS_LIBCLANG ──────────────────────────────────────────────────
 
+//fusa:req REQ-AST005
 std::vector<Finding> run(const fs::path& /*dir*/,
                          const config::ProjectConfig& /*cfg*/) {
     return {{"AST000", Severity::INFO,

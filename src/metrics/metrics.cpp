@@ -22,6 +22,7 @@ std::string now_iso() {
 }
 } // namespace
 
+//fusa:req REQ-METRICS004
 TimeSeries load(const fs::path& dir) {
     TimeSeries ts;
     auto p = dir / METRICS_FILE;

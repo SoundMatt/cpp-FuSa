@@ -53,6 +53,7 @@ std::string render(const Badge& b) {
     return ss.str();
 }
 
+//fusa:req REQ-BADGE003
 Result<std::monostate> write_badge(const std::filesystem::path& dir, const Badge& b) {
     try {
         std::ofstream out(dir / "fusa-badge.svg");

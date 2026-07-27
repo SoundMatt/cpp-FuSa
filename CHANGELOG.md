@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.14.3] — 2026-07-27
+
+### Retrofit (§1.4.1 function-level tag completeness, continued)
+Further closed `--func-coverage` gaps surfaced by v0.14.2's new gate, focusing on genuinely
+behavioural functions and leaving trivial/serialisation helpers (`save`/`write_*` JSON
+builders, `*_content` template strings, `write_mermaid`/`write_dot`/`write_markdown`
+renderers, one-line accessors) untagged, consistent with the metric's existing
+`render_*`/`write_json`/`export_*`/`parse_*`/`*_str` exemption:
+- `metrics::load()`, `lint::run()`, `trace::scan_annotations()`, `unece::assess_r155()/assess_r156()`,
+  `config::load()/save()`, `tmpl::generate()`, `comp::analyse()`, `sas::build()`, `fix::show()`,
+  `ast::run()` (both libclang and stub definitions), `analyze::check_large_stack_alloc()/check_memcpy_on_class()`,
+  `report::write_report()/exit_code()`, `Engine::run()/run_ids()/make_default_engine()`, and
+  `badge::write_badge()` now carry a direct `//fusa:req` tag above their definition.
+- Registered 17 new requirements: `REQ-ANAL006/007` (filling a pre-existing ANAL006/ANAL007
+  rule-id gap), `REQ-METRICS004`, `REQ-LINT032`, `REQ-TRACE020`, `REQ-UNECE-006/007`,
+  `REQ-CFG007/008`, `REQ-TMPL004`, `REQ-SAS004`, `REQ-FIX003`, `REQ-AST006`, `REQ-RPT007/008`,
+  `REQ-ENG005/006`. `REQ-COMP001`, `REQ-ENG004`, and `REQ-BADGE003` were reused where an existing
+  requirement already described the now-tagged function.
+- Every new requirement is backed by a genuine `//fusa:test` — mostly existing `TEST_CASE`s that
+  already exercised the function (verified before tagging, per this repo's convention); `badge::write_badge()`
+  had no existing caller, so two new tests were added (`fusa-badge.svg` is written, and its content matches `render()`).
+- cpp-FuSa's own `--func-coverage` density rose from 74.8% (116/155) to **87.7% (136/155)**.
+  The remaining 19 uncovered declarations are pure serialisation/rendering helpers judged
+  out of scope for req-tagging (e.g. `metrics::save()`, `qualify::save()`, `cyber::write_report()`,
+  `trace::save_requirements()`, `boundary::write_mermaid()/write_dot()`, the six `tmpl::*_content()`
+  template-string functions, `release::write_all()`, `sas::write_markdown()`, `hooks::show()`,
+  `fix::list_all()`, `config::exists()`, `ast::libclang_available()`, `metrics::append()`).
+
+### Tests
+- 2 new tests (`badge::write_badge()`); total: **757 tests** (up from 755)
+
+### Version
+- `Version` constant in `include/cpfusa/fusa.hpp` bumped to `0.14.3`
+
 ## [0.14.2] — 2026-07-27
 
 ### Added

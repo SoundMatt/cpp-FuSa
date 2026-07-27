@@ -4,6 +4,8 @@
 //fusa:test REQ-RPT004
 //fusa:test REQ-RPT005
 //fusa:test REQ-RPT006
+//fusa:test REQ-RPT007
+//fusa:test REQ-RPT008
 #include <catch2/catch_all.hpp>
 #include "report/report.hpp"
 #include "testutil/testutil.hpp"
