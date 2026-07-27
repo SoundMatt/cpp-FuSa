@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.14.2] — 2026-07-27
+
+### Added
+- **`--func-coverage N`** (x-FuSa spec §1.4.1 / §5, closes part of the tag-completeness tracking issue): `trace` gains a `--func-coverage N` flag mirroring `--req-coverage`. It reports the percentage of header-declared public functions (`src/*/*.hpp` with a matching `.cpp` definition) that carry a `//fusa:req` tag directly above their definition, and exits `1` when the percentage is below `N` (`N=0` disables the gate). Trivial enum/string converters and pure serialisation helpers (`render_*`, `write_json`, `export_*`, `parse_*`, `*_str`) are exempt, per this repo's existing tagging convention. New `trace::scan_func_coverage()` / `trace::is_func_exempt()` (REQ-TRACE018); `TraceResult::func_coverage` surfaces in both `render_matrix` text output and the `render_json` `coverage.funcCoverage` block.
+- **Dangling `//fusa:test` reference detection** (x-FuSa spec §1.4.1 item 3): a `//fusa:test <ID>` tag whose `<ID>` does not exist in `.fusa-reqs.json` is now surfaced as a WARNING (`TraceResult::dangling_tags`), the same treatment a malformed annotation gets, never silently accepted. Shown in `render_matrix` text output and as a `danglingTags[]` array in `render_json` (REQ-TRACE019).
+
+### Retrofit (§1.4.1 function-level tag completeness)
+Running the new `--func-coverage` gate against cpp-FuSa's own source surfaced several core per-standard assessment entry points with zero `//fusa:req` tags anywhere in their file, and several referenced-but-unregistered requirement IDs. Fixed:
+- `do178::assess()`, `iso26262::assess()`, `iec61508::assess()`, `iso21434::assess()` now carry a direct req tag above their definition. Registered `REQ-DO178-001/-002/-003`, `REQ-ISO26262-001/-002/-003`, `REQ-IEC61508-001/-002/-003` in `.fusa-reqs.json` (previously referenced by these files and their tests but never registered — a pre-existing dangling-reference gap the new detector would have caught).
+- `hara::load()/save()/init()`, `disposition::save()/add()/find_by_rule()`, `pr::save()/add()`, `sci::build()`, `analyze::run_clang_tidy()/run_cppcheck()/run_own_passes()` now carry req tags. Registered `REQ-HARA001/006/007/008`, `REQ-DISP001/002/003`, `REQ-PR001/002/003`, `REQ-SCI001/002`, `REQ-ANAL014/015/016`.
+- Added missing `//fusa:test` gap-report coverage for `REQ-TRACE009` (Polarion import/export — tests already existed, just untagged), `REQ-RELEASE009` (SPDX 2.2/2.3 — ditto), `REQ-TRACE016`/`REQ-TRACE017` (trace JSON `kind` field / canonical `standard` key).
+- cpp-FuSa's own `--func-coverage` density rose from 63.2% (98/155, measured before the retrofit) to 74.8% (116/155). Remaining gaps are in modules outside this pass's scope and are now visible via `trace --func-coverage`/`--gaps` for future work.
+
+### Tests
+- 16 new tests (11 for `--func-coverage`, 5 for dangling-tag detection); total: **755 tests** (up from 739)
+
+### Version
+- `Version` constant in `include/cpfusa/fusa.hpp` bumped to `0.14.2`
+
 ## [0.14.1] — 2026-07-27
 
 ### Fixed

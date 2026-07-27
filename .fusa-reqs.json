@@ -1494,6 +1494,214 @@
       "standard_ref": "do178c",
       "severity": "safety",
       "asil": "ASIL-D"
+    },
+    {
+      "id": "REQ-TRACE018",
+      "title": "Function-level req-tag density (--func-coverage)",
+      "description": "trace --func-coverage N shall report the percentage of header-declared public functions (src/*/*.hpp with a matching .cpp definition) carrying a //fusa:req tag directly above their definition, excluding trivial enum/string converters and pure serialisation helpers, and shall exit 1 when the percentage is below N (N=0 disables the gate).",
+      "standard_ref": "x-FuSa spec \u00a71.4.1 / \u00a75",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-TRACE019",
+      "title": "Dangling //fusa:test reference detection",
+      "description": "trace shall treat a //fusa:test <ID> tag whose <ID> does not exist in .fusa-reqs.json as a dangling reference and surface it as a WARNING, the same treatment as a malformed annotation, never silently accepted.",
+      "standard_ref": "x-FuSa spec \u00a71.4.1 item 3",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-DO178-001",
+      "title": "DO-178C gap report entry point",
+      "description": "do178::assess() shall compute a DO-178C Table A-1..A-11 objective gap report scoped to the requested DAL, marking each applicable objective Addressed/Partial/Gap from detected project evidence.",
+      "standard_ref": "DO-178C",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-DO178-002",
+      "title": "DO-178C baseline objective table",
+      "description": "do178 shall define the baseline DO-178C Table A-1..A-11 objective set and, for each, which DALs (A-D) require it.",
+      "standard_ref": "DO-178C",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-DO178-003",
+      "title": "DO-178C gap report JSON",
+      "description": "do178::write_json() shall serialise the DO-178C gap Report to JSON with generatedAt/project/dal/summary/objectives fields.",
+      "standard_ref": "DO-178C",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ISO26262-001",
+      "title": "ISO 26262 gap report entry point",
+      "description": "iso26262::assess() shall compute an ISO 26262 Part 6/8/9 objective gap report scoped to the requested ASIL, marking each applicable objective Addressed/Partial/Gap from detected project evidence.",
+      "standard_ref": "ISO 26262",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ISO26262-002",
+      "title": "ISO 26262 baseline objective table",
+      "description": "iso26262 shall define the baseline ISO 26262 Part 6/8/9 objective set and, for each, which ASILs (A-D) require it.",
+      "standard_ref": "ISO 26262",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ISO26262-003",
+      "title": "ISO 26262 gap report JSON",
+      "description": "iso26262::write_json() shall serialise the ISO 26262 gap Report to JSON with generatedAt/project/asil/summary/objectives fields.",
+      "standard_ref": "ISO 26262",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-IEC61508-001",
+      "title": "IEC 61508 gap report entry point",
+      "description": "iec61508::assess() shall compute an IEC 61508 Part 1/3 objective gap report scoped to the requested SIL, marking each applicable objective Addressed/Partial/Gap from detected project evidence.",
+      "standard_ref": "IEC 61508",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-IEC61508-002",
+      "title": "IEC 61508 baseline objective table",
+      "description": "iec61508 shall define the baseline IEC 61508 Part 1/3 objective set and, for each, which SILs (1-4) require it.",
+      "standard_ref": "IEC 61508",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-IEC61508-003",
+      "title": "IEC 61508 gap report JSON",
+      "description": "iec61508::write_json() shall serialise the IEC 61508 gap Report to JSON with generatedAt/project/sil/summary/objectives fields.",
+      "standard_ref": "IEC 61508",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA001",
+      "title": "HARA file format constant",
+      "description": "hara.hpp shall define HARA_FILE as the canonical .fusa-hara.json path used by load/save/init.",
+      "standard_ref": "ISO 26262-3",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA006",
+      "title": "HARA load from file",
+      "description": "hara::load() shall parse .fusa-hara.json into a HARA struct (operational situations, hazards, safety goals), reporting a message via err on failure.",
+      "standard_ref": "ISO 26262-3",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA007",
+      "title": "HARA save to file",
+      "description": "hara::save() shall serialise a HARA struct back to JSON at the given path, reporting a message via err on failure.",
+      "standard_ref": "ISO 26262-3",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-HARA008",
+      "title": "HARA init scaffolding",
+      "description": "hara::init() shall refuse to overwrite an existing .fusa-hara.json and shall otherwise write an example hazard/safety-goal scaffold for the given project and standard.",
+      "standard_ref": "ISO 26262-3",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-DISP001",
+      "title": "Disposition file format constant",
+      "description": "disposition.hpp shall define DISPOSITIONS_FILE as the canonical .fusa-dispositions.json path used by load/save.",
+      "standard_ref": "x-FuSa spec \u00a72.6",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-DISP002",
+      "title": "Disposition load/save round-trip",
+      "description": "disposition::load() and disposition::save() shall round-trip Entry records (rule_id/rationale/reviewer/date/action/reference) through .fusa-dispositions.json.",
+      "standard_ref": "x-FuSa spec \u00a72.6",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-DISP003",
+      "title": "Disposition add/find_by_rule",
+      "description": "disposition::add() shall insert a new Entry or update the existing one matching rule_id, and find_by_rule() shall look up an Entry by rule_id.",
+      "standard_ref": "x-FuSa spec \u00a72.6",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-PR001",
+      "title": "Problem report file format constant",
+      "description": "pr.hpp shall define PR_FILE as the canonical .fusa-problems.json path used by load/save.",
+      "standard_ref": "DO-178C Table A-7",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-PR002",
+      "title": "Problem report load/save round-trip",
+      "description": "pr::load() and pr::save() shall round-trip ProblemReport records through .fusa-problems.json.",
+      "standard_ref": "DO-178C Table A-7",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-PR003",
+      "title": "Problem report add",
+      "description": "pr::add() shall append a new ProblemReport to a PRLog.",
+      "standard_ref": "DO-178C Table A-7",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-SCI001",
+      "title": "SCI file format constant",
+      "description": "sci.hpp shall define SCI_FILE as the canonical sci.json path written by the sci report.",
+      "standard_ref": "ISO 26262-6 \u00a710.4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-SCI002",
+      "title": "SCI lifecycle artefact build",
+      "description": "sci::build() shall enumerate the project's lifecycle artefacts, record presence and a SHA-256 hash for each artefact that exists.",
+      "standard_ref": "ISO 26262-6 \u00a710.4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ANAL014",
+      "title": "clang-tidy integration",
+      "description": "analyze::run_clang_tidy() shall invoke clang-tidy when available and compile_commands.json is present, parsing its diagnostics into Findings with project-relative file paths.",
+      "standard_ref": "x-FuSa spec \u00a71.4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ANAL015",
+      "title": "cppcheck integration",
+      "description": "analyze::run_cppcheck() shall invoke cppcheck when available, parsing its XML output into Findings.",
+      "standard_ref": "x-FuSa spec \u00a71.4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
+      "id": "REQ-ANAL016",
+      "title": "Own analysis pass orchestration",
+      "description": "analyze::run_own_passes() shall aggregate the findings of all own regex-based analysis passes into a single vector.",
+      "standard_ref": "x-FuSa spec \u00a71.4",
+      "severity": "safety",
+      "asil": ""
     }
   ]
 }

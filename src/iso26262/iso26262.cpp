@@ -123,6 +123,7 @@ std::string status_str(Status s) {
 
 } // anonymous namespace
 
+//fusa:req REQ-ISO26262-001 REQ-ISO26262-002
 Report assess(const fs::path& dir, const std::string& project, ASIL asil) {
     Report r;
     r.project = project;

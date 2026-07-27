@@ -16,7 +16,251 @@ namespace {
 
 constexpr std::string_view ReqsFile = ".fusa-reqs.json";
 
+std::string trim(const std::string& s) {
+    auto a = s.find_first_not_of(" \t\r\n");
+    if (a == std::string::npos) return "";
+    auto b = s.find_last_not_of(" \t\r\n");
+    return s.substr(a, b - a + 1);
+}
+
 } // namespace
+
+// §1.4.1 — trivial enum/string converters and pure serialisation helpers are
+// exempt from --func-coverage counting (this repo's existing tagging
+// convention never expects render_text/render_json/write_json/parse_*/*_str
+// to carry their own req tag; they merely surface data already validated
+// elsewhere).
+//fusa:req REQ-TRACE018
+bool is_func_exempt(const std::string& name) {
+    static const std::regex exempt_re(R"(^(render|write_json|export_|parse_|to_)|_str$)");
+    return std::regex_search(name, exempt_re);
+}
+
+namespace {
+
+// Strips // and /* */ comments (respecting string/char literals) so brace
+// tracking below isn't confused by tag text or commented-out code.
+std::string strip_comments(const std::string& content) {
+    std::string out;
+    out.reserve(content.size());
+    bool in_str = false, in_chr = false;
+    for (size_t i = 0; i < content.size(); ) {
+        char c = content[i];
+        if (!in_str && !in_chr && c == '/' && i + 1 < content.size() && content[i + 1] == '/') {
+            while (i < content.size() && content[i] != '\n') ++i;
+            continue;
+        }
+        if (!in_str && !in_chr && c == '/' && i + 1 < content.size() && content[i + 1] == '*') {
+            i += 2;
+            while (i + 1 < content.size() && !(content[i] == '*' && content[i + 1] == '/')) ++i;
+            i += 2;
+            continue;
+        }
+        if (!in_chr && c == '"' && (i == 0 || content[i - 1] != '\\')) in_str = !in_str;
+        if (!in_str && c == '\'' && (i == 0 || content[i - 1] != '\\')) in_chr = !in_chr;
+        out += c;
+        ++i;
+    }
+    return out;
+}
+
+struct DeclaredFunc {
+    std::string name;      // function/method name
+    std::string qualifier; // enclosing class/struct name, or "" for a free function
+};
+
+// Does `stmt` look like a callable declaration (`name(...)`) and, if so, what
+// is the declared name? Empty return means "not a function declaration"
+// (data member, using/typedef, access specifier, constructor/destructor, …).
+std::string extract_func_name(const std::string& raw_stmt, const std::string& enclosing_class) {
+    std::string s = trim(raw_stmt);
+    if (s.empty()) return "";
+    if (s.rfind("using ", 0) == 0 || s.rfind("typedef ", 0) == 0) return "";
+    if (s.rfind("friend ", 0) == 0) return "";
+    if (s.find('(') == std::string::npos) return "";
+    static const std::regex name_re(R"(([A-Za-z_]\w*)\s*\()");
+    std::smatch m;
+    if (!std::regex_search(s, m, name_re)) return "";
+    std::string name = m[1].str();
+    if (!enclosing_class.empty() && name == enclosing_class) return ""; // constructor
+    if (!name.empty() && name[0] == '~')                        return ""; // destructor
+    static const std::set<std::string> kw = {
+        "if", "for", "while", "switch", "sizeof", "static_assert", "return",
+        "catch", "decltype", "noexcept", "alignas", "alignof"};
+    if (kw.count(name)) return "";
+    return name;
+}
+
+// Parses a header's content for namespace-scope free functions and
+// public class/struct methods that are *declared but not inline-defined*
+// (i.e. they have a separate .cpp definition to check for a req tag).
+std::vector<DeclaredFunc> parse_hpp_functions(const std::string& raw) {
+    std::vector<DeclaredFunc> out;
+    std::string content = strip_comments(raw);
+
+    struct Block { std::string kind; std::string name; std::string access; };
+    std::vector<Block> stack;
+    std::string stmt;
+
+    auto enclosing_class = [&]() -> std::string {
+        for (auto it = stack.rbegin(); it != stack.rend(); ++it)
+            if (it->kind == "class" || it->kind == "struct") return it->name;
+        return "";
+    };
+    auto reachable = [&]() -> bool {
+        for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
+            if (it->kind == "class" || it->kind == "struct") return it->access == "public";
+            if (it->kind == "enum" || it->kind == "func" || it->kind == "other") return false;
+        }
+        return true; // only namespace blocks (or nothing) enclosing
+    };
+
+    for (size_t i = 0; i < content.size(); ++i) {
+        char c = content[i];
+        if (c == ':' && !(i + 1 < content.size() && content[i + 1] == ':')
+                     && !(i > 0 && content[i - 1] == ':')) {
+            std::string t = trim(stmt);
+            if ((t == "public" || t == "private" || t == "protected") && !stack.empty()
+                    && (stack.back().kind == "class" || stack.back().kind == "struct")) {
+                stack.back().access = t;
+                stmt.clear();
+                continue;
+            }
+            stmt += c;
+            continue;
+        }
+        if (c == '{') {
+            // `t` is everything accumulated since the last `;`/`{`/`}` — for the
+            // very first block this includes leading #include/#pragma noise, so
+            // block-kind detection below matches the *end* of `t` (immediately
+            // before this '{'), not its start.
+            std::string t = trim(stmt);
+            Block b;
+            static const std::regex class_re(R"(\bclass\s+(\w+))");
+            static const std::regex struct_re(R"(\bstruct\s+(\w+))");
+            static const std::regex ns_re(R"(\bnamespace(\s+[\w:]+)?\s*$)");
+            static const std::regex enum_re(R"(\benum\b)");
+            std::smatch m;
+            // enum must be checked before class/struct: "enum class X" would
+            // otherwise match class_re on the "class X" substring.
+            if (std::regex_search(t, enum_re)) {
+                b.kind = "enum";
+            } else if (std::regex_search(t, m, class_re) && t.find('(') == std::string::npos) {
+                b.kind = "class"; b.name = m[1].str(); b.access = "private";
+            } else if (std::regex_search(t, m, struct_re) && t.find('(') == std::string::npos) {
+                b.kind = "struct"; b.name = m[1].str(); b.access = "public";
+            } else if (std::regex_search(t, ns_re)) {
+                b.kind = "namespace";
+            } else if (reachable() && !extract_func_name(t, enclosing_class()).empty()) {
+                b.kind = "func"; // inline-defined function body — no separate .cpp def to check
+            } else {
+                b.kind = "other";
+            }
+            stack.push_back(b);
+            stmt.clear();
+            continue;
+        }
+        if (c == '}') {
+            if (!stack.empty()) stack.pop_back();
+            stmt.clear();
+            continue;
+        }
+        if (c == ';') {
+            if (reachable()) {
+                std::string name = extract_func_name(stmt, enclosing_class());
+                if (!name.empty()) out.push_back({name, enclosing_class()});
+            }
+            stmt.clear();
+            continue;
+        }
+        stmt += c;
+    }
+    return out;
+}
+
+// Finds the first top-level (column-0) definition line for `name` (optionally
+// qualified as `qualifier::name`) in `cpp_lines`, then reports whether a
+// //fusa:req tag sits directly above it (a contiguous run of `//` comment
+// lines immediately preceding, no blank-line gap).
+bool func_has_tag_above(const std::vector<std::string>& cpp_lines,
+                        const std::string& name, const std::string& qualifier) {
+    std::regex target = qualifier.empty()
+        ? std::regex(R"(\b)" + name + R"(\s*\()")
+        : std::regex(R"(\b)" + qualifier + "::" + name + R"(\s*\()");
+
+    int def_idx = -1;
+    for (size_t i = 0; i < cpp_lines.size(); ++i) {
+        const std::string& line = cpp_lines[i];
+        if (line.empty() || (line[0] == ' ' || line[0] == '\t')) continue; // top-level only
+        std::smatch m;
+        if (!std::regex_search(line, m, target)) continue;
+        if (qualifier.empty()) {
+            auto pos = static_cast<size_t>(m.position(0));
+            if (pos >= 2 && line.substr(pos - 2, 2) == "::") continue; // some_other::name — not ours
+        }
+        def_idx = static_cast<int>(i);
+        break;
+    }
+    if (def_idx < 0) return false;
+
+    for (int j = def_idx - 1; j >= 0; --j) {
+        std::string t = trim(cpp_lines[j]);
+        if (t.empty()) break;
+        if (t.rfind("//", 0) != 0) break;
+        if (t.find("fusa:req") != std::string::npos) return true;
+    }
+    return false;
+}
+
+} // namespace
+
+// §1.4.1 item 2 / §5 --func-coverage
+//fusa:req REQ-TRACE018
+FuncCoverage scan_func_coverage(const fs::path& dir) {
+    FuncCoverage fc;
+    auto src_dir = dir / "src";
+    if (!fs::exists(src_dir)) return fc;
+
+    static const std::regex hpp_ext(R"(\.hpp$)");
+
+    for (const auto& mod : fs::directory_iterator(src_dir, fs::directory_options::skip_permission_denied)) {
+        if (!mod.is_directory()) continue;
+        for (const auto& file : fs::directory_iterator(mod.path(), fs::directory_options::skip_permission_denied)) {
+            if (!file.is_regular_file()) continue;
+            const auto& hpp_path = file.path();
+            if (!std::regex_search(hpp_path.string(), hpp_ext)) continue;
+            auto cpp_path = hpp_path;
+            cpp_path.replace_extension(".cpp");
+            if (!fs::exists(cpp_path)) continue; // no matching definition file — nothing to check
+
+            std::ifstream hf(hpp_path);
+            std::string hpp_content((std::istreambuf_iterator<char>(hf)), std::istreambuf_iterator<char>());
+            auto decls = parse_hpp_functions(hpp_content);
+            if (decls.empty()) continue;
+
+            std::ifstream cf(cpp_path);
+            std::vector<std::string> cpp_lines;
+            std::string line;
+            while (std::getline(cf, line)) cpp_lines.push_back(line);
+
+            fs::path rel_hpp = fs::relative(hpp_path, dir);
+
+            for (const auto& d : decls) {
+                if (is_func_exempt(d.name)) continue;
+                ++fc.total;
+                if (func_has_tag_above(cpp_lines, d.name, d.qualifier)) {
+                    ++fc.covered;
+                } else {
+                    fc.uncovered.push_back(rel_hpp.generic_string() + ":" +
+                        (d.qualifier.empty() ? d.name : d.qualifier + "::" + d.name));
+                }
+            }
+        }
+    }
+
+    if (fc.total > 0) fc.pct = 100.0 * fc.covered / fc.total;
+    return fc;
+}
 
 //fusa:req REQ-TRACE001 REQ-TRACE002 REQ-TRACE003 REQ-TRACE004 REQ-TRACE005 REQ-TRACE006 REQ-TRACE007 REQ-TRACE010 REQ-TRACE011 REQ-TRACE012
 Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
@@ -79,6 +323,7 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
     return out;
 }
 
+//fusa:req REQ-TRACE018 REQ-TRACE019
 Result<TraceResult> run(const fs::path& dir,
                         const config::ProjectConfig& cfg,
                         const TraceOptions& opts) {
@@ -113,6 +358,26 @@ Result<TraceResult> run(const fs::path& dir,
             if (req.severity == "cybersecurity") ++result.sec_tested;
         }
     }
+
+    // §1.4.1 item 3 — dangling //fusa:test references: a test tag whose ID
+    // does not exist in .fusa-reqs.json is surfaced as a WARNING, the same
+    // way a malformed annotation would be, never silently accepted.
+    {
+        std::set<std::string> known_ids;
+        for (const auto& req : reqs) known_ids.insert(req.id);
+        for (const auto& ann : annotations) {
+            if (ann.is_test && !known_ids.count(ann.req_id)) {
+                result.dangling_tags.push_back({
+                    ann.req_id, ann.file, ann.line,
+                    "dangling //fusa:test reference — " + ann.req_id +
+                        " not found in .fusa-reqs.json"
+                });
+            }
+        }
+    }
+
+    // §1.4.1 item 2 / §5 --func-coverage
+    result.func_coverage = scan_func_coverage(dir);
 
     if (result.total > 0) {
         result.annotation_coverage = 100.0 * result.annotated / result.total;
@@ -186,6 +451,13 @@ Result<TraceResult> run(const fs::path& dir,
              + std::to_string(static_cast<int>(result.test_coverage))
              + "% below required " + std::to_string(opts.min_test_pct) + "%";
     }
+    // §5 --func-coverage N: N=0 disables the gate.
+    if (result.func_coverage.total > 0 && opts.min_func_pct > 0
+            && result.func_coverage.pct < opts.min_func_pct) {
+        return std::string("function coverage ")
+             + std::to_string(static_cast<int>(result.func_coverage.pct))
+             + "% below required " + std::to_string(opts.min_func_pct) + "%";
+    }
 
     return result;
 }
@@ -256,6 +528,20 @@ std::string render_matrix(const TraceResult& result, const TraceOptions& opts) {
         out << "HLR/LLR Violations:\n";
         for (const auto& v : result.hlr_violations)
             out << "  WARN: " << v.message << "\n";
+    }
+
+    // §1.4.1 item 3 — dangling //fusa:test references.
+    if (!result.dangling_tags.empty()) {
+        out << "Dangling Test-Tag References:\n";
+        for (const auto& d : result.dangling_tags)
+            out << "  WARN: " << d.message << " (" << d.file << ":" << d.line << ")\n";
+    }
+
+    // §1.4.1 item 2 / §5 --func-coverage
+    if (result.func_coverage.total > 0) {
+        out << "Func Coverage: " << result.func_coverage.covered << "/"
+            << result.func_coverage.total << " (" << std::fixed << std::setprecision(1)
+            << result.func_coverage.pct << "%)\n";
     }
     return out.str();
 }
@@ -339,6 +625,27 @@ std::string render_json(const TraceResult& result,
         {"testedRequirements",   result.tested},
         {"secTestedRequirements", result.sec_tested}
     };
+    // §1.4.1 item 2 / §5 --func-coverage
+    j["coverage"]["funcCoverage"] = {
+        {"total",   result.func_coverage.total},
+        {"covered", result.func_coverage.covered},
+        {"pct",     result.func_coverage.pct}
+    };
+
+    // §1.4.1 item 3 — dangling //fusa:test references (WARNING-level, never
+    // silently accepted; same treatment as a malformed annotation).
+    if (!result.dangling_tags.empty()) {
+        json darr = json::array();
+        for (const auto& d : result.dangling_tags) {
+            darr.push_back({
+                {"requirementId", d.req_id},
+                {"file",          rel(d.file)},
+                {"line",          d.line},
+                {"message",       d.message}
+            });
+        }
+        j["danglingTags"] = darr;
+    }
 
     // HLR/LLR hierarchy block (only when hierarchy is present)
     if (result.hlr_count > 0 || result.llr_count > 0) {

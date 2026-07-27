@@ -9,6 +9,9 @@
 //fusa:test REQ-ANAL011
 //fusa:test REQ-ANAL012
 //fusa:test REQ-ANAL013
+//fusa:test REQ-ANAL014
+//fusa:test REQ-ANAL015
+//fusa:test REQ-ANAL016
 #include <catch2/catch_all.hpp>
 #include "analyze/analyze.hpp"
 #include "testutil/testutil.hpp"

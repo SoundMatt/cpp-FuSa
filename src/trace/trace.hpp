@@ -32,6 +32,28 @@ struct HLRViolation {
     std::string message;
 };
 
+// x-FuSa spec §1.4.1 item 3 — a //fusa:test <ID> tag whose <ID> does not exist
+// in .fusa-reqs.json is a dangling reference; surfaced the same way a malformed
+// annotation would be (a WARNING, never silently accepted).
+struct DanglingTag {
+    std::string req_id;
+    std::string file;
+    int         line;
+    std::string message;
+};
+
+// x-FuSa spec §1.4.1 item 2 / §5 --func-coverage — density of header-declared
+// public functions (with a matching .cpp definition) carrying a //fusa:req tag
+// directly above their definition. Trivial enum/string converters and pure
+// serialisation helpers (render_*, write_json, export_*, parse_*, *_str) are
+// exempt — see is_func_exempt() in trace.cpp.
+struct FuncCoverage {
+    int total{0};
+    int covered{0};
+    double pct{0.0};
+    std::vector<std::string> uncovered; // "path/file.hpp:name" for gap reporting
+};
+
 struct TraceResult {
     std::vector<Requirement>            requirements;
     std::vector<Annotation>             annotations;
@@ -47,12 +69,17 @@ struct TraceResult {
     int llr_count{0};
     int hlr_covered{0};   // HLRs that have at least one LLR child
     std::vector<HLRViolation> hlr_violations;
+    // §1.4.1 dangling //fusa:test references (test tag ID not in .fusa-reqs.json)
+    std::vector<DanglingTag> dangling_tags;
+    // §1.4.1 / §5 --func-coverage
+    FuncCoverage func_coverage;
 };
 
 struct TraceOptions {
     bool show_gaps{false};
     int  min_annotation_pct{0};
     int  min_test_pct{0};
+    int  min_func_pct{0};        // §5 --func-coverage N; 0 disables the gate
     std::string req_id;  // if non-empty, show only this req
     bool strict_hlr_llr{false}; // force HLR/LLR errors regardless of ASIL/DAL
 };
@@ -67,6 +94,19 @@ struct TraceOptions {
 
 [[nodiscard]] std::vector<Annotation> scan_annotations(
     const std::filesystem::path& dir);
+
+// §1.4.1 / §5 --func-coverage — scans src/*/*.hpp for header-declared public
+// functions with a matching .cpp definition in the same directory, and reports
+// how many carry a //fusa:req tag directly above that definition. Trivial
+// enum/string converters and pure serialisation helpers are excluded — see
+// is_func_exempt() in trace.cpp.
+[[nodiscard]] FuncCoverage scan_func_coverage(const std::filesystem::path& dir);
+
+// True when a function name is exempt from --func-coverage counting: trivial
+// enum<->string converters and pure serialisation/export helpers, per this
+// repo's existing tagging convention (render_text, render_json, write_json,
+// parse_*, *_str, export_*, etc. are not expected to carry their own req tag).
+[[nodiscard]] bool is_func_exempt(const std::string& name);
 
 [[nodiscard]] std::string render_matrix(const TraceResult& result,
                                         const TraceOptions& opts);

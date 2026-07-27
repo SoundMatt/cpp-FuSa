@@ -114,6 +114,7 @@ struct FuncBlock { std::string name; int start_line; std::string body; };
 
 // ── clang-tidy integration ──────────────────────────────────────────────────
 
+//fusa:req REQ-ANAL014
 std::vector<Finding> run_clang_tidy(const fs::path& dir, const std::string& bin) {
     std::vector<Finding> out;
     if (!tool_available(bin)) {
@@ -160,6 +161,7 @@ std::vector<Finding> run_clang_tidy(const fs::path& dir, const std::string& bin)
 
 // ── cppcheck integration ────────────────────────────────────────────────────
 
+//fusa:req REQ-ANAL015
 std::vector<Finding> run_cppcheck(const fs::path& dir, const std::string& bin) {
     std::vector<Finding> out;
     if (!tool_available(bin)) {
@@ -463,6 +465,7 @@ std::vector<Finding> check_multiple_returns(const fs::path& dir) {
     return out;
 }
 
+//fusa:req REQ-ANAL016
 std::vector<Finding> run_own_passes(const fs::path& dir) {
     std::vector<Finding> all;
     auto append = [&](std::vector<Finding> v) {

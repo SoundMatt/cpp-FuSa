@@ -226,12 +226,13 @@ int run(int argc, char* argv[]) {
     auto* trace_cmd = app.add_subcommand("trace", "Show requirements traceability matrix");
     bool show_gaps      = false;
     bool strict_hlr_llr = false;
-    int  req_cov = 0, sec_tested = 0;
+    int  req_cov = 0, sec_tested = 0, func_cov = 0;
     std::string trace_fmt, trace_out;
     trace_cmd->add_flag("--gaps",           show_gaps,       "Show only gaps");
     trace_cmd->add_flag("--strict-hlr-llr", strict_hlr_llr,  "Fail on any HLR/LLR violation regardless of ASIL");
     trace_cmd->add_option("--req-coverage", req_cov,         "Fail if annotation coverage < N%");
     trace_cmd->add_option("--sec-tested",   sec_tested,      "Fail if test coverage < N%");
+    trace_cmd->add_option("--func-coverage",func_cov,        "Fail if header-declared public function req-tag density < N% (§1.4.1); 0 disables");
     trace_cmd->add_option("--format",       trace_fmt,       "text|json (default: text)");
     trace_cmd->add_option("--output",       trace_out,       "Write output to file instead of stdout");
     trace_cmd->callback([&]() -> void {
@@ -243,6 +244,7 @@ int run(int argc, char* argv[]) {
         topts.show_gaps          = show_gaps;
         topts.min_annotation_pct = req_cov;
         topts.min_test_pct       = sec_tested;
+        topts.min_func_pct       = func_cov;
         topts.strict_hlr_llr     = strict_hlr_llr;
         auto r = trace::run(dir, *cfg_opt, topts);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }

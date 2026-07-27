@@ -38,6 +38,7 @@ Log load(const fs::path& dir) {
     return log;
 }
 
+//fusa:req REQ-DISP002
 bool save(const fs::path& path, const Log& log, std::string& err) {
     json j;
     j["entries"] = json::array();
@@ -57,6 +58,7 @@ bool save(const fs::path& path, const Log& log, std::string& err) {
     return true;
 }
 
+//fusa:req REQ-DISP003
 Log add(Log log, const Entry& e) {
     // Update if rule_id already exists
     for (auto& existing : log.entries) {
@@ -84,6 +86,7 @@ void render_entries(const Log& log) {
     }
 }
 
+//fusa:req REQ-DISP003
 bool find_by_rule(const Log& log, const std::string& rule_id, Entry& out) {
     for (auto& e : log.entries) {
         if (e.rule_id == rule_id) { out = e; return true; }

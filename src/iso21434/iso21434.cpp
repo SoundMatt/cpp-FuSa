@@ -151,6 +151,7 @@ std::string now_utc() {
 
 } // anonymous namespace
 
+//fusa:req REQ-ISO21434-002
 Report assess(const fs::path& dir, const std::string& project, CAL cal) {
     Report r;
     r.project      = project;

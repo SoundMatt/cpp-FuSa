@@ -139,6 +139,7 @@ std::string status_str(Status s) {
 
 } // anonymous namespace
 
+//fusa:req REQ-DO178-001 REQ-DO178-002
 Report assess(const fs::path& dir, const std::string& project, DAL dal) {
     Report r;
     r.project = project;

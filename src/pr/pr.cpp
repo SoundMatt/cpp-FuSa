@@ -64,6 +64,7 @@ PRLog load(const fs::path& dir) {
     return log;
 }
 
+//fusa:req REQ-PR002
 bool save(const fs::path& path, const PRLog& log, std::string& err) {
     json j;
     j["project"] = log.project;
@@ -87,6 +88,7 @@ bool save(const fs::path& path, const PRLog& log, std::string& err) {
     return true;
 }
 
+//fusa:req REQ-PR003
 PRLog add(PRLog log, const ProblemReport& pr) {
     log.reports.push_back(pr);
     return log;

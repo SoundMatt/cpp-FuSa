@@ -55,6 +55,7 @@ Controllability parse_controllability(const std::string& s) {
     return Controllability::C3;
 }
 
+//fusa:req REQ-HARA001 REQ-HARA006
 bool load(const fs::path& dir, HARA& out, std::string& err) {
     auto p = dir / HARA_FILE;
     std::ifstream f(p);
@@ -97,6 +98,7 @@ bool load(const fs::path& dir, HARA& out, std::string& err) {
     return true;
 }
 
+//fusa:req REQ-HARA007
 bool save(const fs::path& path, const HARA& h, std::string& err) {
     json j;
     j["project"]   = h.project;
@@ -136,6 +138,7 @@ bool save(const fs::path& path, const HARA& h, std::string& err) {
     return true;
 }
 
+//fusa:req REQ-HARA008
 bool init(const fs::path& dir, const std::string& project, const std::string& standard, std::string& err) {
     auto p = dir / HARA_FILE;
     if (fs::exists(p)) {

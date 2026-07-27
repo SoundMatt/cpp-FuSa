@@ -6,6 +6,7 @@
 //fusa:test REQ-RELEASE006
 //fusa:test REQ-RELEASE007
 //fusa:test REQ-RELEASE008
+//fusa:test REQ-RELEASE009
 #include <catch2/catch_all.hpp>
 #include "release/release.hpp"
 #include "testutil/testutil.hpp"

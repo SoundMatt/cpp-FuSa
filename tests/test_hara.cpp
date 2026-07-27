@@ -1,6 +1,9 @@
 //fusa:test REQ-HARA001
 //fusa:test REQ-HARA002
 //fusa:test REQ-HARA003
+//fusa:test REQ-HARA006
+//fusa:test REQ-HARA007
+//fusa:test REQ-HARA008
 #include <catch2/catch_all.hpp>
 #include "hara/hara.hpp"
 #include "testutil/testutil.hpp"

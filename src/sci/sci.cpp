@@ -97,6 +97,7 @@ std::vector<ArtifactDef> lifecycle_items() {
 }
 } // anonymous namespace
 
+//fusa:req REQ-SCI001 REQ-SCI002
 SCI build(const fs::path& dir, const std::string& project, const std::string& version) {
     SCI s;
     s.project = project;

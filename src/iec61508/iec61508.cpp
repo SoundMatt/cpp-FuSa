@@ -94,6 +94,7 @@ std::string status_str(Status s) {
 
 } // anonymous namespace
 
+//fusa:req REQ-IEC61508-001 REQ-IEC61508-002
 Report assess(const fs::path& dir, const std::string& project, SIL sil) {
     Report r;
     r.project = project;

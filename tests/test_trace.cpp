@@ -6,12 +6,17 @@
 //fusa:test REQ-TRACE006
 //fusa:test REQ-TRACE007
 //fusa:test REQ-TRACE008
+//fusa:test REQ-TRACE009
 //fusa:test REQ-TRACE010
 //fusa:test REQ-TRACE011
 //fusa:test REQ-TRACE012
 //fusa:test REQ-TRACE013
 //fusa:test REQ-TRACE014
 //fusa:test REQ-TRACE015
+//fusa:test REQ-TRACE016
+//fusa:test REQ-TRACE017
+//fusa:test REQ-TRACE018
+//fusa:test REQ-TRACE019
 //fusa:test REQ-HLR001
 //fusa:test REQ-HLR002
 //fusa:test REQ-HLR003
@@ -604,4 +609,248 @@ TEST_CASE("trace: export_csv includes parent_id column", "[trace][hlr]") {
     std::string csv = trace::export_csv(reqs);
     REQUIRE(csv.find("parent_id") != std::string::npos);
     REQUIRE(csv.find("REQ-HLR-001") != std::string::npos);
+}
+
+// ─── §1.4.1 / §5 --func-coverage ─────────────────────────────────────────────
+
+TEST_CASE("trace: is_func_exempt recognises trivial converters and serialisers", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    REQUIRE(trace::is_func_exempt("render_text"));
+    REQUIRE(trace::is_func_exempt("render_json"));
+    REQUIRE(trace::is_func_exempt("render_matrix"));
+    REQUIRE(trace::is_func_exempt("write_json"));
+    REQUIRE(trace::is_func_exempt("export_csv"));
+    REQUIRE(trace::is_func_exempt("parse_asil"));
+    REQUIRE(trace::is_func_exempt("dal_str"));
+    REQUIRE(trace::is_func_exempt("asil_str"));
+    REQUIRE(trace::is_func_exempt("to_string"));
+}
+
+TEST_CASE("trace: is_func_exempt does not exempt ordinary functions", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    REQUIRE_FALSE(trace::is_func_exempt("assess"));
+    REQUIRE_FALSE(trace::is_func_exempt("load"));
+    REQUIRE_FALSE(trace::is_func_exempt("save"));
+    REQUIRE_FALSE(trace::is_func_exempt("run"));
+}
+
+TEST_CASE("trace: scan_func_coverage counts a tagged function as covered", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget {\n"
+              "[[nodiscard]] int assess(int x);\n"
+              "} // namespace\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget {\n"
+              "//fusa:req REQ-WIDGET-001\n"
+              "int assess(int x) { return x; }\n"
+              "} // namespace\n");
+    auto fc = trace::scan_func_coverage(tmp.path());
+    REQUIRE(fc.total == 1);
+    REQUIRE(fc.covered == 1);
+    REQUIRE(fc.uncovered.empty());
+}
+
+TEST_CASE("trace: scan_func_coverage counts an untagged function as uncovered", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget {\n"
+              "[[nodiscard]] int assess(int x);\n"
+              "} // namespace\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget {\n"
+              "int assess(int x) { return x; }\n"
+              "} // namespace\n");
+    auto fc = trace::scan_func_coverage(tmp.path());
+    REQUIRE(fc.total == 1);
+    REQUIRE(fc.covered == 0);
+    REQUIRE(fc.uncovered.size() == 1);
+    REQUIRE(fc.uncovered[0].find("assess") != std::string::npos);
+}
+
+TEST_CASE("trace: scan_func_coverage excludes trivial converters and serialisers", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget {\n"
+              "enum class Kind { A, B };\n"
+              "std::string kind_str(Kind k);\n"
+              "Kind parse_kind(const std::string& s);\n"
+              "void render_text(Kind k);\n"
+              "void write_json(Kind k);\n"
+              "} // namespace\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget {\n"
+              "std::string kind_str(Kind k) { return \"\"; }\n"
+              "Kind parse_kind(const std::string& s) { return Kind::A; }\n"
+              "void render_text(Kind k) {}\n"
+              "void write_json(Kind k) {}\n"
+              "} // namespace\n");
+    auto fc = trace::scan_func_coverage(tmp.path());
+    REQUIRE(fc.total == 0); // every declared function is exempt
+}
+
+TEST_CASE("trace: scan_func_coverage ignores fully inline header functions", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget {\n"
+              "class Thing {\n"
+              "public:\n"
+              "    int inline_accessor() const { return 0; }\n"
+              "    int declared_only() const;\n"
+              "};\n"
+              "} // namespace\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget {\n"
+              "int Thing::declared_only() const { return 0; }\n"
+              "} // namespace\n");
+    auto fc = trace::scan_func_coverage(tmp.path());
+    // inline_accessor has no separate .cpp definition and is excluded entirely;
+    // declared_only is the sole counted (uncovered) function.
+    REQUIRE(fc.total == 1);
+    REQUIRE(fc.covered == 0);
+    REQUIRE(fc.uncovered[0].find("declared_only") != std::string::npos);
+}
+
+TEST_CASE("trace: scan_func_coverage skips headers with no matching .cpp", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget {\n"
+              "int assess(int x);\n"
+              "} // namespace\n");
+    auto fc = trace::scan_func_coverage(tmp.path());
+    REQUIRE(fc.total == 0);
+}
+
+TEST_CASE("trace: run reports func_coverage in the result", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget { int assess(int x); }\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget { int assess(int x) { return x; } }\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    REQUIRE(res.func_coverage.total == 1);
+    REQUIRE(res.func_coverage.covered == 0);
+    REQUIRE(res.func_coverage.pct == Catch::Approx(0.0));
+}
+
+TEST_CASE("trace: --func-coverage N fails the run when below threshold", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget { int assess(int x); }\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget { int assess(int x) { return x; } }\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    trace::TraceOptions opts;
+    opts.min_func_pct = 50;
+    auto res = trace::run(tmp.path(), cfg, opts);
+    REQUIRE_FALSE(is_ok(res));
+    REQUIRE(error_of(res).find("function coverage") != std::string::npos);
+}
+
+TEST_CASE("trace: --func-coverage 0 disables the gate", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp",
+              "#pragma once\n"
+              "namespace cpfusa::widget { int assess(int x); }\n");
+    tmp.write("src/widget/widget.cpp",
+              "#include \"widget.hpp\"\n"
+              "namespace cpfusa::widget { int assess(int x) { return x; } }\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    trace::TraceOptions opts;
+    opts.min_func_pct = 0;
+    auto res = trace::run(tmp.path(), cfg, opts);
+    REQUIRE(is_ok(res));
+}
+
+TEST_CASE("trace: render_json reports funcCoverage in coverage block", "[trace][trace018]") {
+    //fusa:test REQ-TRACE018
+    TempDir tmp;
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j["coverage"].contains("funcCoverage"));
+    REQUIRE(j["coverage"]["funcCoverage"].contains("total"));
+    REQUIRE(j["coverage"]["funcCoverage"].contains("covered"));
+    REQUIRE(j["coverage"]["funcCoverage"].contains("pct"));
+}
+
+// ─── §1.4.1 item 3 — dangling //fusa:test references ────────────────────────
+
+TEST_CASE("trace: run detects a dangling //fusa:test reference", "[trace][trace019]") {
+    //fusa:test REQ-TRACE019
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    tmp.write("tests/test_foo.cpp", "//fusa:test REQ-999\nTEST_CASE(\"t\"){}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    REQUIRE(res.dangling_tags.size() == 1);
+    REQUIRE(res.dangling_tags[0].req_id == "REQ-999");
+    REQUIRE(res.dangling_tags[0].message.find("dangling") != std::string::npos);
+}
+
+TEST_CASE("trace: run does not flag a //fusa:test reference that exists", "[trace][trace019]") {
+    //fusa:test REQ-TRACE019
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    tmp.write("tests/test_foo.cpp", "//fusa:test REQ-001\nTEST_CASE(\"t\"){}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    REQUIRE(res.dangling_tags.empty());
+}
+
+TEST_CASE("trace: run does not flag a dangling //fusa:req reference (test-tag only)", "[trace][trace019]") {
+    //fusa:test REQ-TRACE019
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", "[]");
+    tmp.write("src/foo.cpp", "//fusa:req REQ-999\nvoid f() {}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    REQUIRE(res.dangling_tags.empty());
+}
+
+TEST_CASE("trace: render_matrix reports dangling test-tag references as WARN", "[trace][trace019]") {
+    //fusa:test REQ-TRACE019
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    tmp.write("tests/test_foo.cpp", "//fusa:test REQ-999\nTEST_CASE(\"t\"){}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    std::string out = trace::render_matrix(res, {});
+    REQUIRE(out.find("WARN") != std::string::npos);
+    REQUIRE(out.find("REQ-999") != std::string::npos);
+}
+
+TEST_CASE("trace: render_json includes danglingTags array", "[trace][trace019]") {
+    //fusa:test REQ-TRACE019
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", R"([{"id":"REQ-001","title":"T","severity":"safety"}])");
+    tmp.write("tests/test_foo.cpp", "//fusa:test REQ-999\nTEST_CASE(\"t\"){}\n");
+    config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0";
+    auto res = value_of(trace::run(tmp.path(), cfg));
+    auto j = json::parse(trace::render_json(res, cfg));
+    REQUIRE(j.contains("danglingTags"));
+    REQUIRE(j["danglingTags"].size() == 1);
+    REQUIRE(j["danglingTags"][0]["requirementId"] == "REQ-999");
 }
