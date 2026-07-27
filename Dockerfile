@@ -13,6 +13,13 @@
 #   docker run --rm -v "$(pwd)":/project cpp-fusa trace --format json
 #   docker run --rm -v "$(pwd)":/project cpp-fusa release
 
+# Image label values. Overridden at CI build time via --build-arg (see
+# .github/workflows/docker-publish.yml) so they always track fusa.hpp's
+# Version/SpecVersion constants instead of going stale in this file. The
+# defaults below are best-effort for plain local `docker build` runs.
+ARG VERSION=0.14.4
+ARG SPEC_VERSION=1.10.12
+
 # ── Stage 1: build ────────────────────────────────────────────────────────────
 FROM alpine:3.20 AS builder
 
@@ -40,6 +47,11 @@ RUN cmake -B build \
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
 FROM alpine:3.20
 
+# Re-declare to bring the global ARGs (and any --build-arg override) into
+# this stage's scope; Docker clears ARG scope at each FROM.
+ARG VERSION
+ARG SPEC_VERSION
+
 # git for impact/provenance; zip for audit-pack; ca-certificates for TLS.
 # libstdc++ is statically linked into the binary, so not needed at runtime.
 RUN apk add --no-cache git zip ca-certificates
@@ -53,11 +65,11 @@ LABEL org.opencontainers.image.title="cpp-FuSa" \
       org.opencontainers.image.description="C++ functional safety toolkit" \
       org.opencontainers.image.source="https://github.com/SoundMatt/cpp-FuSa" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.version="0.12.5" \
+      org.opencontainers.image.version="${VERSION}" \
       io.x-fusa.tool="cpp-FuSa" \
       io.x-fusa.language="cpp" \
       io.x-fusa.binary="cpfusa" \
-      io.x-fusa.spec-version="1.10"
+      io.x-fusa.spec-version="${SPEC_VERSION}"
 
 ENTRYPOINT ["cpfusa"]
 CMD ["--help"]
