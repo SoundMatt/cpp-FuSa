@@ -127,6 +127,33 @@ cpfusa report --format sarif --output results.sarif
 
 # Safety document templates
 cpfusa template --type all    # SAFETY_PLAN.md, HARA.md, SVP.md, SCMP.md, SQAP.md
+
+# Requirement lookup, import, and export
+cpfusa req show               # show all requirements and their annotations
+cpfusa req show REQ-FO-001    # show a single requirement
+cpfusa req import --file reqs.csv
+cpfusa req export --output reqs.csv
+
+# ISO 21434 CAL gap report
+cpfusa iso21434 --cal CAL-2 --output iso21434-gap-report.json
+
+# UNECE R155/R156 gap report
+cpfusa unece --regulation r155 --output unece-r155-gap-report.json
+cpfusa unece --regulation both
+
+# MISRA C++:2023 rule mapping
+cpfusa misra
+cpfusa misra --gaps   # manually-reviewed rules only
+
+# Data and control coupling analysis (DO-178C §6.4.4.3)
+cpfusa coupling --output coupling-report.json
+
+# Deep AST-based safety analysis (requires libclang)
+cpfusa ast --format json --output ast-report.json
+
+# Version and machine-readable capabilities
+cpfusa version
+cpfusa capabilities
 ```
 
 ## Modules
@@ -169,6 +196,11 @@ cpfusa template --type all    # SAFETY_PLAN.md, HARA.md, SVP.md, SCMP.md, SQAP.m
 | `src/pr/` | Problem Report log (DO-178C §11.17) |
 | `src/fix/` | Fix guidance catalog with before/after code examples |
 | `src/testutil/` | Test harness helpers (`TempDir`, `has_finding`) |
+| `src/ast/` | Deep AST-based safety analysis (requires libclang) |
+| `src/coupling/` | Data and control coupling analysis (DO-178C §6.4.4.3) |
+| `src/iso21434/` | ISO 21434 CAL gap assessment |
+| `src/unece/` | UNECE R155/R156 gap assessment |
+| `src/misra/` | MISRA C++:2023 → cpfusa rule mapping |
 
 ## Standards coverage
 
@@ -176,9 +208,10 @@ cpfusa template --type all    # SAFETY_PLAN.md, HARA.md, SVP.md, SCMP.md, SQAP.m
 |---|---|---|
 | ISO 26262 | Automotive functional safety (ASIL A–D) | `cpfusa iso26262` |
 | IEC 61508 | General functional safety (SIL 1–4) | `cpfusa iec61508` |
-| ISO 21434 | Automotive cybersecurity | `cpfusa tara`, `cpfusa cyber` |
+| ISO 21434 | Automotive cybersecurity | `cpfusa tara`, `cpfusa cyber`, `cpfusa iso21434` (CAL gap report) |
+| UNECE R155/R156 | Cybersecurity/software update management | `cpfusa unece` |
 | DO-178C | Aerospace software (DAL A–D) | `cpfusa do178`, `cpfusa coverage` |
-| MISRA C++:2023 | C++ coding standard | `cpfusa lint` (LINT001–010) |
+| MISRA C++:2023 | C++ coding standard | `cpfusa lint` (LINT001–010), `cpfusa misra` |
 | AUTOSAR C++14 | AUTOSAR coding guidelines | `cpfusa lint` (LINT005) |
 | JSF++ | Joint Strike Fighter C++ | `cpfusa lint` (LINT008) |
 

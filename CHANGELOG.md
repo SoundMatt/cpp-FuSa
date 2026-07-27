@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.14.4] — 2026-07-27
+
+### Fixed (issue #30)
+- **`fusa.hpp` internal version inconsistency**: `VersionPatch` was `"2"` while `Version` was
+  `"0.14.3"` — a stale sub-constant not caught by the repo's 3-file version-sync process
+  (`fusa.hpp`/`CMakeLists.txt`/`.fusa.json`). `VersionPatch` now agrees with `Version` (both `0.14.4`).
+- **Stale Dockerfile OCI labels**: `org.opencontainers.image.version` (`0.12.5`, ~9 releases behind)
+  and `io.x-fusa.spec-version` (`1.10`, actual `1.10.12`) were hardcoded and baked into every published
+  image. Both are now `ARG`s (`VERSION`, `SPEC_VERSION`) with local-build defaults, injected at CI build
+  time via `--build-arg` in `.github/workflows/docker-publish.yml` (derived from the pushed tag and
+  `fusa.hpp`'s `SpecVersion` constant), so published images always track the actual release.
+- **`docs/tool-safety-manual.md`** stale `**Version:** 0.12.3` header updated to `0.14.4`.
+- **`docs/qualification.md`** stale "Catch2 unit test suite (633 tests)" updated to the actual current
+  count (757 tests, per the v0.14.3 CHANGELOG entry).
+
+### Added (issue #31)
+- README Quick Start now documents `req`, `iso21434`, `unece`, `misra`, `coupling`, `ast`, `version`,
+  and `capabilities` — real, shipped subcommands that were previously undocumented (`iso21434` and
+  `unece` since v0.9.0).
+- README Modules table gains rows for `src/ast/`, `src/coupling/`, `src/iso21434/`, `src/unece/`, and
+  `src/misra/`.
+- README Standards coverage table gains a UNECE R155/R156 row and cross-references `cpfusa iso21434`/
+  `cpfusa misra` on their respective standard rows.
+
+### Changed
+- Backfilled missing `CHANGELOG.md` entries for `v0.12.5`, `v0.12.4`, and `v0.6.2` (each a single-commit
+  release that had been omitted, reconstructed from their tagged commits).
+
 ## [0.14.3] — 2026-07-27
 
 ### Retrofit (§1.4.1 function-level tag completeness, continued)
@@ -107,6 +135,24 @@ Running the new `--func-coverage` gate against cpp-FuSa's own source surfaced se
 ### Fixed
 - `SpecVersion` constant updated from `"1.10"` to `"1.10.4"` (x-FuSa spec alignment)
 - MSVC C2338 compile error in `test_analyze.cpp`: wrap compound `REQUIRE` expression in parentheses
+
+## [0.12.5] — 2026-06-12
+
+### Fixed
+- **Project-relative finding paths** (issue #27, mirrors go-FuSa v0.30.0): `analyze::for_each_source()` now
+  passes `fs::relative(entry.path(), dir)` to each own-pass lambda, so ANAL003–012 findings all carry portable
+  project-relative paths instead of absolute ones; `run_clang_tidy()` likewise relativizes the path parsed
+  from clang-tidy diagnostic output. Required per x-FuSa spec §4 MUST so fingerprints, SARIF
+  `artifactLocation`s, and cross-environment diff baselines are stable regardless of checkout location.
+  New REQ-ANAL013 test asserts an ANAL003 finding's file does not start with `/`.
+
+## [0.12.4] — 2026-06-12
+
+### Fixed
+- **Trace JSON canonical keys** (closes #11, #12): `trace --format json` emitted `kind: "trace-report"`
+  where x-FuSa spec §3.1 requires `"trace-matrix"`, and `requirements[]` entries used `"standardRef"`
+  where spec §5 requires `"standard"`. Both corrected; adds REQ-TRACE016/REQ-TRACE017 and a test
+  asserting `"standard"` is present and `"standardRef"` is absent.
 
 ## [0.12.3] — 2026-06-12
 
@@ -285,6 +331,19 @@ Running the new `--func-coverage` gate against cpp-FuSa's own source surfaced se
 - GitHub Actions composite action (`.github/action.yml`) — `uses: SoundMatt/cpp-FuSa@v0.7.0` mounts the project into the Docker image and runs any `cpfusa` subcommand; exposes `exit-code` output
 - CPack packaging in `CMakeLists.txt` — NSIS (Windows installer with PATH modification), WiX (Windows MSI), DEB (Debian/Ubuntu), RPM (Fedora/RHEL); build with `cmake --build build --target package`
 - ROADMAP.md updated to reflect reality: v0.7 (IEC 62443, SLSA) and v0.8 (distribution) marked complete
+
+## [0.6.2] — 2026-06-10
+
+### Fixed
+- **x-FuSa spec v1.8 MUST gap 1** — `cpfusa trace --format json` (§5): added `render_json()` emitting the
+  §5 cross-language traceability schema — §3.1 common envelope (`schemaVersion 1.8`, `kind:"trace-report"`,
+  `tool`/`toolVersion`/`language`/`generatedAt`), per-requirement `implementedBy`/`testedBy` location
+  arrays, a `covered`/`partial`/`gap` status, and a summary block; paths are project-relative. `trace`
+  gains `--format text|json` and `--output`.
+- **x-FuSa spec v1.8 MUST gap 2** — gap-report summary keys (§9.3): `iso26262`, `iec61508`, and `do178`
+  `write_json()` emitted `"addressed"`/`"gap"` instead of the spec-mandated `"satisfied"`/`"gaps"`; renamed
+  across all three modules.
+- 9 new tests (6 `trace` `render_json`, 3 gap-report summary-key assertions); 463 total, 100% pass.
 
 ## [0.6.1] — 2026-06-10
 
