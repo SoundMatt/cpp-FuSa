@@ -69,6 +69,11 @@ struct TraceResult {
     int llr_count{0};
     int hlr_covered{0};   // HLRs that have at least one LLR child
     std::vector<HLRViolation> hlr_violations;
+    // true when hlr_violations tripped the gate (--strict-hlr-llr or
+    // project ASIL-C/D) — the caller MUST still render/emit the result
+    // (spec §2.3: gate failure MUST NOT suppress the --format json artefact)
+    // and is responsible for exiting non-zero.
+    bool hlr_gate_failed{false};
     // §1.4.1 dangling //fusa:test references (test tag ID not in .fusa-reqs.json)
     std::vector<DanglingTag> dangling_tags;
     // §1.4.1 / §5 --func-coverage

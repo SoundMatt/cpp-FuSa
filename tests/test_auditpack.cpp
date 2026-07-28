@@ -5,6 +5,7 @@
 #include <catch2/catch_all.hpp>
 #include "auditpack/auditpack.hpp"
 #include "testutil/testutil.hpp"
+#include <cstdlib>
 
 using namespace cpfusa;
 using namespace cpfusa::testutil;
@@ -112,3 +113,31 @@ TEST_CASE("auditpack: multiple evidence files all appear in manifest", "[auditpa
 TEST_CASE("auditpack: AuditPackFile constant is audit-pack.zip", "[auditpack][audit001]") {
     REQUIRE(std::string(auditpack::AuditPackFile) == "audit-pack.zip");
 }
+
+#ifndef _WIN32
+// Regression for the "silently writes a non-ZIP manifest.json and reports
+// success when the system `zip` binary is missing" bug: pack() must detect
+// the failed popen/zip invocation and return a hard error, never fall back
+// to copying manifest.json to the requested output path while claiming
+// success (setenv/PATH manipulation is POSIX-only; Windows resolves
+// _popen commands differently, so this test is skipped there).
+TEST_CASE("auditpack: pack errors (not silently succeeds) when zip is unavailable on PATH",
+          "[auditpack][audit001]") {
+    TempDir tmp;
+    tmp.write("qualify-report.json", R"({"passed":8})");
+    auto out = tmp.path() / "audit-pack.zip";
+
+    const char* old_path = std::getenv("PATH");
+    std::string saved_path = old_path ? old_path : "";
+    setenv("PATH", "/nonexistent-dir-for-cpfusa-auditpack-test", 1);
+
+    auto r = auditpack::pack(tmp.path(), out);
+
+    setenv("PATH", saved_path.c_str(), 1);
+
+    REQUIRE_FALSE(is_ok(r));
+    // Must not have written manifest.json (or anything else) under the
+    // requested ZIP output path while reporting success.
+    REQUIRE_FALSE(std::filesystem::exists(out));
+}
+#endif

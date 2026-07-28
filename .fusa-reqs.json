@@ -1838,6 +1838,198 @@
       "standard_ref": "ISO 26262 \u00a76.6",
       "severity": "safety",
       "asil": ""
+    },
+    {
+      "id": "REQ-COUPLING001",
+      "title": "Coupling report generation entry point",
+      "description": "coupling::analyse() shall scan a project's src/ tree and return a CouplingReport (data/control edges, counts, generated_at, project name), written to coupling-report.json by write_json().",
+      "standard_ref": "DO-178C \u00a76.3.4",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-COUPLING002",
+      "title": "Data coupling detection via includes",
+      "description": "analyse() shall detect data coupling by scanning #include directives that reference a sibling component (a top-level directory under src/ other than the including file's own component).",
+      "standard_ref": "DO-178C \u00a76.3.4",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-COUPLING003",
+      "title": "Control coupling detection via namespace calls",
+      "description": "analyse() shall detect control coupling by scanning namespace::function() call sites that invoke a sibling component's namespace, recording the call site file:line.",
+      "standard_ref": "DO-178C \u00a76.3.4",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-METRICS001",
+      "title": "Metrics snapshot collection",
+      "description": "metrics::collect() shall build a Snapshot from the project's check-report.json, .fusa-reqs.json, and cyber-report.json, counting errors/warnings/infos, total/traced requirements, coverage percentage, and cybersecurity findings; the persisted file is .fusa-metrics.json (METRICS_FILE).",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-METRICS002",
+      "title": "Metrics time series append and persistence",
+      "description": "metrics::append() shall add a Snapshot to a TimeSeries and metrics::save()/load() shall round-trip the TimeSeries to/from JSON, tolerating a missing or malformed file by returning an empty series.",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-METRICS003",
+      "title": "Metrics time series rendering",
+      "description": "metrics::render_text() and render_json() shall present the accumulated Snapshot time series as human-readable text or JSON output, printing a no-data message when the series is empty.",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-FIX001",
+      "title": "Fix guidance catalog entry model",
+      "description": "The FixEntry struct shall carry a rule_id, title, description, before/after code examples, and standard_ref for each remediation catalog entry.",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-FIX002",
+      "title": "Fix guidance catalog contents",
+      "description": "fix::catalog() shall return a non-empty list of FixEntry records covering the tool's own LINT/ANAL/FUSA rule ids, each with non-empty before/after examples and a standard_ref.",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-SLSA001",
+      "title": "SLSA level parsing and baseline requirements",
+      "description": "slsa::parse_level()/level_str()/status_str() shall convert between SLSA level strings and the Level enum, and baseline_requirements() shall return the SLSA L1-L3 requirement checklist with per-level applicability flags.",
+      "standard_ref": "SLSA v1.0",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SLSA002",
+      "title": "SLSA level assessment",
+      "description": "slsa::assess() shall evaluate the baseline requirements applicable to the requested SLSA level against evidence present in the project (CMakeLists.txt, provenance.json, sbom.json, .git, CODEOWNERS, provenance signature) and return a Report.",
+      "standard_ref": "SLSA v1.0",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SLSA003",
+      "title": "SLSA gap report JSON",
+      "description": "slsa::write_json() shall emit a spec \u00a79.3-conformant gap-report JSON with satisfied/gap summary keys and per-objective status for the assessed SLSA level.",
+      "standard_ref": "SLSA v1.0",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-MISRA001",
+      "title": "MISRA mapping table structure",
+      "description": "misra::mapping_table() shall return a non-empty list of Rule records, each with a non-empty id, category (Required/Advisory), and description; the report file is misra-report.json (MISRA_REPORT_FILE).",
+      "standard_ref": "MISRA C++:2023",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-MISRA002",
+      "title": "MISRA rule to lint-rule mapping",
+      "description": "Each Mapped MISRA rule in mapping_table() shall carry the LINT/ANAL rule id that automatically enforces it (e.g. A18-5-2 -> LINT001, A6-6-1 -> LINT002, A5-2-4 -> LINT003); N/A rules shall have an empty lint_rule.",
+      "standard_ref": "MISRA C++:2023",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-MISRA003",
+      "title": "MISRA compliance report",
+      "description": "misra::build_report() shall build a Report from mapping_table(), optionally filtered to Manual-status rules only (gaps_only), with consistent totals; write_json() shall emit it as JSON.",
+      "standard_ref": "MISRA C++:2023",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-COV003",
+      "title": "Structural coverage report JSON",
+      "description": "coverage::write_json() shall emit a coverage-report.json document including the assessed DAL, and per-file line/branch coverage percentages.",
+      "standard_ref": "DO-178C \u00a76.3.4",
+      "severity": "safety",
+      "asil": "ASIL-D"
+    },
+    {
+      "id": "REQ-IMPACT001",
+      "title": "Impact analysis change-file and report model",
+      "description": "The ChangedFile and ImpactedReq structs shall record per-file insertion/deletion counts and the requirement ids impacted by a change, respectively, as produced by impact::analyse().",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-IMPACT002",
+      "title": "Change-impact analysis on requirements",
+      "description": "impact::analyse() shall diff from_ref..to_ref via git, load .fusa-reqs.json, and report which requirements are impacted by the changed files, defaulting both refs to HEAD when omitted.",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-TMPL001",
+      "title": "Core safety document content generators",
+      "description": "tmpl::safety_plan_content()/test_evidence_content()/hara_content() shall render non-empty Markdown document bodies for the corresponding safety document type, including the project name from ProjectConfig.",
+      "standard_ref": "Internal",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-TMPL002",
+      "title": "DO-178C document content generators",
+      "description": "tmpl::svp_content()/scmp_content()/sqap_content() shall render non-empty Markdown document bodies for the DO-178C Software Verification Plan, Software Configuration Management Plan, and Software Quality Assurance Plan.",
+      "standard_ref": "DO-178C \u00a711",
+      "severity": "info"
+    },
+    {
+      "id": "REQ-IEC62443-001",
+      "title": "IEC 62443 SL parsing and baseline checks",
+      "description": "iec62443::parse_sl()/sl_str()/status_str() shall convert between security level strings and the SL enum, and baseline_checks() shall return the IEC 62443 SR checklist with per-SL applicability flags; the report file is iec62443-report.json.",
+      "standard_ref": "IEC 62443-4-2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-IEC62443-002",
+      "title": "IEC 62443 baseline check catalog",
+      "description": "baseline_checks() shall return the full set of IEC 62443 SR (System Requirement) checks with descriptions and per-security-level required flags.",
+      "standard_ref": "IEC 62443-4-2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-IEC62443-003",
+      "title": "IEC 62443 security level assessment",
+      "description": "iec62443::assess() shall evaluate the baseline checks applicable to the requested security level against project evidence and return a Report with consistent counts.",
+      "standard_ref": "IEC 62443-4-2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAS002",
+      "title": "SAS baseline evidence item catalog",
+      "description": "sas::baseline_items() shall return the fixed list of DO-178C \u00a711.20 accomplishment-summary evidence items (SAS-01..SAS-20), each with a non-empty id and expected artifact filename.",
+      "standard_ref": "DO-178C \u00a711.20",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAS003",
+      "title": "SAS document rendering",
+      "description": "sas::write_json() and write_markdown() shall render the SAS evidence assembly (total/complete counts and per-item presence) as JSON and as a Markdown document with an Evidence Index section.",
+      "standard_ref": "DO-178C \u00a711.20",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-COV001",
+      "title": "DAL level parsing and output file conventions",
+      "description": "coverage::parse_dal()/dal_str() shall convert between DAL-A..DAL-D strings and the DAL enum; COVERAGE_FILE (coverage.info) and COVERAGE_REPORT_FILE (coverage-report.json) name the expected lcov input and generated report output.",
+      "standard_ref": "DO-178C \u00a76.3.4",
+      "severity": "safety",
+      "asil": "ASIL-D"
+    },
+    {
+      "id": "REQ-COV002",
+      "title": "Structural coverage computed from lcov profile",
+      "description": "coverage::build_from_lcov() shall parse an lcov .info file into a CoverageReport with per-file and aggregate line/branch coverage percentages, applying the DAL-specific line/branch thresholds and throwing when the profile file cannot be opened.",
+      "standard_ref": "DO-178C \u00a76.3.4",
+      "severity": "safety",
+      "asil": "ASIL-D"
+    },
+    {
+      "id": "REQ-SAS001",
+      "title": "SAS output file conventions",
+      "description": "SAS_MD_FILE (sas.md) and SAS_JSON_FILE (sas.json) name the Markdown and JSON Software Accomplishment Summary documents written by write_markdown()/write_json().",
+      "standard_ref": "DO-178C \u00a711.20",
+      "severity": "safety"
     }
   ]
 }

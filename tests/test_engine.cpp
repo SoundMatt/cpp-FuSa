@@ -108,6 +108,14 @@ TEST_CASE("engine: FUSA004 fires when evidence file absent", "[engine][fusa004]"
     REQUIRE(has_finding(engine::make_fusa004().check(tmp.path(), cfg), "FUSA004"));
 }
 
+TEST_CASE("engine: FUSA004 finding reports the missing evidence file as location.file", "[engine][fusa004]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto findings = engine::make_fusa004().check(tmp.path(), cfg);
+    REQUIRE_FALSE(findings.empty());
+    REQUIRE(findings[0].file == ".fusa-evidence.json");
+}
+
 TEST_CASE("engine: FUSA004 passes when .fusa-evidence.json exists", "[engine][fusa004]") {
     TempDir tmp;
     tmp.write(".fusa-evidence.json", R"({"summary":{"total":5,"passed":5}})");

@@ -430,10 +430,12 @@ Result<TraceResult> run(const fs::path& dir,
         if (!result.hlr_violations.empty()) {
             bool do_error = opts.strict_hlr_llr || any_high_asil;
             if (do_error) {
-                std::string msg = "HLR/LLR violations:";
-                for (const auto& v : result.hlr_violations)
-                    msg += "\n  " + v.message;
-                return msg;
+                // Gate failure (exit 1), not a runtime error (exit 3) — the
+                // tool ran fine and found a gap. Per spec §2.3 the JSON/text
+                // artefact MUST still be produced; record the gate outcome
+                // in the result and let the caller decide the exit code
+                // after rendering, instead of discarding the result here.
+                result.hlr_gate_failed = true;
             }
             // warn-only for lower ASIL levels — violations are recorded in result
         }

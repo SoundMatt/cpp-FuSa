@@ -510,8 +510,12 @@ TEST_CASE("trace: strict_hlr_llr flag errors on violations", "[trace][hlr]") {
     trace::TraceOptions opts;
     opts.strict_hlr_llr = true;
     auto r = trace::run(tmp.path(), cfg, opts);
-    // strict mode → should return error
-    REQUIRE_FALSE(is_ok(r));
+    // strict mode → gate fails, but the result (and its JSON/text rendering)
+    // MUST still be produced (spec §2.3); the caller signals failure via
+    // hlr_gate_failed, not by discarding the TraceResult.
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).hlr_gate_failed);
+    REQUIRE_FALSE(value_of(r).hlr_violations.empty());
 }
 
 TEST_CASE("trace: ASIL-D HLR violation causes error without strict flag", "[trace][hlr]") {
@@ -522,8 +526,9 @@ TEST_CASE("trace: ASIL-D HLR violation causes error without strict flag", "[trac
     ])");
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0"; cfg.asil = "ASIL-D";
     auto r = trace::run(tmp.path(), cfg);
-    // ASIL-D project → gate is error (REQ-HLR004)
-    REQUIRE_FALSE(is_ok(r));
+    // ASIL-D project → gate fails, but result still produced (spec §2.3)
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).hlr_gate_failed);
 }
 
 TEST_CASE("trace: ASIL-C HLR violation causes error without strict flag", "[trace][hlr]") {
@@ -534,8 +539,9 @@ TEST_CASE("trace: ASIL-C HLR violation causes error without strict flag", "[trac
     ])");
     config::ProjectConfig cfg; cfg.project = "p"; cfg.version = "1.0.0"; cfg.asil = "ASIL-C";
     auto r = trace::run(tmp.path(), cfg);
-    // ASIL-C project → gate is error (REQ-HLR004), same as ASIL-D
-    REQUIRE_FALSE(is_ok(r));
+    // ASIL-C project → gate fails, same as ASIL-D, but result still produced (spec §2.3)
+    REQUIRE(is_ok(r));
+    REQUIRE(value_of(r).hlr_gate_failed);
 }
 
 TEST_CASE("trace: ASIL-B HLR violation is warn not error without strict flag", "[trace][hlr]") {

@@ -9,6 +9,59 @@
   `FUSAOPS_DISPATCH_TOKEN` secret in this repo; falls back silently
   (`continue-on-error`) to the weekly rebuild if it's not set.
 
+## [0.14.5] — 2026-07-27
+
+### Fixed
+- **FUSA004 `location.file` was empty** (issue #35): `make_fusa004()` in
+  `src/engine/rules.cpp` hardcoded `""` for the missing `.fusa-evidence.json`
+  finding's `location.file` instead of the target filename, unlike the
+  sibling FUSA003/FUSA005 rules. Now emits `.fusa-evidence.json`, a valid
+  spec §4 project-relative path.
+- **`trace --format json` emitted no output on HLR/LLR gate failure**
+  (issue #36): on ASIL-C/D projects (or with `--strict-hlr-llr`), `trace::run()`
+  returned a plain error string on an HLR/LLR violation, and the CLI exited
+  before ever rendering — discarding the JSON/text artefact entirely, even
+  though the `hierarchy` block was already built. `trace::run()` now always
+  returns the populated `TraceResult` (with a new `hlr_gate_failed` flag);
+  the CLI renders the requested output first and exits `1` afterward, per
+  spec §2.3 (a gate failure MUST NOT suppress the artefact).
+- **`qualify` had no `--output` flag** (issue #37): passing `--output <file>`
+  was a CLI11 parse error — the flag was never registered, and the report
+  path was hardcoded to `<dir>/qualify-report.json`. `qualify --output <file>`
+  now works per spec §2.2/§6.
+- **`release` had no `--output-dir` flag** (issue #38): passing
+  `--output-dir <dir>` was a CLI11 parse error; `sbom.json`/`provenance.json`/
+  `artifact-manifest.json` were always written to the project root.
+  `release --output-dir <dir>` now works per spec §2.2/§7, creating the
+  directory if it doesn't exist.
+- **`audit-pack` silently wrote a non-ZIP `manifest.json` and reported
+  success when the system `zip` binary was missing** (issue #39): the
+  `popen("zip ...")` calls in `src/auditpack/auditpack.cpp` never checked
+  their exit status; when `zip` was unavailable (e.g. the FuSaOps bundled
+  image before it added `zip`), the code fell back to copying
+  `manifest.json` to the requested `--output` path and still exited `0`.
+  `pack()` now checks each `zip` invocation's exit code and returns a hard
+  error (exit `1`, no fallback file) instead of masquerading a corrupt
+  evidence bundle as a success.
+
+### Requirements
+- Closed 27 orphan requirement tags surfaced by `trace --gaps` / `--format
+  json` self-audit: `REQ-COUPLING001..003`, `REQ-METRICS001..003`,
+  `REQ-FIX001..002`, `REQ-SLSA001..003`, `REQ-MISRA001..003`,
+  `REQ-COV001..003`, `REQ-IMPACT001..002`, `REQ-TMPL001..002`,
+  `REQ-IEC62443-001..003`, and `REQ-SAS001..003` had real `//fusa:req`/
+  `//fusa:test` annotations but no entry in `.fusa-reqs.json`; all are now
+  registered with titles/descriptions drawn from the tagged code. The
+  duplicate `REQ-TMPL003` test-only tag (same `generate()` behaviour already
+  covered by the registered `REQ-TMPL004`) was removed rather than
+  registered. Zero orphan tags and zero untested requirements remain.
+
+### CI
+- `windows-2022` matrix job now installs `zip` via Chocolatey. The runner
+  image doesn't ship one by default (unlike the ubuntu/macos jobs), which
+  the `audit-pack` zip-missing hard error above now correctly surfaces as a
+  test failure instead of silently degrading.
+
 ## [0.14.4] — 2026-07-27
 
 ### Fixed (issue #30)
