@@ -111,7 +111,7 @@ TEST_CASE("tara: every scenario's SFOP impact axes are valid closed-enum levels"
 
 // §9.2 risk-combination table — every cell of the 4x4 lookup, so a future
 // edit to the table can't silently change a corner case unnoticed.
-TEST_CASE("tara: derive_risk matches the §9.2 canonical combination table", "[tara][tara008]") {
+TEST_CASE("tara: derive_risk matches the spec 9.2 canonical combination table", "[tara][tara008]") {
     auto impact_of = [](const std::string& level) {
         tara::SFOPImpact im;
         im.safety = level; // highest_impact() picks the max across all four axes
