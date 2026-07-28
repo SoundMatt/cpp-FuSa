@@ -2,7 +2,7 @@
   "configVersion": "1.0",
   "project": {
     "name": "cpp-FuSa",
-    "version": "0.14.4"
+    "version": "0.14.5"
   },
   "standard": "iso26262",
   "asil": "ASIL-B",

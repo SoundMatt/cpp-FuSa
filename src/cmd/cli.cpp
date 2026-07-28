@@ -248,10 +248,11 @@ int run(int argc, char* argv[]) {
         topts.strict_hlr_llr     = strict_hlr_llr;
         auto r = trace::run(dir, *cfg_opt, topts);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
+        const auto& result = value_of(r);
         const bool as_json = (trace_fmt == "json");
         std::string out_str = as_json
-            ? trace::render_json(value_of(r), *cfg_opt)
-            : trace::render_matrix(value_of(r), topts);
+            ? trace::render_json(result, *cfg_opt)
+            : trace::render_matrix(result, topts);
         if (!trace_out.empty()) {
             std::ofstream f(trace_out);
             if (!f) { print_err("cannot write " + trace_out); std::exit(3); }
@@ -260,6 +261,10 @@ int run(int argc, char* argv[]) {
             // §2.2: all output goes to stdout by default; use --output to write a file.
             std::cout << out_str;
         }
+        // §2.3: a gate failure (HLR/LLR decomposition here) MUST NOT prevent
+        // the requested artefact from being written — exit 1 only after the
+        // output above has already been emitted.
+        if (result.hlr_gate_failed) std::exit(1);
     });
 
     // ── req ───────────────────────────────────────────────────────────────────
@@ -415,6 +420,9 @@ int run(int argc, char* argv[]) {
                             "Independent test executor");
     qualify_cmd->add_option("--achievable-asil",       achievable_asil,
                             "Achievable ASIL level given independence");
+    std::string qualify_out;
+    qualify_cmd->add_option("--output", qualify_out,
+                            "Output file path (default: <dir>/qualify-report.json)");
     qualify_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         std::cout << "Running qualification suite for cpfusa v" << Version << "...\n";
@@ -432,7 +440,9 @@ int run(int argc, char* argv[]) {
         rpt.independent_test_executor = ind_test_executor;
         rpt.achievable_asil          = achievable_asil;
 
-        auto wr = qualify::save(dir / std::string(qualify::ReportFile), rpt);
+        fs::path out_path = qualify_out.empty() ? dir / std::string(qualify::ReportFile)
+                                                : fs::path(qualify_out);
+        auto wr = qualify::save(out_path, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
         std::cout << "Cases: " << rpt.total
                   << "  Passed: " << rpt.passed
@@ -458,19 +468,26 @@ int run(int argc, char* argv[]) {
                     std::cerr << "  FAIL " << cr.test_case.name << ": " << cr.error << "\n";
             std::exit(1);
         }
-        print_ok("qualify-report.json written");
+        print_ok(out_path.filename().string() + " written");
     });
 
     // ── release ───────────────────────────────────────────────────────────────
     auto* release_cmd = app.add_subcommand("release", "Generate SBOM, provenance, and artifact manifest");
     bool release_full = false;
     std::string spdx_ver_str = "3.0.1";
+    std::string release_out_dir;
     release_cmd->add_flag("--full", release_full, "Also run tara, fmea, safety-case before packaging");
     release_cmd->add_option("--spdx-version", spdx_ver_str, "SBOM SPDX version: 3.0.1 (default), 2.3, 2.2");
+    release_cmd->add_option("--output-dir", release_out_dir,
+                            "Directory for sbom.json/provenance.json/artifact-manifest.json (default: --dir)");
     release_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        fs::path out_dir = release_out_dir.empty() ? dir : fs::path(release_out_dir);
+        std::error_code od_ec;
+        fs::create_directories(out_dir, od_ec);
+        if (od_ec) { print_err("cannot create output dir " + out_dir.string() + ": " + od_ec.message()); std::exit(3); }
 
         if (release_full) {
             // Run tara
@@ -491,7 +508,7 @@ int run(int argc, char* argv[]) {
         auto manifest = release::hash_artifacts(dir);
         auto spdx_ver = release::parse_spdx_version(spdx_ver_str);
         if (spdx_ver != release::SpdxVersion::V3_0_1) {
-            release::write_sbom(dir / std::string(release::SBOMFile), value_of(sbom_r), spdx_ver);
+            release::write_sbom(out_dir / std::string(release::SBOMFile), value_of(sbom_r), spdx_ver);
             auto prov_manifest = release::hash_artifacts(dir);
             (void)prov_manifest;
             // Write provenance and manifest separately
@@ -506,7 +523,7 @@ int run(int argc, char* argv[]) {
             pj["vcsRevision"]   = value_of(prov_r).vcs_revision;
             pj["vcsModified"]   = value_of(prov_r).vcs_modified;
             pj["os"]            = value_of(prov_r).platform;
-            std::ofstream pf(dir / std::string(release::ProvenanceFile));
+            std::ofstream pf(out_dir / std::string(release::ProvenanceFile));
             pf << pj.dump(2) << "\n";
             nlohmann::json mj;
             mj["schemaVersion"] = std::string(SpecVersion);
@@ -518,10 +535,10 @@ int run(int argc, char* argv[]) {
             for (const auto& a : manifest.artifacts)
                 ar.push_back({{"path", a.path}, {"sha256", a.sha256}});
             mj["artifacts"] = ar;
-            std::ofstream mf(dir / std::string(release::ManifestFile));
+            std::ofstream mf(out_dir / std::string(release::ManifestFile));
             mf << mj.dump(2) << "\n";
         } else {
-            auto wr = release::write_all(dir, value_of(sbom_r), value_of(prov_r), manifest);
+            auto wr = release::write_all(out_dir, value_of(sbom_r), value_of(prov_r), manifest);
             if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
         }
         print_ok("sbom.json written");

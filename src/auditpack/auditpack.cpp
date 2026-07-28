@@ -12,6 +12,8 @@
 #ifdef _WIN32
 #  define popen  _popen
 #  define pclose _pclose
+#else
+#  include <sys/wait.h>
 #endif
 #include <cstring>
 #include <array>
@@ -23,6 +25,12 @@ namespace cpfusa::auditpack {
 
 namespace {
 
+std::string trim_trailing(std::string s) {
+    while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' '))
+        s.pop_back();
+    return s;
+}
+
 std::string now_iso8601() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
@@ -31,14 +39,35 @@ std::string now_iso8601() {
     return ss.str();
 }
 
-std::string run_cmd(const std::string& cmd) {
-    std::string out;
+// Result of running an external command via popen: captured stdout+stderr
+// and a normalised exit code (0 == success). A missing binary (e.g. the
+// system `zip` CLI) surfaces here as a non-zero exit code rather than being
+// silently swallowed — callers MUST check it before trusting the output.
+struct CmdResult {
+    std::string output;
+    int         exit_code{-1};
+};
+
+CmdResult run_cmd(const std::string& cmd) {
+    CmdResult result;
     std::array<char,256> buf{};
     FILE* pipe = popen(cmd.c_str(), "r");
-    if (!pipe) return out;
-    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) out += buf.data();
-    pclose(pipe);
-    return out;
+    if (!pipe) return result; // exit_code stays -1 — popen itself failed
+    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) result.output += buf.data();
+    int status = pclose(pipe);
+    if (status < 0) {
+        result.exit_code = -1;
+#ifndef _WIN32
+    } else if (WIFEXITED(status)) {
+        result.exit_code = WEXITSTATUS(status);
+    } else {
+        result.exit_code = -1; // killed/signalled
+#else
+    } else {
+        result.exit_code = status;
+#endif
+    }
+    return result;
 }
 
 // SHA-256 for manifest entries — reuse a simple implementation.
@@ -148,21 +177,38 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
         file_list += " \"" + info.name + "\"";
     }
 
-    std::string zip_cmd = "cd \"" + project_root.string() + "\" && zip -q \""
-                        + output_path.string() + "\" "
-                        + file_list
-                        + " 2>&1";
-    auto zip_out = run_cmd(zip_cmd);
+    // When there are no evidence files present, skip this step entirely —
+    // `zip` with no file operands exits non-zero ("Nothing to do!") even
+    // though that's not a failure; the archive still gets created below
+    // when manifest.json is added.
+    if (!present.empty()) {
+        std::string zip_cmd = "cd \"" + project_root.string() + "\" && zip -q \""
+                            + output_path.string() + "\" "
+                            + file_list
+                            + " 2>&1";
+        auto zip_res = run_cmd(zip_cmd);
+        if (zip_res.exit_code != 0) {
+            // The system `zip` binary is missing (or failed) — do not fall
+            // back to writing a non-ZIP artefact under the requested name
+            // while claiming success. Fail loudly instead (spec §8 MUST).
+            return std::string("failed to create ZIP archive (is 'zip' installed?): ")
+                 + (zip_res.output.empty() ? "zip command failed" : trim_trailing(zip_res.output));
+        }
+    }
 
     // Add manifest.json (from tmp) into the zip at the root.
     std::string add_manifest = "cd \"" + fs::temp_directory_path().string()
                              + "\" && zip -q \"" + output_path.string()
                              + "\" manifest.json 2>&1";
-    run_cmd(add_manifest);
+    auto manifest_res = run_cmd(add_manifest);
+    if (manifest_res.exit_code != 0) {
+        return std::string("failed to add manifest.json to ZIP archive: ")
+             + (manifest_res.output.empty() ? "zip command failed" : trim_trailing(manifest_res.output));
+    }
 
     if (!fs::exists(output_path)) {
-        // zip not installed; write manifest.json as the fallback artefact.
-        fs::copy(tmp_manifest, output_path);
+        return std::string("zip reported success but did not produce an output archive at ")
+             + output_path.string();
     }
 
     return manifest;

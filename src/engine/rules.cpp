@@ -101,7 +101,7 @@ Rule make_fusa004() {
             if (fs::exists(dir / ".fusa-evidence.json")) return {};
             return {Finding{"FUSA004", Severity::WARNING,
                             ".fusa-evidence.json not found — run 'cpfusa verify' after tests pass",
-                            "", 0,
+                            ".fusa-evidence.json", 0,
                             "cpfusa verify", "safety"}};
         }};
 }
