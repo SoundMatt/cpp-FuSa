@@ -1,7 +1,7 @@
 # Safety Case — cpp-FuSa
 
 **Standard:** iso26262  
-**Generated:** 2026-07-28T19:43:07Z  
+**Generated:** 2026-07-28T21:42:51Z  
 
 ## Goals
 

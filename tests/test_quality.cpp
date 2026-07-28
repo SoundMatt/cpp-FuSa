@@ -5,8 +5,10 @@
 //fusa:test REQ-QUAL005
 //fusa:test REQ-QUAL006
 //fusa:test REQ-QUAL007
+//fusa:test REQ-QUAL008
 #include <catch2/catch_all.hpp>
 #include "quality/quality.hpp"
+#include "testutil/testutil.hpp"
 #include <nlohmann/json.hpp>
 
 using namespace cpfusa;
@@ -146,6 +148,104 @@ TEST_CASE("quality: is_valid_reviewed false for heuristic status", "[quality][qu
     a.present = true;
     a.status = "heuristic";
     REQUIRE_FALSE(quality::is_valid_reviewed(a, content));
+}
+
+// ─── §1.6.2 carry-forward across regeneration ────────────────────────────────
+
+TEST_CASE("quality: carry_forward returns fail-safe default when file is absent", "[quality][qual008]") {
+    auto a = quality::carry_forward("/nonexistent/path/does-not-exist.json");
+    REQUIRE_FALSE(a.present);
+    REQUIRE(a.status == "heuristic");
+}
+
+TEST_CASE("quality: carry_forward returns fail-safe default for malformed JSON", "[quality][qual008]") {
+    testutil::TempDir tmp;
+    tmp.write("bad.json", "{not valid json");
+    auto a = quality::carry_forward(tmp.path() / "bad.json");
+    REQUIRE_FALSE(a.present);
+}
+
+TEST_CASE("quality: carry_forward returns fail-safe default when no attestation object present", "[quality][qual008]") {
+    testutil::TempDir tmp;
+    tmp.write("no-attestation.json", R"({"entries":[]})");
+    auto a = quality::carry_forward(tmp.path() / "no-attestation.json");
+    REQUIRE_FALSE(a.present);
+}
+
+TEST_CASE("quality: carry_forward preserves a still-valid reviewed attestation verbatim", "[quality][qual008]") {
+    testutil::TempDir tmp;
+    // content is what is_valid_reviewed's contentHash is pinned against —
+    // the artifact's substantive content, excluding the attestation object
+    // itself (§1.6.2: "excluding the attestation object itself").
+    json content;
+    content["entries"] = json::array({"a", "b"});
+    json doc = content;
+    doc["attestation"] = {
+        {"status", "reviewed"},
+        {"implementationAuthor", "auto"},
+        {"independentReviewer", "Jane Doe <jane@example.com>"},
+        {"reviewedAt", "2026-07-28T00:00:00Z"},
+        {"contentHash", quality::content_hash(content)}
+    };
+    tmp.write("valid.json", doc.dump());
+    auto a = quality::carry_forward(tmp.path() / "valid.json");
+    REQUIRE(a.present);
+    REQUIRE(a.status == "reviewed");
+    REQUIRE(a.independent_reviewer == "Jane Doe <jane@example.com>");
+    REQUIRE(quality::is_valid_reviewed(a, content));
+}
+
+// §1.6.2's carry-forward MUST: a stale attestation (content changed since
+// review) must still be carried forward *unchanged* onto the regenerated
+// document — never silently erased — so a consumer can see a review
+// happened even though it no longer satisfies is_valid_reviewed(). Erasing
+// it outright (rather than letting the hash mismatch demote it) is exactly
+// the gap x-FuSa spec §1.6.2's rollout-audit MUST closes.
+TEST_CASE("quality: carry_forward preserves a stale attestation object rather than erasing it", "[quality][qual008]") {
+    testutil::TempDir tmp;
+    json old_content;
+    old_content["entries"] = json::array({"a", "b"});
+    json old_doc = old_content;
+    old_doc["attestation"] = {
+        {"status", "reviewed"},
+        {"implementationAuthor", "auto"},
+        {"independentReviewer", "Jane Doe <jane@example.com>"},
+        {"reviewedAt", "2026-07-28T00:00:00Z"},
+        {"contentHash", quality::content_hash(old_content)}
+    };
+    tmp.write("stale.json", old_doc.dump());
+
+    auto a = quality::carry_forward(tmp.path() / "stale.json");
+    // The attestation object itself is preserved, not dropped...
+    REQUIRE(a.present);
+    REQUIRE(a.status == "reviewed");
+    REQUIRE(a.independent_reviewer == "Jane Doe <jane@example.com>");
+
+    // ...but reads as invalid against the freshly-regenerated (changed)
+    // content, exactly per the hash-pinning rule.
+    json new_content;
+    new_content["entries"] = json::array({"a", "b", "c"}); // content changed
+    REQUIRE_FALSE(quality::is_valid_reviewed(a, new_content));
+}
+
+TEST_CASE("quality: carry_forward preserves a self-attested (invalid) attestation object too", "[quality][qual008]") {
+    testutil::TempDir tmp;
+    json content;
+    content["entries"] = json::array();
+    json doc = content;
+    doc["attestation"] = {
+        {"status", "reviewed"},
+        {"implementationAuthor", "auto"},
+        {"independentReviewer", "auto"}, // same identity — not genuinely independent
+        {"reviewedAt", "2026-07-28T00:00:00Z"},
+        {"contentHash", quality::content_hash(content)}
+    };
+    tmp.write("self.json", doc.dump());
+
+    auto a = quality::carry_forward(tmp.path() / "self.json");
+    REQUIRE(a.present); // carried forward unchanged...
+    REQUIRE(a.independent_reviewer == "auto");
+    REQUIRE_FALSE(quality::is_valid_reviewed(a, content)); // ...but never gates as valid
 }
 
 // ─── Rule A / FUSA-STUB001 ────────────────────────────────────────────────────

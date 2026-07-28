@@ -28,6 +28,14 @@ std::string now_iso8601() {
 }
 
 bool is_excluded(const fs::path& p, const config::ProjectConfig& cfg) {
+    // §1.6 rule 4 implementer guidance: reuse the same test-source-tree
+    // exclusion trace::scan_func_coverage's denominator gets "for free" from
+    // only walking src/*/*.hpp, rather than this scanner (which walks the
+    // whole project) independently re-deriving a narrower/drifting version.
+    // Without this, a helper function declared in tests/ would be counted as
+    // a real project component — exactly the §1.6 rule 4 MUST violation
+    // ("not... a test fixture mistaken for project code").
+    if (trace::is_test_tree_path(p)) return true;
     auto s = p.string();
     for (const auto& pat : cfg.exclude_patterns)
         if (s.find(pat) != std::string::npos) return true;
@@ -98,7 +106,7 @@ std::string project_relative(const fs::path& dir, const std::string& file) {
 
 } // namespace
 
-//fusa:req REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006 REQ-FMEA007
+//fusa:req REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006 REQ-FMEA007 REQ-FMEA010
 Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cfg,
                             bool enrich_cyber) {
     FMEAReport rpt;
@@ -219,6 +227,13 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
     } else {
         rpt.summary.coverage_pct = 100.0; // nothing to analyze => nothing missed
     }
+    // §9.2 MUST: coveragePct MUST NOT exceed 100. componentsInProject already
+    // being max(func_cov.total, componentsAnalyzed) makes this structurally
+    // unreachable today, but a defensive clamp is cheap insurance against a
+    // future change to that formula silently reintroducing the exact bug
+    // §9.2 calls out (a test fixture or excluded file counted as if it were
+    // a real project component).
+    rpt.summary.coverage_pct = std::min(100.0, rpt.summary.coverage_pct);
 
     rpt.summary.total = static_cast<int>(rpt.entries.size());
     for (const auto& e : rpt.entries)

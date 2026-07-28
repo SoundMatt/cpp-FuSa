@@ -36,6 +36,15 @@ bool is_func_exempt(const std::string& name) {
     return std::regex_search(name, exempt_re);
 }
 
+//fusa:req REQ-TRACE021
+bool is_test_tree_path(const fs::path& p) {
+    for (const auto& part : p) {
+        auto s = part.string();
+        if (s == "test" || s == "tests") return true;
+    }
+    return false;
+}
+
 namespace {
 
 // Strips // and /* */ comments (respecting string/char literals) so brace

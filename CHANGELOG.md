@@ -2,6 +2,52 @@
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-07-28
+
+x-FuSa spec v1.15.0 conformance (`SoundMatt/cpp-FuSa` issue #44): attestation
+carry-forward MUST, §1.6 rule 4 test-tree-exclusion reuse, and a `coveragePct`
+defensive clamp — plus a proactively-found TARA closed-enum conformance bug.
+
+### Fixed
+- **§1.6.2 attestation carry-forward MUST.** `fmea`/`tara`/`safety-case`/`sas`
+  previously only carried a prior attestation forward when it was *already*
+  still valid (`quality::is_valid_reviewed`) against the freshly-built
+  content — a stale or self-attested attestation was silently dropped
+  entirely on regeneration instead of being preserved-but-demoted, exactly
+  the gap the spec's new MUST closes. New `quality::carry_forward()` loads
+  whatever attestation object (if any) the prior saved artifact carried and
+  returns it *unchanged*; validity/staleness is still decided separately by
+  `is_valid_reviewed()` against the new content, so a real prior review now
+  stays visible in the regenerated JSON (falling back to `"heuristic"` for
+  gating purposes when stale) instead of vanishing as if no review had ever
+  happened.
+- **TARA SFOP impact vocabulary — closed-enum conformance (found during this
+  round's proactive review, not filed as an issue).** `tara`'s
+  `impact.{safety,financial,operational,privacy}` fields, and the risk they
+  derive, used an ad hoc `high|medium|low` vocabulary — the same vocabulary
+  as `attackFeasibility` — instead of the spec's mandated
+  `critical|major|moderate|negligible` closed enum (§9.2, "a tool MUST NOT
+  substitute a different vocabulary... for these four fields"). Replaced
+  with the correct enum and the spec's canonical 4×4 risk-combination table
+  (`tara::derive_risk`, now exposed and directly unit-tested across all 16
+  cells). This is exactly the class of bug the v1.15.0 rollout audit found
+  in other tools — cpp-FuSa wasn't part of that audit round, so it went
+  uncaught until this pass.
+- **`fmea`'s component scanner now excludes the test-source tree** (§1.6 rule
+  4 implementer guidance). Unlike `trace --func-coverage` (which only walks
+  `src/*/*.hpp` and so excludes `tests/` structurally), `fmea`'s own
+  declaration scanner walked the whole project and could count a `tests/`
+  helper function as a real project component. New
+  `trace::is_test_tree_path()` — reused rather than reinvented — is applied
+  in `fmea`'s exclusion check; on cpp-FuSa's own `tests/` tree this removed
+  every test-helper entry from `fmea.json` (1628 entries, componentsAnalyzed
+  395, all real).
+- **`fmea`/`tara` `summary.coveragePct` defensive clamp (§9.2 MUST: "MUST NOT
+  exceed 100").** Both denominators are already structurally bounded so this
+  is defense-in-depth against a future formula change reintroducing the
+  exact bug the spec calls out — plus a regression test with a non-trivial
+  `tests/` fixture (a fixture with no test-source tree can't exercise this).
+
 ## [0.15.0] — 2026-07-28
 
 x-FuSa spec v1.13.0/v1.14.0 conformance: `hara`/`fmea`/`tara`/`safety-case`/`sas`/`sci`

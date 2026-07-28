@@ -1744,6 +1744,14 @@
       "asil": ""
     },
     {
+      "id": "REQ-TRACE021",
+      "title": "Reusable test-source-tree exclusion predicate",
+      "description": "trace shall expose is_test_tree_path() identifying a path under a test-source-tree directory (\"test\"/\"tests\") so other source-walking scanners (e.g. fmea's component scan) can reuse the same exclusion trace's own func-coverage denominator already applies, instead of maintaining an independently-drifting second exclusion list, per x-FuSa spec \u00a71.6 rule 4 implementer guidance.",
+      "standard_ref": "x-FuSa spec \u00a71.6 rule 4",
+      "severity": "safety",
+      "asil": ""
+    },
+    {
       "id": "REQ-UNECE-006",
       "title": "UNECE R155 compliance assessment",
       "description": "unece::assess_r155() shall build a gap report scoring project evidence against the UNECE R155 cybersecurity management system threat catalog.",
@@ -2081,6 +2089,13 @@
       "severity": "safety"
     },
     {
+      "id": "REQ-QUAL008",
+      "title": "Attestation carry-forward across regeneration",
+      "description": "quality shall load any existing attestation object from a prior saved copy of an artifact and return it unchanged (regardless of validity/staleness) so an artifact-producing command can carry it forward onto the freshly-built document instead of silently discarding a human review, per x-FuSa spec \u00a71.6.2's carry-forward MUST.",
+      "standard_ref": "x-FuSa spec \u00a71.6.2",
+      "severity": "safety"
+    },
+    {
       "id": "REQ-HARA009",
       "title": "HARA completeness roll-up",
       "description": "hara shall compute the \u00a79.2 completeness block (totalHazards, hazardsWithAsil, hazardsWithSafetyGoal, safetyGoalsWithFssrRefs, danglingReferences) including a dangling fssrRefs id absent from .fusa-reqs.json.",
@@ -2123,6 +2138,13 @@
       "severity": "safety"
     },
     {
+      "id": "REQ-FMEA010",
+      "title": "FMEA test-tree exclusion and coveragePct clamp",
+      "description": "fmea's declaration scanner shall exclude files under a test-source tree (reusing the same exclusion trace's func-coverage scan applies) so a test helper is never counted as a real project component, and summary.coveragePct shall be defensively clamped so it can never exceed 100, per x-FuSa spec \u00a71.6 rule 4 and \u00a79.2.",
+      "standard_ref": "x-FuSa spec \u00a71.6 rule 4 / \u00a79.2",
+      "severity": "safety"
+    },
+    {
       "id": "REQ-TARA006",
       "title": "tara.json \u00a79.2 SFOP impact and coverage",
       "description": "tara shall emit threats[] with an SFOP impact object (safety/financial/operational/privacy) and a risk level derived from attackFeasibility \u00d7 the highest SFOP axis, plus summary.coveragePct/assetInventoryMethod.",
@@ -2134,6 +2156,13 @@
       "title": "TARA quality scan wiring",
       "description": "tara shall run \u00a71.6.1 rule A/B over each threat scenario's threat description.",
       "standard_ref": "x-FuSa spec \u00a71.6.1",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-TARA008",
+      "title": "TARA impact closed enum and risk combination table",
+      "description": "tara's SFOP impact axes (safety/financial/operational/privacy) shall use the x-FuSa spec's closed enum (critical|major|moderate|negligible), and risk shall be derived from attackFeasibility \u00d7 the highest SFOP axis via the spec's canonical 4\u00d74 combination table, not an ad hoc high/medium/low vocabulary.",
+      "standard_ref": "x-FuSa spec \u00a79.2 closed enums",
       "severity": "safety"
     },
     {

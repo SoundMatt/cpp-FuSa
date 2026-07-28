@@ -6,11 +6,11 @@
 
 namespace cpfusa {
 
-constexpr std::string_view Version      = "0.15.0";
+constexpr std::string_view Version      = "0.16.0";
 constexpr std::string_view VersionMajor = "0";
-constexpr std::string_view VersionMinor = "15";
+constexpr std::string_view VersionMinor = "16";
 constexpr std::string_view VersionPatch = "0";
-constexpr std::string_view SpecVersion  = "1.14.0";
+constexpr std::string_view SpecVersion  = "1.15.0";
 
 enum class Severity { INFO, WARNING, ERROR };
 

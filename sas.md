@@ -1,9 +1,9 @@
 # Software Accomplishment Summary
 
 **Project:** cpp-FuSa  
-**Version:** 0.15.0  
+**Version:** 0.16.0  
 **DAL/ASIL/SIL:** DAL-B  
-**Generated:** 2026-07-28T19:43:07Z  
+**Generated:** 2026-07-28T21:42:51Z  
 
 ## Checklist
 

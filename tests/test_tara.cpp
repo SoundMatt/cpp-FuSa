@@ -5,6 +5,7 @@
 //fusa:test REQ-TARA005
 //fusa:test REQ-TARA006
 //fusa:test REQ-TARA007
+//fusa:test REQ-TARA008
 #include <catch2/catch_all.hpp>
 #include "tara/tara.hpp"
 #include "testutil/testutil.hpp"
@@ -84,18 +85,71 @@ TEST_CASE("tara: every scenario's attackFeasibility is a valid ISO 21434 level",
     }
 }
 
-TEST_CASE("tara: every scenario's SFOP impact axes are valid levels", "[tara][tara006]") {
+// §9.2 closed enum (MUST): impact.{safety,financial,operational,privacy} is
+// critical|major|moderate|negligible — NOT the high|medium|low vocabulary
+// used for attackFeasibility. This is a distinct scale for a distinct
+// question (damage vs. likelihood) and must not be conflated.
+TEST_CASE("tara: every scenario's SFOP impact axes are valid closed-enum levels", "[tara][tara006][tara008]") {
     TempDir tmp;
     config::ProjectConfig cfg;
     auto r = tara::generate(tmp.path(), cfg);
     REQUIRE(is_ok(r));
-    auto valid = [](const std::string& v) { return v == "high" || v == "medium" || v == "low"; };
+    auto valid = [](const std::string& v) {
+        return v == "critical" || v == "major" || v == "moderate" || v == "negligible";
+    };
     for (auto& s : value_of(r).scenarios) {
         REQUIRE(valid(s.impact.safety));
         REQUIRE(valid(s.impact.financial));
         REQUIRE(valid(s.impact.operational));
         REQUIRE(valid(s.impact.privacy));
+        // Not the attackFeasibility vocabulary either.
+        REQUIRE(s.impact.safety != "high");
+        REQUIRE(s.impact.safety != "medium");
+        REQUIRE(s.impact.safety != "low");
     }
+}
+
+// §9.2 risk-combination table — every cell of the 4x4 lookup, so a future
+// edit to the table can't silently change a corner case unnoticed.
+TEST_CASE("tara: derive_risk matches the §9.2 canonical combination table", "[tara][tara008]") {
+    auto impact_of = [](const std::string& level) {
+        tara::SFOPImpact im;
+        im.safety = level; // highest_impact() picks the max across all four axes
+        return im;
+    };
+    struct Case { const char* impact; const char* feasibility; const char* expected; };
+    const Case cases[] = {
+        {"critical",   "high",     "critical"},
+        {"critical",   "medium",   "critical"},
+        {"critical",   "low",      "high"},
+        {"critical",   "very-low", "medium"},
+        {"major",      "high",     "high"},
+        {"major",      "medium",   "high"},
+        {"major",      "low",      "medium"},
+        {"major",      "very-low", "medium"},
+        {"moderate",   "high",     "medium"},
+        {"moderate",   "medium",   "medium"},
+        {"moderate",   "low",      "low"},
+        {"moderate",   "very-low", "low"},
+        {"negligible", "high",     "low"},
+        {"negligible", "medium",   "low"},
+        {"negligible", "low",      "low"},
+        {"negligible", "very-low", "low"},
+    };
+    for (const auto& c : cases) {
+        INFO("impact=" << c.impact << " feasibility=" << c.feasibility);
+        REQUIRE(tara::derive_risk(c.feasibility, impact_of(c.impact)) == c.expected);
+    }
+}
+
+TEST_CASE("tara: derive_risk uses the highest of the four SFOP axes", "[tara][tara008]") {
+    tara::SFOPImpact im;
+    im.safety = "negligible"; im.financial = "negligible";
+    im.operational = "critical"; im.privacy = "negligible";
+    // Highest axis (operational=critical) at high feasibility => critical,
+    // not "low" (which a buggy implementation only looking at `safety` would
+    // wrongly return).
+    REQUIRE(tara::derive_risk("high", im) == "critical");
 }
 
 TEST_CASE("tara: risk is derived (non-empty) for every scenario", "[tara][tara006]") {
@@ -106,16 +160,19 @@ TEST_CASE("tara: risk is derived (non-empty) for every scenario", "[tara][tara00
     for (auto& s : value_of(r).scenarios) REQUIRE_FALSE(s.risk.empty());
 }
 
-TEST_CASE("tara: high-impact high-feasibility scenario is at least high risk", "[tara][tara006]") {
+TEST_CASE("tara: TARA-001's derived risk matches its own impact/feasibility per the combination table", "[tara][tara006]") {
     TempDir tmp;
     config::ProjectConfig cfg;
     auto r = tara::generate(tmp.path(), cfg);
     REQUIRE(is_ok(r));
-    // TARA-001 (release binary) always carries safety=high impact.
+    // TARA-001 (release binary) always carries safety=major impact and
+    // low attackFeasibility — major x low => "medium" per the §9.2 table.
     bool checked = false;
     for (auto& s : value_of(r).scenarios) {
         if (s.id == "TARA-001") {
-            REQUIRE(s.impact.safety == "high");
+            REQUIRE(s.impact.safety == "major");
+            REQUIRE(s.attack_feasibility == "low");
+            REQUIRE(s.risk == "medium");
             checked = true;
         }
     }
