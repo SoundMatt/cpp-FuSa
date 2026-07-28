@@ -45,6 +45,7 @@ add_executable(cpfusa_tests
     test_unece.cpp
     test_req.cpp
     test_comp.cpp
+    test_quality.cpp
 )
 
 target_include_directories(cpfusa_tests

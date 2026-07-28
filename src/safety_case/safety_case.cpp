@@ -32,42 +32,70 @@ Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cf
     sc.project      = cfg.project;
     sc.standard     = cfg.standard;
 
-    // Top-level goal.
+    std::string project = cfg.project.empty() ? "this project" : cfg.project;
+    std::string standard = cfg.standard.empty() ? "iso26262" : cfg.standard;
+    std::string asil = cfg.asil.empty() ? "ASIL-B" : cfg.asil;
+
+    // §9.2: nodes[].type is one of the six lowercase GSN node types.
+    // node text is specific to this tool's actual claims (§1.6.1 rule B) —
+    // no generic "the system is acceptably safe" boilerplate.
     sc.nodes = {
-        {"G1",  "Goal",     cfg.project + " is acceptably safe for " + cfg.standard + " ASIL-" + cfg.asil, "undeveloped"},
-        {"G2",  "Goal",     "Software development process meets " + cfg.standard + " requirements",         "undeveloped"},
-        {"G3",  "Goal",     "No unacceptable residual risks remain",                                        "undeveloped"},
-        {"G4",  "Goal",     "All requirements are implemented and verified",                                 "undeveloped"},
-        {"G5",  "Goal",     "Static analysis reports no unmitigated errors",                                 "undeveloped"},
-        {"G6",  "Goal",     "Tool is qualified per ISO 26262 Part 8",                                       "undeveloped"},
-        {"S1",  "Strategy", "Argument over safety process evidence",                                         ""},
-        {"S2",  "Strategy", "Argument over verification evidence",                                           ""},
-        {"Sn1", "Solution", "SAFETY_PLAN.md — documented safety plan",                                      ""},
-        {"Sn2", "Solution", ".fusa.json — project safety configuration",                                     ""},
-        {"Sn3", "Solution", ".fusa-reqs.json — requirements register",                                      ""},
-        {"Sn4", "Solution", "qualify-report.json — tool qualification evidence",                             ""},
-        {"Sn5", "Solution", ".fusa-evidence.json — test execution evidence",                                 ""},
-        {"Sn6", "Solution", "check-report.json — safety check report",                                      ""},
-        {"C1",  "Context",  "Project: " + cfg.project + " standard: " + cfg.standard + " ASIL-" + cfg.asil, ""},
-        {"A1",  "Assumption","Compiler toolchain is itself qualified",                                        ""},
+        {"G1",  "goal",     project + " produces conformant, non-fabricated safety evidence for "
+                             + standard + " " + asil, "undeveloped", ""},
+        {"G2",  "goal",     project + "'s own development process satisfies " + standard
+                             + "'s tool-confidence-level requirements (ISO 26262-8 Clause 11)",
+                             "undeveloped", ""},
+        {"G3",  "goal",     "Every generated evidence artifact (fmea/tara/hara/safety-case/sas) "
+                             "passes the §1.6 content-quality baseline (no placeholder text, no "
+                             "blanket qualitative fallback)", "undeveloped", ""},
+        {"G4",  "goal",     "Every requirement in .fusa-reqs.json is implemented and independently verified",
+                             "undeveloped", ""},
+        {"G5",  "goal",     "Static analysis (check/lint/analyze/cyber) reports no unmitigated ERROR findings",
+                             "undeveloped", ""},
+        {"G6",  "goal",     project + " itself is qualified as a verification tool per ISO 26262-8 Clause 11",
+                             "undeveloped", ""},
+        {"St1", "strategy", "Argument by direct inspection of generated evidence artifacts", ""},
+        {"St2", "strategy", "Argument over independent verification and qualification records", ""},
+        {"Sn1", "solution", "SAFETY_PLAN.md — documented development and evidence-generation plan",
+                             "", "SAFETY_PLAN.md"},
+        {"Sn2", "solution", ".fusa.json — declares the standard/ASIL this project is held to",
+                             "", ".fusa.json"},
+        {"Sn3", "solution", ".fusa-reqs.json — requirement registry with req/test traceability",
+                             "", ".fusa-reqs.json"},
+        {"Sn4", "solution", "qualify-report.json — tool qualification cases and pass/fail record",
+                             "", "qualify-report.json"},
+        {"Sn5", "solution", ".fusa-evidence.json — collected test execution evidence",
+                             "", ".fusa-evidence.json"},
+        {"Sn6", "solution", "check-report.json — the aggregated finding report `check` produced",
+                             "", "check-report.json"},
+        {"Sn7", "solution", "fmea.json / tara.json / .fusa-hara.json — pass the §1.6 quality baseline",
+                             "", "fmea.json"},
+        {"C1",  "context",  "Project: " + project + ", standard: " + standard + " " + asil, ""},
+        {"A1",  "assumption","The compiler toolchain used to build " + project + " is itself qualified "
+                              "or independently trusted for its intended use", ""},
+        {"J1",  "justification", "§1.6.1's FUSA-STUB001/002 heuristics are an automatable proxy for "
+                                  "content quality, not a substitute for a human reviewer's judgement — "
+                                  "hence §1.6.2's attestation mechanism rather than a purely mechanical gate", ""},
     };
 
     sc.edges = {
-        {"G1",  "S1",  "supported-by"},
-        {"S1",  "G2",  "in-context-of"},
-        {"S1",  "G3",  "in-context-of"},
-        {"S1",  "G4",  "in-context-of"},
-        {"S1",  "G5",  "in-context-of"},
-        {"S1",  "G6",  "in-context-of"},
-        {"G2",  "Sn1", "supported-by"},
-        {"G2",  "Sn2", "supported-by"},
-        {"G4",  "S2",  "supported-by"},
-        {"S2",  "Sn3", "in-context-of"},
-        {"S2",  "Sn5", "in-context-of"},
-        {"G5",  "Sn6", "supported-by"},
-        {"G6",  "Sn4", "supported-by"},
-        {"G1",  "C1",  "in-context-of"},
-        {"G2",  "A1",  "in-context-of"},
+        {"G1",  "St1", "supportedBy"},
+        {"St1", "G3",  "inContextOf"},
+        {"St1", "G5",  "inContextOf"},
+        {"G1",  "St2", "supportedBy"},
+        {"St2", "G2",  "inContextOf"},
+        {"St2", "G4",  "inContextOf"},
+        {"St2", "G6",  "inContextOf"},
+        {"G2",  "Sn1", "supportedBy"},
+        {"G2",  "Sn2", "supportedBy"},
+        {"G4",  "Sn3", "supportedBy"},
+        {"G4",  "Sn5", "supportedBy"},
+        {"G5",  "Sn6", "supportedBy"},
+        {"G6",  "Sn4", "supportedBy"},
+        {"G3",  "Sn7", "supportedBy"},
+        {"G1",  "C1",  "inContextOf"},
+        {"St2", "A1",  "inContextOf"},
+        {"G3",  "J1",  "inContextOf"},
     };
 
     // Collect evidence files present.
@@ -84,32 +112,84 @@ Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cf
         if (n.id == "G5" && has("check-report.json"))   n.status = "supported";
         if (n.id == "G6" && has("qualify-report.json")) n.status = "supported";
         if (n.id == "G2" && has("SAFETY_PLAN.md"))      n.status = "supported";
+        if (n.id == "G3" && has("fmea.json"))           n.status = "supported";
     }
 
     return sc;
 }
 
+//fusa:req REQ-SAFETYCASE007
+Completeness compute_completeness(const SafetyCase& sc) {
+    Completeness c;
+    for (const auto& n : sc.nodes) {
+        if (n.type != "goal") continue;
+        ++c.total_goals;
+        if (!n.evidence.empty()) ++c.goals_with_evidence;
+        if (n.status == "undeveloped") ++c.undeveloped;
+    }
+    return c;
+}
+
+//fusa:req REQ-SAFETYCASE008
+std::vector<Finding> scan_quality(const SafetyCase& sc) {
+    std::vector<quality::QualField> fields;
+    for (const auto& n : sc.nodes)
+        fields.push_back({"nodes[].text", n.text, std::string(SafetyCaseJson), 0});
+    std::vector<Finding> out = quality::scan_stub001(fields, std::string(SafetyCaseJson));
+    auto rule_b = quality::scan_stub002(fields, std::string(SafetyCaseJson));
+    out.insert(out.end(), rule_b.begin(), rule_b.end());
+    return out;
+}
+
+//fusa:req REQ-SAFETYCASE006
+json to_json(const SafetyCase& sc, const config::ProjectConfig& cfg) {
+    json j;
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "safety-case";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["generatedAt"]   = sc.generated_at;
+    j["projectRoot"]   = cfg.project_root;
+    if (!sc.project.empty())  j["project"]  = sc.project;
+    if (!sc.standard.empty()) j["standard"] = sc.standard;
+
+    json na = json::array();
+    for (const auto& n : sc.nodes) {
+        json nj = {{"id", n.id}, {"type", n.type}, {"text", n.text}};
+        if (!n.evidence.empty()) nj["evidence"] = n.evidence;
+        if (!n.status.empty())   nj["status"]   = n.status; // tool-defined, additive to §9.2
+        na.push_back(nj);
+    }
+    j["nodes"] = na;
+
+    json ea = json::array();
+    for (const auto& e : sc.edges)
+        ea.push_back({{"from", e.from}, {"to", e.to}, {"type", e.type}});
+    j["edges"] = ea;
+
+    auto c = compute_completeness(sc);
+    j["completeness"] = {
+        {"totalGoals", c.total_goals},
+        {"goalsWithEvidence", c.goals_with_evidence},
+        {"undeveloped", c.undeveloped}
+    };
+
+    if (sc.attestation.present) j["attestation"] = quality::to_json(sc.attestation);
+    return j;
+}
+
 //fusa:req REQ-SAFETYCASE002 REQ-SAFETYCASE005
 Result<std::monostate> write(const fs::path& dir, const SafetyCase& sc) {
     try {
+        config::ProjectConfig cfg;
+        cfg.project      = sc.project;
+        cfg.standard     = sc.standard;
+        cfg.project_root = dir.string();
         // safety-case.json
         {
-            json j;
-            j["format"]      = "cpp-FuSa Safety Case v1 (GSN)";
-            j["generatedAt"] = sc.generated_at;
-            j["project"]     = sc.project;
-            j["standard"]    = sc.standard;
-            json na = json::array();
-            for (const auto& n : sc.nodes)
-                na.push_back({{"id",n.id},{"type",n.type},{"text",n.text},{"status",n.status}});
-            j["nodes"] = na;
-            json ea = json::array();
-            for (const auto& e : sc.edges)
-                ea.push_back({{"from",e.from},{"to",e.to},{"label",e.label}});
-            j["edges"]    = ea;
-            j["evidence"] = sc.evidence;
             std::ofstream out(dir / SafetyCaseJson);
-            out << j.dump(2) << "\n";
+            out << to_json(sc, cfg).dump(2) << "\n";
         }
         // safety-case.mermaid
         {
@@ -118,10 +198,10 @@ Result<std::monostate> write(const fs::path& dir, const SafetyCase& sc) {
             out << "%% cpp-FuSa Safety Case GSN — " << sc.project << "\n";
             for (const auto& n : sc.nodes) {
                 std::string shape_open, shape_close;
-                if (n.type == "Goal")       { shape_open = "["; shape_close = "]"; }
-                else if (n.type == "Strategy"){ shape_open = "{"; shape_close = "}"; }
-                else if (n.type == "Solution"){ shape_open = "[("; shape_close = ")]"; }
-                else if (n.type == "Context") { shape_open = "(("; shape_close = "))"; }
+                if (n.type == "goal")       { shape_open = "["; shape_close = "]"; }
+                else if (n.type == "strategy"){ shape_open = "{"; shape_close = "}"; }
+                else if (n.type == "solution"){ shape_open = "[("; shape_close = ")]"; }
+                else if (n.type == "context") { shape_open = "(("; shape_close = "))"; }
                 else                          { shape_open = "[/"; shape_close = "/]"; }
                 // Truncate long text for the diagram
                 auto txt = n.text;
@@ -131,7 +211,7 @@ Result<std::monostate> write(const fs::path& dir, const SafetyCase& sc) {
                 out << "  " << n.id << shape_open << "\"" << n.type << ": " << txt << "\"" << shape_close << "\n";
             }
             for (const auto& e : sc.edges)
-                out << "  " << e.from << " -->|\"" << e.label << "\"| " << e.to << "\n";
+                out << "  " << e.from << " -->|\"" << e.type << "\"| " << e.to << "\n";
         }
         // safety-case.md
         {

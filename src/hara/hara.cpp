@@ -1,6 +1,11 @@
 #include "hara.hpp"
+#include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <nlohmann/json.hpp>
 
 namespace fs = std::filesystem;
@@ -65,13 +70,19 @@ bool load(const fs::path& dir, HARA& out, std::string& err) {
         out.project  = j.value("project", "");
         out.standard = j.value("standard", "ISO 26262");
         out.created_at = j.value("createdAt", "");
-        for (auto& s : j.value("situations", json::array())) {
+        // §1.2.5 canonical key: "operationalSituations". Accept the legacy
+        // "situations" key too so an existing file is not silently emptied.
+        auto situations_json = j.contains("operationalSituations")
+                                    ? j["operationalSituations"]
+                                    : j.value("situations", json::array());
+        for (auto& s : situations_json) {
             out.situations.push_back({s.value("id",""), s.value("description","")});
         }
         for (auto& h : j.value("hazards", json::array())) {
             Hazard hz;
             hz.id = h.value("id","");
             hz.description = h.value("description","");
+            hz.source = h.value("source","");
             hz.situations = h.value("situations", std::vector<std::string>{});
             hz.safety_goals = h.value("safetyGoals", std::vector<std::string>{});
             if (h.contains("risk")) {
@@ -86,11 +97,17 @@ bool load(const fs::path& dir, HARA& out, std::string& err) {
             SafetyGoal g;
             g.id = sg.value("id","");
             g.description = sg.value("description","");
-            g.hazard_ids = sg.value("hazardIds", std::vector<std::string>{});
+            // §1.2.5 canonical key is "hazards" (refs back into hazards[]);
+            // accept the legacy "hazardIds" key too.
+            g.hazards = sg.contains("hazards")
+                            ? sg.value("hazards", std::vector<std::string>{})
+                            : sg.value("hazardIds", std::vector<std::string>{});
             g.asil = sg.value("asil","QM");
             g.safe_state = sg.value("safeState","");
+            g.fssr_refs = sg.value("fssrRefs", std::vector<std::string>{});
             out.safety_goals.push_back(g);
         }
+        out.attestation = quality::parse(j);
     } catch (const std::exception& e) {
         err = std::string("parse error: ") + e.what();
         return false;
@@ -98,20 +115,21 @@ bool load(const fs::path& dir, HARA& out, std::string& err) {
     return true;
 }
 
-//fusa:req REQ-HARA007
-bool save(const fs::path& path, const HARA& h, std::string& err) {
+//fusa:req REQ-HARA012
+json content_json(const HARA& h) {
     json j;
     j["project"]   = h.project;
     j["standard"]  = h.standard;
     j["createdAt"] = h.created_at;
-    j["situations"] = json::array();
+    j["operationalSituations"] = json::array();
     for (auto& s : h.situations)
-        j["situations"].push_back({{"id", s.id}, {"description", s.description}});
+        j["operationalSituations"].push_back({{"id", s.id}, {"description", s.description}});
     j["hazards"] = json::array();
     for (auto& hz : h.hazards) {
         json hj;
         hj["id"] = hz.id;
         hj["description"] = hz.description;
+        if (!hz.source.empty()) hj["source"] = hz.source;
         hj["situations"] = hz.situations;
         hj["safetyGoals"] = hz.safety_goals;
         hj["risk"] = {
@@ -127,11 +145,19 @@ bool save(const fs::path& path, const HARA& h, std::string& err) {
         j["safetyGoals"].push_back({
             {"id", sg.id},
             {"description", sg.description},
-            {"hazardIds", sg.hazard_ids},
+            {"hazards", sg.hazards},
             {"asil", sg.asil},
-            {"safeState", sg.safe_state}
+            {"safeState", sg.safe_state},
+            {"fssrRefs", sg.fssr_refs}
         });
     }
+    return j;
+}
+
+//fusa:req REQ-HARA007
+bool save(const fs::path& path, const HARA& h, std::string& err) {
+    json j = content_json(h);
+    if (h.attestation.present) j["attestation"] = quality::to_json(h.attestation);
     std::ofstream f(path);
     if (!f) { err = "cannot write " + path.string(); return false; }
     f << j.dump(2);
@@ -145,25 +171,12 @@ bool init(const fs::path& dir, const std::string& project, const std::string& st
         err = std::string(HARA_FILE) + " already exists — delete it first to reinitialise";
         return false;
     }
+    // §1.6 rule 1 / §9.2 `--init`: scaffold EMPTY collections, never a dummy
+    // row — a project author fills these in with item-specific analysis.
     HARA h;
     h.project  = project;
     h.standard = standard;
     h.created_at = "2026-06-09T00:00:00Z"; // populated at write time
-    h.situations.push_back({"OS-001", "Normal operation"});
-    h.hazards.push_back({
-        "H-001",
-        "Example hazard — replace with project-specific hazard",
-        {"OS-001"},
-        {"S2", "E3", "C2", determine_asil(Severity::S2, Exposure::E3, Controllability::C2)},
-        {"SG-001"}
-    });
-    h.safety_goals.push_back({
-        "SG-001",
-        "Example safety goal — replace with project-specific goal",
-        {"H-001"},
-        determine_asil(Severity::S2, Exposure::E3, Controllability::C2),
-        "safe state description"
-    });
     return save(p, h, err);
 }
 
@@ -188,7 +201,125 @@ void render_text(const HARA& h) {
     for (auto& sg : h.safety_goals) {
         std::cout << "  " << sg.id << " [" << sg.asil << "]  " << sg.description << "\n";
         std::cout << "    Safe state: " << sg.safe_state << "\n";
+        std::cout << "    FSSR refs: ";
+        for (size_t i = 0; i < sg.fssr_refs.size(); ++i) {
+            if (i) std::cout << ", ";
+            std::cout << sg.fssr_refs[i];
+        }
+        if (sg.fssr_refs.empty()) std::cout << "(none — MUST have >=1, §1.2.5)";
+        std::cout << "\n";
     }
+}
+
+//fusa:req REQ-HARA009
+Completeness compute_completeness(const HARA& h, const std::vector<std::string>& requirement_ids) {
+    Completeness c;
+    std::vector<std::string> situation_ids, hazard_ids, goal_ids;
+    for (auto& s : h.situations) situation_ids.push_back(s.id);
+    for (auto& hz : h.hazards) hazard_ids.push_back(hz.id);
+    for (auto& sg : h.safety_goals) goal_ids.push_back(sg.id);
+
+    auto contains = [](const std::vector<std::string>& v, const std::string& id) {
+        return std::find(v.begin(), v.end(), id) != v.end();
+    };
+
+    c.total_hazards = static_cast<int>(h.hazards.size());
+    for (auto& hz : h.hazards) {
+        if (!hz.risk.asil.empty()) ++c.hazards_with_asil;
+        if (!hz.safety_goals.empty()) ++c.hazards_with_safety_goal;
+        for (auto& sid : hz.situations)
+            if (!contains(situation_ids, sid)) ++c.dangling_references;
+        for (auto& gid : hz.safety_goals)
+            if (!contains(goal_ids, gid)) ++c.dangling_references;
+    }
+
+    c.total_safety_goals = static_cast<int>(h.safety_goals.size());
+    for (auto& sg : h.safety_goals) {
+        if (!sg.fssr_refs.empty()) ++c.safety_goals_with_fssr_refs;
+        for (auto& hid : sg.hazards)
+            if (!contains(hazard_ids, hid)) ++c.dangling_references;
+        // fssrRefs MUST resolve into .fusa-reqs.json (§1.2.5) — a dangling
+        // requirement id here is counted the same as a structural dangling ref.
+        for (auto& rid : sg.fssr_refs)
+            if (!contains(requirement_ids, rid)) ++c.dangling_references;
+    }
+    return c;
+}
+
+//fusa:req REQ-HARA010
+std::vector<Finding> scan_quality(const HARA& h) {
+    std::vector<quality::QualField> fields;
+    for (auto& hz : h.hazards)
+        fields.push_back({"hazards[].description", hz.description, HARA_FILE, 0});
+    for (auto& sg : h.safety_goals)
+        fields.push_back({"safetyGoals[].description", sg.description, HARA_FILE, 0});
+
+    std::vector<Finding> out = quality::scan_stub001(fields, HARA_FILE);
+    auto rule_b = quality::scan_stub002(fields, HARA_FILE);
+    out.insert(out.end(), rule_b.begin(), rule_b.end());
+    return out;
+}
+
+//fusa:req REQ-HARA011
+json to_report_json(const HARA& h, const config::ProjectConfig& cfg,
+                    const std::vector<std::string>& requirement_ids) {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::ostringstream ts;
+    ts << std::put_time(std::gmtime(&t), "%FT%TZ");
+
+    json j;
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "hara-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["generatedAt"]   = ts.str();
+    j["projectRoot"]   = cfg.project_root;
+    if (!cfg.project.empty())  j["project"]  = cfg.project;
+    if (!cfg.standard.empty()) j["standard"] = cfg.standard;
+
+    json situations = json::array();
+    for (auto& s : h.situations)
+        situations.push_back({{"id", s.id}, {"description", s.description}});
+
+    json hazards = json::array();
+    for (auto& hz : h.hazards) {
+        json hj;
+        hj["id"] = hz.id;
+        hj["description"] = hz.description;
+        if (!hz.source.empty()) hj["source"] = hz.source;
+        hj["situations"] = hz.situations;
+        hj["safetyGoals"] = hz.safety_goals;
+        hj["risk"] = {
+            {"severity", hz.risk.severity}, {"exposure", hz.risk.exposure},
+            {"controllability", hz.risk.controllability}, {"asil", hz.risk.asil}
+        };
+        hazards.push_back(hj);
+    }
+
+    json goals = json::array();
+    for (auto& sg : h.safety_goals) {
+        goals.push_back({
+            {"id", sg.id}, {"description", sg.description}, {"hazards", sg.hazards},
+            {"asil", sg.asil}, {"safeState", sg.safe_state}, {"fssrRefs", sg.fssr_refs}
+        });
+    }
+
+    j["operationalSituations"] = situations;
+    j["hazards"]               = hazards;
+    j["safetyGoals"]           = goals;
+
+    auto c = compute_completeness(h, requirement_ids);
+    j["completeness"] = {
+        {"totalHazards", c.total_hazards},
+        {"hazardsWithAsil", c.hazards_with_asil},
+        {"hazardsWithSafetyGoal", c.hazards_with_safety_goal},
+        {"safetyGoalsWithFssrRefs", c.safety_goals_with_fssr_refs},
+        {"danglingReferences", c.dangling_references}
+    };
+    if (h.attestation.present) j["attestation"] = quality::to_json(h.attestation);
+    return j;
 }
 
 } // namespace cpfusa::hara

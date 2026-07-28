@@ -41,6 +41,7 @@
 #include "../unece/unece.hpp"
 #include "../ast/ast.hpp"
 #include "../comp/comp.hpp"
+#include "../quality/quality.hpp"
 #include "cpfusa/fusa.hpp"
 
 #include <CLI/CLI.hpp>
@@ -48,8 +49,10 @@
 #include <chrono>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <optional>
 #include <string>
 
@@ -74,6 +77,74 @@ std::optional<config::ProjectConfig> load_config(const fs::path& dir) {
 
 void print_ok(const std::string& msg)  { std::cout << "[OK] "    << msg << "\n"; }
 void print_err(const std::string& msg) { std::cerr << "[ERROR] " << msg << "\n"; }
+
+std::string fmt_pct(double v) {
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(1) << v;
+    return ss.str();
+}
+
+// §1.6.1/§1.6.2 gating shared by fmea/hara/tara/safety-case/sas: FUSA-STUB001
+// (Rule A) always gates unless waived via a rule-level disposition Accept
+// entry (§1.6.1 — "disposition-suppressible only, never via attestation").
+// FUSA-STUB002 (Rule B) is suppressed outright by a valid "reviewed"
+// attestation (§1.6.2); otherwise it stays advisory unless
+// --strict/--require-attestation is set, in which case an unsuppressed
+// Rule B WARNING escalates to exit 1 too. Returns true when the caller
+// should exit(1).
+// content_only strips the two fields §1.6.2 excludes from a content hash —
+// `attestation` itself (self-referential) and `generatedAt` (varies every
+// run) — from an already-built §3.1-headered document.
+nlohmann::json content_only(nlohmann::json doc) {
+    doc.erase("generatedAt");
+    doc.erase("attestation");
+    return doc;
+}
+
+// preserve_attestation checks whether the artifact already on disk at `path`
+// carries a still-valid "reviewed" attestation over `new_content` (§1.6.2) —
+// i.e. the reviewed content is byte-for-byte the same substantive content
+// this run just produced — and, if so, carries it forward so simply
+// re-running the generator command doesn't silently discard a real human
+// review. A stale, self-attested, or absent attestation correctly falls back
+// to none (heuristic).
+quality::Attestation preserve_attestation(const fs::path& path, const nlohmann::json& new_content) {
+    quality::Attestation none;
+    if (!fs::exists(path)) return none;
+    std::ifstream f(path);
+    if (!f) return none;
+    try {
+        nlohmann::json old = nlohmann::json::parse(f);
+        auto a = quality::parse(old);
+        if (quality::is_valid_reviewed(a, new_content)) return a;
+    } catch (...) {}
+    return none;
+}
+
+bool apply_quality_gate(const std::vector<Finding>& findings, const fs::path& dir,
+                        bool attestation_valid, bool require_attestation) {
+    auto log = disposition::load(dir);
+    bool gate = false;
+    for (const auto& f : findings) {
+        bool suppressed = false;
+        if (f.rule_id == std::string(quality::kStub001RuleId)) {
+            disposition::Entry e;
+            if (disposition::find_by_rule(log, f.rule_id, e) &&
+                e.action == disposition::Action::Accept)
+                suppressed = true;
+        } else if (f.rule_id == std::string(quality::kStub002RuleId)) {
+            if (attestation_valid) suppressed = true;
+        }
+        std::string sev = f.severity == Severity::ERROR ? "ERROR" : "WARNING";
+        std::cout << "[" << sev << "] " << f.rule_id << " " << f.file;
+        if (f.line > 0) std::cout << ":" << f.line;
+        std::cout << " — " << f.message << (suppressed ? "  (suppressed)" : "") << "\n";
+        if (suppressed) continue;
+        if (f.severity == Severity::ERROR) gate = true;
+        if (f.severity == Severity::WARNING && require_attestation) gate = true;
+    }
+    return gate;
+}
 
 } // anonymous namespace
 
@@ -663,52 +734,113 @@ int run(int argc, char* argv[]) {
     });
 
     // ── tara ──────────────────────────────────────────────────────────────────
-    auto* tara_cmd = app.add_subcommand("tara", "Generate TARA per ISO 21434 Chapter 9");
+    auto* tara_cmd = app.add_subcommand("tara", "Generate TARA per ISO/SAE 21434 Clause 15");
+    bool tara_strict = false, tara_require_attestation = false;
+    int  tara_min_coverage = 0;
+    tara_cmd->add_flag("--strict", tara_strict,
+                       "Exit 1 on an unsuppressed FUSA-STUB002 warning too (implies --require-attestation)");
+    tara_cmd->add_flag("--require-attestation", tara_require_attestation,
+                       "Exit 1 on an unsuppressed FUSA-STUB002 warning (§1.6.2)");
+    tara_cmd->add_option("--min-coverage", tara_min_coverage,
+                         "Exit 1 if summary.coveragePct < N (0 disables, default)");
     tara_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        cfg_opt->project_root = fs::canonical(dir).string();
         auto r = tara::generate(dir, *cfg_opt);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
-        auto wr = tara::write(dir, value_of(r));
+        auto rpt = value_of(r);
+        auto content = content_only(tara::to_json(rpt, *cfg_opt));
+        rpt.attestation = preserve_attestation(dir / tara::TaraJsonFile, content);
+        auto wr = tara::write(dir, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
-        const auto& rpt = value_of(r);
         print_ok("tara.json written (" + std::to_string(rpt.scenarios.size()) + " scenarios)");
         print_ok("tara.md written");
+        std::cout << "Coverage: " << rpt.summary.assets_analyzed << "/"
+                  << rpt.summary.assets_in_project << " assets ("
+                  << std::fixed << std::setprecision(1) << rpt.summary.coverage_pct << "%)\n";
+
+        bool attested = quality::is_valid_reviewed(rpt.attestation, content);
+        auto findings = tara::scan_quality(rpt);
+        bool gate = apply_quality_gate(findings, dir, attested, tara_require_attestation || tara_strict);
+        if (tara_min_coverage > 0 && rpt.summary.coverage_pct < tara_min_coverage) {
+            print_err("coveragePct " + fmt_pct(rpt.summary.coverage_pct) +
+                      " < --min-coverage " + std::to_string(tara_min_coverage));
+            gate = true;
+        }
+        if (gate) std::exit(1);
     });
 
     // ── fmea ──────────────────────────────────────────────────────────────────
     auto* fmea_cmd  = app.add_subcommand("fmea", "Generate dFMEA from class/function declarations");
     bool fmea_cyber = false;
+    bool fmea_strict = false, fmea_require_attestation = false;
+    int  fmea_min_coverage = 0;
     fmea_cmd->add_flag("--cyber", fmea_cyber, "Enrich FMEA entries with findings from cyber-report.json");
+    fmea_cmd->add_flag("--strict", fmea_strict,
+                       "Exit 1 on an unsuppressed FUSA-STUB002 warning too (implies --require-attestation)");
+    fmea_cmd->add_flag("--require-attestation", fmea_require_attestation,
+                       "Exit 1 on an unsuppressed FUSA-STUB002 warning (§1.6.2)");
+    fmea_cmd->add_option("--min-coverage", fmea_min_coverage,
+                         "Exit 1 if summary.coveragePct < N (0 disables, default)");
     fmea_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        cfg_opt->project_root = fs::canonical(dir).string();
         auto r = fmea::generate(dir, *cfg_opt, fmea_cyber);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
-        auto wr = fmea::write(dir, value_of(r));
+        auto rpt = value_of(r);
+        auto content = content_only(fmea::to_json(rpt, *cfg_opt));
+        rpt.attestation = preserve_attestation(dir / fmea::FmeaJsonFile, content);
+        auto wr = fmea::write(dir, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
-        const auto& rpt = value_of(r);
         print_ok("fmea.json written (" + std::to_string(rpt.entries.size()) + " entries)");
         print_ok("fmea.csv written");
+        std::cout << "Coverage: " << rpt.summary.components_analyzed << "/"
+                  << rpt.summary.components_in_project << " components ("
+                  << std::fixed << std::setprecision(1) << rpt.summary.coverage_pct << "%)\n";
+
+        bool attested = quality::is_valid_reviewed(rpt.attestation, content);
+        auto findings = fmea::scan_quality(rpt);
+        bool gate = apply_quality_gate(findings, dir, attested, fmea_require_attestation || fmea_strict);
+        if (fmea_min_coverage > 0 && rpt.summary.coverage_pct < fmea_min_coverage) {
+            print_err("coveragePct " + fmt_pct(rpt.summary.coverage_pct) +
+                      " < --min-coverage " + std::to_string(fmea_min_coverage));
+            gate = true;
+        }
+        if (gate) std::exit(1);
     });
 
     // ── safety-case ───────────────────────────────────────────────────────────
     auto* sc_cmd = app.add_subcommand("safety-case", "Generate GSN safety case argument");
+    bool sc_strict = false, sc_require_attestation = false;
+    sc_cmd->add_flag("--strict", sc_strict,
+                     "Exit 1 on an unsuppressed FUSA-STUB002 warning too (implies --require-attestation)");
+    sc_cmd->add_flag("--require-attestation", sc_require_attestation,
+                     "Exit 1 on an unsuppressed FUSA-STUB002 warning (§1.6.2)");
     sc_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        cfg_opt->project_root = fs::canonical(dir).string();
         auto r = safety_case::generate(dir, *cfg_opt);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
-        auto wr = safety_case::write(dir, value_of(r));
+        auto sc = value_of(r);
+        auto content = content_only(safety_case::to_json(sc, *cfg_opt));
+        sc.attestation = preserve_attestation(dir / safety_case::SafetyCaseJson, content);
+        auto wr = safety_case::write(dir, sc);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
-        const auto& sc = value_of(r);
         print_ok("safety-case.json written (" + std::to_string(sc.nodes.size()) + " nodes)");
         print_ok("safety-case.mermaid written");
         print_ok("safety-case.md written");
         print_ok("Evidence collected: " + std::to_string(sc.evidence.size()) + " file(s)");
+
+        bool attested = quality::is_valid_reviewed(sc.attestation, content);
+        auto findings = safety_case::scan_quality(sc);
+        bool gate = apply_quality_gate(findings, dir, attested, sc_require_attestation || sc_strict);
+        if (gate) std::exit(1);
     });
 
     // ── hara ──────────────────────────────────────────────────────────────────
@@ -718,11 +850,19 @@ int run(int argc, char* argv[]) {
     auto* hara_asil   = hara_cmd->add_subcommand("asil", "Derive ASIL from S/E/C parameters");
     std::string hara_project, hara_standard = "ISO 26262";
     std::string asil_s, asil_e, asil_c;
+    std::string hara_fmt, hara_out;
+    bool hara_strict = false, hara_require_attestation = false;
     hara_init->add_option("--project",  hara_project,  "Project name");
     hara_init->add_option("--standard", hara_standard, "Safety standard");
     hara_asil->add_option("-s", asil_s, "Severity: S0, S1, S2, S3")->required();
     hara_asil->add_option("-e", asil_e, "Exposure: E0..E4")->required();
     hara_asil->add_option("-c", asil_c, "Controllability: C0..C3")->required();
+    hara_cmd->add_option("--format", hara_fmt, "text|json (§9.2 hara-report; default: text)");
+    hara_cmd->add_option("--output", hara_out, "Write output to file instead of stdout");
+    hara_cmd->add_flag("--strict", hara_strict,
+                       "Exit 1 on an unsuppressed FUSA-STUB002 warning too (implies --require-attestation)");
+    hara_cmd->add_flag("--require-attestation", hara_require_attestation,
+                       "Exit 1 on an unsuppressed FUSA-STUB002 warning (§1.6.2)");
     hara_show->callback([&]() -> void {
         fs::path dir{dir_str};
         hara::HARA h;
@@ -746,13 +886,42 @@ int run(int argc, char* argv[]) {
                   << "  →  " << hara::determine_asil(s_val, e_val, c_val) << "\n";
     });
     hara_cmd->callback([&]() -> void {
-        if (hara_cmd->get_subcommands().empty()) {
-            fs::path dir{dir_str};
-            hara::HARA h;
-            std::string err;
-            if (!hara::load(dir, h, err)) { print_err(err); std::exit(1); }
+        if (!hara_cmd->get_subcommands().empty()) return;
+        fs::path dir{dir_str};
+        hara::HARA h;
+        std::string err;
+        if (!hara::load(dir, h, err)) { print_err(err); std::exit(1); }
+
+        config::ProjectConfig cfg;
+        cfg.project = h.project;
+        cfg.standard = h.standard;
+        std::error_code canon_ec;
+        auto cd = fs::canonical(dir, canon_ec);
+        cfg.project_root = canon_ec ? dir.string() : cd.string();
+
+        // §1.4.1/§1.2.5: fssrRefs MUST resolve into .fusa-reqs.json; load the
+        // known ids so dangling references surface in `completeness`.
+        std::vector<std::string> req_ids;
+        auto reqs_r = trace::load_requirements(dir);
+        if (is_ok(reqs_r)) for (auto& rq : value_of(reqs_r)) req_ids.push_back(rq.id);
+
+        if (hara_fmt == "json") {
+            auto j = hara::to_report_json(h, cfg, req_ids);
+            std::string out_str = j.dump(2);
+            if (!hara_out.empty()) {
+                std::ofstream of(hara_out);
+                of << out_str << "\n";
+            } else {
+                std::cout << out_str << "\n";
+            }
+        } else {
             hara::render_text(h);
         }
+
+        auto findings = hara::scan_quality(h);
+        bool attested = quality::is_valid_reviewed(h.attestation, hara::content_json(h));
+        bool gate = apply_quality_gate(findings, dir, attested, hara_require_attestation || hara_strict);
+        if (gate) std::exit(1);
     });
 
     // ── iso26262 ──────────────────────────────────────────────────────────────
@@ -1020,17 +1189,32 @@ int run(int argc, char* argv[]) {
     // ── sas ───────────────────────────────────────────────────────────────────
     auto* sas_cmd = app.add_subcommand("sas", "Generate Software Accomplishment Summary");
     std::string sas_dal = "DAL-B";
+    bool sas_strict = false, sas_require_attestation = false;
     sas_cmd->add_option("--dal", sas_dal, "DAL/ASIL/SIL level");
+    sas_cmd->add_flag("--strict", sas_strict,
+                      "Exit 1 on an unsuppressed FUSA-STUB002 warning too (implies --require-attestation)");
+    sas_cmd->add_flag("--require-attestation", sas_require_attestation,
+                      "Exit 1 on an unsuppressed FUSA-STUB002 warning (§1.6.2)");
     sas_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        std::error_code canon_ec;
+        auto cd = fs::canonical(dir, canon_ec);
+        std::string project_root = canon_ec ? dir.string() : cd.string();
         auto s = sas::build(dir, cfg_opt->project, cfg_opt->version, sas_dal);
-        sas::write_json(dir / sas::SAS_JSON_FILE, s);
+        auto content = content_only(sas::to_json(s, project_root));
+        s.attestation = preserve_attestation(dir / sas::SAS_JSON_FILE, content);
+        sas::write_json(dir / sas::SAS_JSON_FILE, s, project_root);
         sas::write_markdown(dir / sas::SAS_MD_FILE, s);
         print_ok("sas.json written");
         print_ok("sas.md written");
-        std::cout << "Evidence: " << s.complete << "/" << s.total << " items present\n";
+        std::cout << "Evidence: " << s.present << "/" << s.total << " items present\n";
+
+        bool attested = quality::is_valid_reviewed(s.attestation, content);
+        auto findings = sas::scan_quality(s);
+        bool gate = apply_quality_gate(findings, dir, attested, sas_require_attestation || sas_strict);
+        if (gate) std::exit(1);
     });
 
     // ── sci ───────────────────────────────────────────────────────────────────
@@ -1039,9 +1223,12 @@ int run(int argc, char* argv[]) {
         fs::path dir{dir_str};
         auto cfg_opt = load_config(dir);
         if (!cfg_opt) { std::exit(3); }
+        std::error_code canon_ec;
+        auto cd = fs::canonical(dir, canon_ec);
+        std::string project_root = canon_ec ? dir.string() : cd.string();
         auto s = sci::build(dir, cfg_opt->project, cfg_opt->version);
-        sci::write_json(dir / sci::SCI_FILE, s);
-        print_ok("sci.json written (" + std::to_string(s.items.size()) + " lifecycle items)");
+        sci::write_json(dir / sci::SCI_FILE, s, project_root);
+        print_ok("sci.json written (" + std::to_string(s.artifacts.size()) + " artifacts)");
     });
 
     // ── pr ────────────────────────────────────────────────────────────────────

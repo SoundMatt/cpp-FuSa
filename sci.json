@@ -1,109 +1,139 @@
 {
-  "generatedAt": "2026-06-10T19:14:28Z",
-  "items": [
+  "artifacts": [
     {
-      "artifact": ".fusa-reqs.json",
       "category": "Requirements",
+      "file": ".fusa-reqs.json",
+      "hash": "sha256:4dcd04ef827e93d2146bbf6b79609865ce8c9506b8dd603b3e150c25706a716c",
       "present": true,
-      "sha256": "14f8d4254eb89c0dd933d6ed1848b0f064c7a8e4fade796d7c18b0f4155da154"
+      "version": "0.15.0"
     },
     {
-      "artifact": ".fusa.json",
       "category": "Configuration",
+      "file": ".fusa.json",
+      "hash": "sha256:fac6fc3367a546102af9ea876a212c876ba6e2a15770ca53363256b4d2870958",
       "present": true,
-      "sha256": "06ff989ad583d12c6aae7c7821be6167b06d9b235dd216d6dff9ca5c3ce75ca9"
+      "version": "0.15.0"
     },
     {
-      "artifact": ".fusa-evidence.json",
+      "category": "Hazard Analysis",
+      "file": ".fusa-hara.json",
+      "hash": "sha256:49a5600545e33490440425ae2b8d34648c4138cf6f03bb0ddb8d4c19931b0343",
+      "present": true,
+      "version": "0.15.0"
+    },
+    {
       "category": "Test Evidence",
+      "file": ".fusa-evidence.json",
+      "hash": "sha256:29214ee688507630657204977fe74e12b4b32b26a8a5e9fd408901af42e1a6ce",
       "present": true,
-      "sha256": "29214ee688507630657204977fe74e12b4b32b26a8a5e9fd408901af42e1a6ce"
+      "version": "0.15.0"
     },
     {
-      "artifact": "check-report.json",
       "category": "Analysis",
+      "file": "check-report.json",
+      "hash": "sha256:d69c15a93962c242ae1ed597e41416ea088fca627bbcece5ebe3a3d539351044",
       "present": true,
-      "sha256": "0d2137f853b6f6ae8aeea4da40d908ea9a97b6d60abedf0067d9ce2d8c92ce4e"
+      "version": "0.15.0"
     },
     {
-      "artifact": "cyber-report.json",
       "category": "Analysis",
+      "file": "cyber-report.json",
+      "hash": "sha256:dd11a104de7c3f605c7347979b53f351dd43db3a00a6d15f68c44c066496e3e8",
       "present": true,
-      "sha256": "dd11a104de7c3f605c7347979b53f351dd43db3a00a6d15f68c44c066496e3e8"
+      "version": "0.15.0"
     },
     {
-      "artifact": "fmea.json",
       "category": "Safety",
+      "file": "fmea.json",
+      "hash": "sha256:cebc6a26897254db05068a53d5bcbada563bf8458a92a21fd002b18869dd1b87",
       "present": true,
-      "sha256": "81948e5c2753c0277e52b2f90cf356990e5190a00236798ee265f42369f0b9a6"
+      "version": "0.15.0"
     },
     {
-      "artifact": "tara.json",
       "category": "Safety",
+      "file": "tara.json",
+      "hash": "sha256:4a4da10654d328889afeb70c0755ca4f88190ed5d548a0959f6886ed77be2a1e",
       "present": true,
-      "sha256": "b1247e828c0ab125916235c0cebd4572f3218d8208f9e1dfb54cf017b688851e"
+      "version": "0.15.0"
     },
     {
-      "artifact": "safety-case.json",
       "category": "Safety",
+      "file": "safety-case.json",
+      "hash": "sha256:135a9820f903f102ee3e4b49a9376a3298e87b45e73c2ca7e6d406acdeaf123b",
       "present": true,
-      "sha256": "0cb37ac90425ffa653cd73ae22b0119b2f3fcc2a18f85d4c11450cf4801463ec"
+      "version": "0.15.0"
     },
     {
-      "artifact": "qualify-report.json",
       "category": "Qualification",
+      "file": "qualify-report.json",
+      "hash": "sha256:4777cca4631fa0af4931c63262aad444819dc331c86fc0b4a629d77089dff323",
       "present": true,
-      "sha256": "dc09797b9a57956db968a649e014092da3a79e05ff355845e792abf772a86e17"
+      "version": "0.15.0"
     },
     {
-      "artifact": "sbom.json",
       "category": "Release",
+      "file": "sbom.json",
+      "hash": "sha256:35e621dc60b80300884f867bb1abce8d3ee4874b9043e731f26834cfc136618e",
       "present": true,
-      "sha256": "35e621dc60b80300884f867bb1abce8d3ee4874b9043e731f26834cfc136618e"
+      "version": "0.15.0"
     },
     {
-      "artifact": "provenance.json",
       "category": "Release",
+      "file": "provenance.json",
+      "hash": "sha256:45164360d0a2cffeef71f99a18b9b7eb6302b055e7cb2c4819e79d7b5df210e2",
       "present": true,
-      "sha256": "45164360d0a2cffeef71f99a18b9b7eb6302b055e7cb2c4819e79d7b5df210e2"
+      "version": "0.15.0"
     },
     {
-      "artifact": "artifact-manifest.json",
       "category": "Release",
+      "file": "artifact-manifest.json",
+      "hash": "sha256:a10553c026e1fa73d033a3a7ed0e68973f88e6d6a129e730a9a50ee04f68190a",
       "present": true,
-      "sha256": "a10553c026e1fa73d033a3a7ed0e68973f88e6d6a129e730a9a50ee04f68190a"
+      "version": "0.15.0"
     },
     {
-      "artifact": "audit-pack.zip",
       "category": "Audit",
+      "file": "audit-pack.zip",
+      "hash": "sha256:873167646805caf6430103527dc6b8889468b1a857fb59ed26bfd0b8df82eb9e",
       "present": true,
-      "sha256": "873167646805caf6430103527dc6b8889468b1a857fb59ed26bfd0b8df82eb9e"
+      "version": "0.15.0"
     },
     {
-      "artifact": "iso26262-gap-report.json",
       "category": "Gap Analysis",
+      "file": "iso26262-gap-report.json",
+      "hash": "sha256:b063c7091b5818afecfb0069e89594d34bfc36ad9b0d690032626a437004661c",
       "present": true,
-      "sha256": "7eafaac9cd9e11c5348d59ffc794d3ed7229f2561d66b0763c539cf980d421fa"
+      "version": "0.15.0"
     },
     {
-      "artifact": "iec61508-gap-report.json",
       "category": "Gap Analysis",
+      "file": "iec61508-gap-report.json",
+      "hash": "sha256:83633145aad846848e31b97a26e52220bb6d8ed3600864dc37b0352e7ee4b625",
       "present": true,
-      "sha256": "5b92134ae242a4ef97709c04a51ab7349e0b50d6c2b12cb04874a60cae8bb524"
+      "version": "0.15.0"
     },
     {
-      "artifact": "do178-gap-report.json",
       "category": "Gap Analysis",
+      "file": "do178-gap-report.json",
+      "hash": "sha256:50f4e3fa121000747e877287198ae66f735c3a0272284eb36446f8923d1ab4cb",
       "present": true,
-      "sha256": "132cc45b7a52d69c79905c654ade63d1a25005ec4e1fba5e695333a23150ace6"
+      "version": "0.15.0"
     },
     {
-      "artifact": "sas.json",
       "category": "Summary",
+      "file": "sas.json",
+      "hash": "sha256:097a8651fc4dd7c75b242cebb061b70697fe4cc30cebaa5675c5ade8c1b4267f",
       "present": true,
-      "sha256": "03c1b2c3d8529b72d3fbaf335ffb53551ae7c9a4359cf7fd383cd34db7701e87"
+      "version": "0.15.0"
     }
   ],
+  "generatedAt": "2026-07-28T19:43:07Z",
+  "kind": "sci",
+  "language": "cpp",
   "project": "cpp-FuSa",
-  "version": "0.6.1"
+  "projectRoot": "/Users/matt/Documents/Coding/SoundMatt/cpp-FuSa",
+  "schemaVersion": "1.14.0",
+  "tool": "cpp-FuSa",
+  "toolVersion": "0.15.0",
+  "version": "0.15.0"
 }

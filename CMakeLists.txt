@@ -48,6 +48,7 @@ include(cmake/FetchDeps.cmake)
 # ── Library target ────────────────────────────────────────────────────────────
 add_library(cpfusa_lib STATIC
     src/config/config.cpp
+    src/quality/quality.cpp
     src/engine/engine.cpp
     src/engine/rules.cpp
     src/report/report.cpp
