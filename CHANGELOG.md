@@ -9,6 +9,27 @@
   `FUSAOPS_DISPATCH_TOKEN` secret in this repo; falls back silently
   (`continue-on-error`) to the weekly rebuild if it's not set.
 
+## [0.14.6] — 2026-07-28
+
+### Fixed
+- **Windows release build never installed `zip`**: `release.yml`'s Windows
+  matrix job builds and tests independently of `ci.yml` and never had a
+  `choco install zip` step, so every audit-pack test failed there even
+  after `ci.yml`'s own Windows fixes below landed — the v0.14.5 tag's
+  release build failed as a result (no artifacts were ever published under
+  that tag). Added the same `choco install zip` step `ci.yml` already had.
+- **Windows audit-pack silently failed on this repo's own CI**: root
+  cause was `cmd.exe`'s `cd` not switching drives without `/d` — this
+  repo's checkout lives on `D:\` while `std::filesystem::temp_directory_path()`
+  resolves to `C:\...`, so `cd "C:\...\Temp"` silently no-op'd and the
+  subsequent `zip` invocation ran from the wrong directory, unable to find
+  the file it was asked to add ("zip error: Nothing to do!"). Added a
+  `cd_cmd()` helper that emits `cd /d` on Windows. Also hardened path
+  quoting generally: directory paths embedded in a quoted `cd "..."`
+  argument must not end in a trailing separator (Windows' argument parser
+  treats a backslash immediately before a closing quote as an escaped
+  quote, corrupting the rest of the command line).
+
 ## [0.14.5] — 2026-07-27
 
 ### Fixed

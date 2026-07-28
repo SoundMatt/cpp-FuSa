@@ -33,6 +33,15 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y cmake ninja-build
 
+      - name: Install zip (Windows)
+        if: runner.os == 'Windows'
+        # audit-pack's tests shell out to the system `zip` binary; unlike
+        # ci.yml's matrix, this workflow never installed it, so the tests
+        # here failed with "zip: command not found" even after ci.yml's own
+        # Windows audit-pack fixes landed.
+        run: choco install zip -y --no-progress
+        shell: pwsh
+
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
 
