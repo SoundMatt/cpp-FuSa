@@ -31,6 +31,19 @@ std::string trim_trailing(std::string s) {
     return s;
 }
 
+// Directory paths embedded in a double-quoted shell argument must not end
+// in a path separator: on Windows, `cd "C:\...\Temp\"` has the trailing
+// backslash escape the closing quote (MSVCRT/cmd.exe argument-parsing
+// behaviour), corrupting the rest of the command line. std::filesystem's
+// temp_directory_path() (wrapping GetTempPathW) and some directory_iterator
+// results always carry a trailing separator on Windows, so every directory
+// path built into a quoted "cd \"...\"" fragment must go through this first.
+std::string strip_trailing_sep(std::string s) {
+    while (!s.empty() && (s.back() == '\\' || s.back() == '/'))
+        s.pop_back();
+    return s;
+}
+
 std::string now_iso8601() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
@@ -182,7 +195,7 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     // though that's not a failure; the archive still gets created below
     // when manifest.json is added.
     if (!present.empty()) {
-        std::string zip_cmd = "cd \"" + project_root.string() + "\" && zip -q \""
+        std::string zip_cmd = "cd \"" + strip_trailing_sep(project_root.string()) + "\" && zip -q \""
                             + output_path.string() + "\" "
                             + file_list
                             + " 2>&1";
@@ -197,7 +210,7 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     }
 
     // Add manifest.json (from tmp) into the zip at the root.
-    std::string add_manifest = "cd \"" + fs::temp_directory_path().string()
+    std::string add_manifest = "cd \"" + strip_trailing_sep(fs::temp_directory_path().string())
                              + "\" && zip -q \"" + output_path.string()
                              + "\" manifest.json 2>&1";
     auto manifest_res = run_cmd(add_manifest);
