@@ -57,6 +57,11 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Install zip (Windows)
+        if: runner.os == 'Windows'
+        run: choco install zip -y --no-progress
+        shell: pwsh
+
       - name: Configure
         shell: bash
         env:
