@@ -3,6 +3,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstdio>
+#include <fstream>
 #include <map>
 #include <regex>
 #include <set>
@@ -10,6 +11,7 @@
 
 namespace cpfusa::quality {
 
+namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 namespace {
@@ -273,6 +275,18 @@ bool is_valid_reviewed(const Attestation& a, const json& content) {
     // Hash pinning (MUST): stale content_hash => fall back to "heuristic".
     if (a.content_hash.empty()) return false;
     return a.content_hash == content_hash(content);
+}
+
+Attestation carry_forward(const fs::path& path) {
+    Attestation none;
+    if (!fs::exists(path)) return none;
+    std::ifstream f(path);
+    if (!f) return none;
+    try {
+        json old = json::parse(f);
+        return parse(old);
+    } catch (...) {}
+    return none;
 }
 
 std::vector<Finding> scan_stub001(const std::vector<QualField>& fields,

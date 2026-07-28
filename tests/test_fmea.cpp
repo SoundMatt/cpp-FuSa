@@ -7,6 +7,7 @@
 //fusa:test REQ-FMEA007
 //fusa:test REQ-FMEA008
 //fusa:test REQ-FMEA009
+//fusa:test REQ-FMEA010
 #include <catch2/catch_all.hpp>
 #include "fmea/fmea.hpp"
 #include "testutil/testutil.hpp"
@@ -135,6 +136,56 @@ TEST_CASE("fmea: summary counts componentsAnalyzed and componentsInProject consi
     const auto& s = value_of(r).summary;
     REQUIRE(s.components_analyzed <= s.components_in_project);
     REQUIRE(s.components_analyzed > 0);
+}
+
+// ─── §1.6 rule 4 / §9.2: test-tree exclusion + coveragePct clamp ─────────────
+// A fixture with no tests/-equivalent directory can't exercise either bug
+// (x-FuSa spec §9.2's own note) — these fixtures pair a real src/ component
+// with tests/ helpers that look exactly like real project components.
+
+TEST_CASE("fmea: declarations under tests/ are excluded from entries and componentsAnalyzed",
+          "[fmea][fmea010]") {
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp", "class Widget {\npublic:\n  void draw();\n};\n");
+    tmp.write("src/widget/widget.cpp",
+        "//fusa:req REQ-X001\nvoid Widget::draw() {}\n");
+    // A test-tree helper that looks exactly like a real project component —
+    // this must NOT be scanned as one (§1.6 rule 4: "not... a test fixture
+    // mistaken for project code").
+    tmp.write("tests/test_widget_helper.cpp",
+        "class TestHelperWidget {\npublic:\n  void run_test_scenario();\n};\n");
+
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    const auto& rpt = value_of(r);
+
+    REQUIRE_FALSE(rpt.entries.empty());
+    for (const auto& e : rpt.entries) {
+        REQUIRE(e.file.find("tests/") == std::string::npos);
+        REQUIRE(e.component != "TestHelperWidget");
+    }
+}
+
+TEST_CASE("fmea: summary.coveragePct never exceeds 100 with a non-trivial test-source tree present",
+          "[fmea][fmea010]") {
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp", "class Widget {\npublic:\n  void draw();\n};\n");
+    tmp.write("src/widget/widget.cpp",
+        "//fusa:req REQ-X001\nvoid Widget::draw() {}\n");
+    // Several test-tree "components" that a scanner failing to apply rule 4
+    // would otherwise fold into componentsAnalyzed, inflating it beyond
+    // componentsInProject.
+    tmp.write("tests/test_a.cpp", "class HelperA {\npublic:\n  void runA();\n};\n");
+    tmp.write("tests/test_b.cpp", "class HelperB {\npublic:\n  void runB();\n};\n");
+    tmp.write("tests/nested/test_c.cpp", "class HelperC {\npublic:\n  void runC();\n};\n");
+
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    const auto& s = value_of(r).summary;
+    REQUIRE(s.coverage_pct <= 100.0);
+    REQUIRE(s.components_analyzed <= s.components_in_project);
 }
 
 // ─── write ────────────────────────────────────────────────────────────────────

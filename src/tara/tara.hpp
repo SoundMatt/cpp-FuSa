@@ -17,11 +17,15 @@ constexpr std::string_view TaraMdFile   = "tara.md";
 // Impact rates one SFOP (Safety/Financial/Operational/Privacy) axis, ISO
 // 21434 Clause 15.7 — a threat rates differently on each axis, so §9.2's
 // `impact` is an object of four of these, not one generic severity.
+// §9.2 closed enum (MUST): critical | major | moderate | negligible — a
+// tool MUST NOT substitute the high|medium|low vocabulary used elsewhere
+// (e.g. attackFeasibility) for these four fields; the two are deliberately
+// distinct scales for distinct questions (likelihood vs. damage).
 struct SFOPImpact {
-    std::string safety{"low"};
-    std::string financial{"low"};
-    std::string operational{"low"};
-    std::string privacy{"low"};
+    std::string safety{"negligible"};
+    std::string financial{"negligible"};
+    std::string operational{"negligible"};
+    std::string privacy{"negligible"};
 };
 
 struct ThreatScenario {
@@ -58,6 +62,17 @@ struct TARAReport {
     Summary                      summary;
     quality::Attestation         attestation;
 };
+
+// derive_risk implements the x-FuSa spec §9.2 TARA risk-combination table:
+// looked up by attackFeasibility (high|medium|low|very-low) against the
+// highest-ranked SFOP impact axis (critical|major|moderate|negligible).
+// Exposed (rather than kept file-local) so the full 4x4 combination table
+// can be unit-tested directly rather than only through the fixed default
+// scenario catalogue, which does not exercise every cell.
+//
+//fusa:req REQ-TARA008
+[[nodiscard]] std::string derive_risk(const std::string& attack_feasibility,
+                                      const SFOPImpact& impact);
 
 // generate creates a TARA with default threat scenarios for the project.
 //

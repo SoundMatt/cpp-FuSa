@@ -113,6 +113,18 @@ struct TraceOptions {
 // parse_*, *_str, export_*, etc. are not expected to carry their own req tag).
 [[nodiscard]] bool is_func_exempt(const std::string& name);
 
+// is_test_tree_path reports whether `p` lies under a test-source-tree
+// directory (a path component exactly "test" or "tests", this project's own
+// `tests/` convention). scan_func_coverage() gets this exclusion "for free"
+// by only walking src/*/*.hpp; a scanner that instead walks the whole
+// project (e.g. fmea's component scan) needs it explicitly so a test helper
+// function is never counted as a real project component — x-FuSa spec §1.6
+// rule 4's implementer guidance: reuse this exclusion rather than each
+// scanner maintaining its own, independently-drifting version.
+//
+//fusa:req REQ-TRACE021
+[[nodiscard]] bool is_test_tree_path(const std::filesystem::path& p);
+
 [[nodiscard]] std::string render_matrix(const TraceResult& result,
                                         const TraceOptions& opts);
 

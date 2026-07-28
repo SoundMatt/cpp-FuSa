@@ -101,24 +101,19 @@ nlohmann::json content_only(nlohmann::json doc) {
     return doc;
 }
 
-// preserve_attestation checks whether the artifact already on disk at `path`
-// carries a still-valid "reviewed" attestation over `new_content` (§1.6.2) —
-// i.e. the reviewed content is byte-for-byte the same substantive content
-// this run just produced — and, if so, carries it forward so simply
-// re-running the generator command doesn't silently discard a real human
-// review. A stale, self-attested, or absent attestation correctly falls back
-// to none (heuristic).
-quality::Attestation preserve_attestation(const fs::path& path, const nlohmann::json& new_content) {
-    quality::Attestation none;
-    if (!fs::exists(path)) return none;
-    std::ifstream f(path);
-    if (!f) return none;
-    try {
-        nlohmann::json old = nlohmann::json::parse(f);
-        auto a = quality::parse(old);
-        if (quality::is_valid_reviewed(a, new_content)) return a;
-    } catch (...) {}
-    return none;
+// preserve_attestation implements §1.6.2's "carry-forward across
+// regeneration" MUST: loads whatever attestation object (if any) the
+// artifact already on disk at `path` carries and returns it *unchanged* —
+// regardless of whether it is still valid against the freshly-built content.
+// It deliberately does not decide validity/staleness here (that is
+// quality::is_valid_reviewed's job, applied separately by each call site
+// below) — a stale or self-attested attestation is still carried into the
+// regenerated artifact's JSON so a human can see a review happened, even
+// though it no longer gates FUSA-STUB002. Discarding it outright here would
+// silently wipe every human attestation on the very next regeneration, which
+// is exactly the gap this MUST closes.
+quality::Attestation preserve_attestation(const fs::path& path) {
+    return quality::carry_forward(path);
 }
 
 bool apply_quality_gate(const std::vector<Finding>& findings, const fs::path& dir,
@@ -752,7 +747,7 @@ int run(int argc, char* argv[]) {
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto rpt = value_of(r);
         auto content = content_only(tara::to_json(rpt, *cfg_opt));
-        rpt.attestation = preserve_attestation(dir / tara::TaraJsonFile, content);
+        rpt.attestation = preserve_attestation(dir / tara::TaraJsonFile);
         auto wr = tara::write(dir, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
         print_ok("tara.json written (" + std::to_string(rpt.scenarios.size()) + " scenarios)");
@@ -793,7 +788,7 @@ int run(int argc, char* argv[]) {
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto rpt = value_of(r);
         auto content = content_only(fmea::to_json(rpt, *cfg_opt));
-        rpt.attestation = preserve_attestation(dir / fmea::FmeaJsonFile, content);
+        rpt.attestation = preserve_attestation(dir / fmea::FmeaJsonFile);
         auto wr = fmea::write(dir, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
         print_ok("fmea.json written (" + std::to_string(rpt.entries.size()) + " entries)");
@@ -829,7 +824,7 @@ int run(int argc, char* argv[]) {
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
         auto sc = value_of(r);
         auto content = content_only(safety_case::to_json(sc, *cfg_opt));
-        sc.attestation = preserve_attestation(dir / safety_case::SafetyCaseJson, content);
+        sc.attestation = preserve_attestation(dir / safety_case::SafetyCaseJson);
         auto wr = safety_case::write(dir, sc);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
         print_ok("safety-case.json written (" + std::to_string(sc.nodes.size()) + " nodes)");
@@ -1204,7 +1199,7 @@ int run(int argc, char* argv[]) {
         std::string project_root = canon_ec ? dir.string() : cd.string();
         auto s = sas::build(dir, cfg_opt->project, cfg_opt->version, sas_dal);
         auto content = content_only(sas::to_json(s, project_root));
-        s.attestation = preserve_attestation(dir / sas::SAS_JSON_FILE, content);
+        s.attestation = preserve_attestation(dir / sas::SAS_JSON_FILE);
         sas::write_json(dir / sas::SAS_JSON_FILE, s, project_root);
         sas::write_markdown(dir / sas::SAS_MD_FILE, s);
         print_ok("sas.json written");

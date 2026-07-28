@@ -14,6 +14,7 @@
 //      depend on.
 #include "cpfusa/fusa.hpp"
 #include <nlohmann/json.hpp>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -98,6 +99,27 @@ struct Attestation {
 //
 //fusa:req REQ-QUAL005
 [[nodiscard]] bool is_valid_reviewed(const Attestation& a, const nlohmann::json& content);
+
+// carry_forward implements §1.6.2's "carry-forward across regeneration" MUST:
+// an artifact-producing command MUST NOT silently discard an existing
+// attestation object when it regenerates the artifact — it MUST load any
+// prior saved copy of the artifact and carry its attestation (if present)
+// onto the freshly-built document, *unchanged*, before rebuilding. Staleness
+// then falls out automatically the next time a caller checks
+// is_valid_reviewed() against the newly-generated content: a carried-forward
+// contentHash that no longer matches simply reads as invalid (falls back to
+// "heuristic") for gating purposes, without this function ever erasing the
+// attestation object itself. Deliberately does NOT judge validity — that is
+// the caller's job via is_valid_reviewed(), kept separate so a stale (or
+// self-attested) review is preserved in the output for audit purposes
+// instead of vanishing as if no review had ever happened.
+//
+// Returns the fail-safe default (status "heuristic", present=false) when
+// `path` doesn't exist, can't be opened, isn't valid JSON, or carries no
+// attestation object.
+//
+//fusa:req REQ-QUAL008
+[[nodiscard]] Attestation carry_forward(const std::filesystem::path& path);
 
 // ---- §1.6.1 detection heuristics -------------------------------------------
 

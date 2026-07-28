@@ -1,5 +1,6 @@
 #include "tara.hpp"
 #include <nlohmann/json.hpp>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -30,10 +31,14 @@ int feasibility_rank(const std::string& f) {
     return 0; // very-low
 }
 
+// §9.2 closed enum ranking: critical > major > moderate > negligible.
+// Unrecognised/absent values fail safe to the lowest rank rather than
+// silently inflating risk.
 int impact_rank(const std::string& i) {
-    if (i == "high") return 2;
-    if (i == "medium") return 1;
-    return 0; // low
+    if (i == "critical") return 3;
+    if (i == "major") return 2;
+    if (i == "moderate") return 1;
+    return 0; // negligible
 }
 
 const std::string& highest_impact(const SFOPImpact& impact) {
@@ -43,27 +48,18 @@ const std::string& highest_impact(const SFOPImpact& impact) {
     return *best;
 }
 
-// ISO 21434 Clause 15's risk determination: attackFeasibility x the highest
-// SFOP impact axis (§9.2 — "risk MUST be derived from attackFeasibility x the
-// highest SFOP impact").
-//
-//fusa:req REQ-TARA006
-std::string derive_risk(const std::string& feasibility, const SFOPImpact& impact) {
-    int fr = feasibility_rank(feasibility);
-    int ir = impact_rank(highest_impact(impact));
-    if (ir == 2) { // high impact
-        if (fr >= 2) return "critical";
-        if (fr == 1) return "high";
-        return "medium";
-    }
-    if (ir == 1) { // medium impact
-        if (fr >= 2) return "high";
-        return "medium";
-    }
-    // low impact
-    if (fr >= 2) return "medium";
-    return "low";
-}
+// §9.2's canonical risk-combination table (the x-FuSa family's own
+// convention, since ISO/SAE 21434 Clause 15.3 deliberately leaves risk
+// determination organization-defined). Indexed [impact_rank][feasibility_rank]
+// using the same 0..3 ranks as impact_rank()/feasibility_rank() above:
+//   impact:      0=negligible 1=moderate 2=major 3=critical
+//   feasibility: 0=very-low   1=low      2=medium 3=high
+const char* const kRiskTable[4][4] = {
+    /* negligible */ {"low",    "low",    "low",      "low"},
+    /* moderate   */ {"low",    "low",    "medium",   "medium"},
+    /* major      */ {"medium", "medium", "high",     "high"},
+    /* critical   */ {"medium", "high",   "critical", "critical"},
+};
 
 struct ScenarioSpec {
     std::string id;
@@ -87,7 +83,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "Compromise of the GitHub release pipeline, a maintainer's signing key, or the container "
          "registry hosting the all-in-one image.",
          "low",
-         {"high", "medium", "medium", "low"},
+         {"major", "moderate", "moderate", "negligible"},
          "mitigate",
          {"sign — HMAC-SHA256 artifact signing", "SLSA provenance verification (slsa command)",
           "Release workflow requires branch-protected, reviewed PRs before tagging"}},
@@ -97,7 +93,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "Direct write access to the repository, or a merged PR that was not reviewed for "
          "safety-relevant configuration changes.",
          "medium",
-         {"high", "medium", "low", "low"},
+         {"major", "moderate", "negligible", "negligible"},
          "mitigate",
          {"FUSA-STUB001 deny-list scan flags untouched hazard/goal templates (§1.6.1)",
           "Code review required on any change to .fusa.json / .fusa-hara.json",
@@ -108,7 +104,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "Write access to the CI runner's workspace or the artifact upload step between generation "
          "and audit-pack bundling.",
          "low",
-         {"high", "medium", "medium", "low"},
+         {"major", "moderate", "moderate", "negligible"},
          "mitigate",
          {"audit-pack — hashed manifest over every evidence artifact",
           "sign --verify re-checks HMAC signatures before submission",
@@ -119,7 +115,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "Supply-chain compromise of an upstream GitHub repository or its release tags fetched by "
          "FetchDeps.cmake.",
          "very-low",
-         {"high", "medium", "medium", "low"},
+         {"major", "moderate", "moderate", "negligible"},
          "mitigate",
          {"vuln — scans CMake dependency manifests for known vulnerabilities",
           "Dependency versions pinned to tagged releases in cmake/FetchDeps.cmake"}},
@@ -129,7 +125,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "Direct file modification between qualify run and audit-pack bundling, or a forged report "
          "committed directly to the repository.",
          "low",
-         {"high", "medium", "low", "low"},
+         {"major", "moderate", "negligible", "negligible"},
          "mitigate",
          {"qualify.hash — RFC 8785 canonical integrity hash over the report content",
           "audit-pack bundles qualify-report.json under the same hashed manifest as every other artifact"}},
@@ -138,7 +134,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "Compromise of repository settings, a maintainer token, or a malicious workflow-file change "
          "in an unreviewed PR.",
          "medium",
-         {"medium", "low", "high", "low"},
+         {"moderate", "negligible", "major", "negligible"},
          "mitigate",
          {"Branch protection requires the check/lint/test CI jobs to pass before merge",
           "dco.yml enforces signed-off commits, raising the bar for an anonymous malicious push"}},
@@ -147,7 +143,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "A code change that deletes or corrupts an annotation without the reviewer noticing, since "
          "the annotation itself is easy to overlook in a diff.",
          "medium",
-         {"medium", "low", "medium", "low"},
+         {"moderate", "negligible", "moderate", "negligible"},
          "mitigate",
          {"trace --req-coverage / --func-coverage gates CI on annotation density",
           "trace flags a dangling //fusa:test reference to a nonexistent requirement id"}},
@@ -157,7 +153,7 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
          "A merged PR that adds a disposition entry without the scrutiny a normal finding-fix PR "
          "would receive, since a waiver reads as \"already handled\".",
          "medium",
-         {"high", "low", "medium", "low"},
+         {"major", "negligible", "moderate", "negligible"},
          "mitigate",
          {"disposition add requires --reviewer and --rationale (no anonymous waivers)",
           "Code review required on any change to .fusa-dispositions.json",
@@ -166,6 +162,17 @@ std::vector<ScenarioSpec> default_scenarios(const config::ProjectConfig& cfg) {
 }
 
 } // namespace
+
+// ISO 21434 Clause 15's risk determination: attackFeasibility x the highest
+// SFOP impact axis (§9.2 — "risk MUST be derived from attackFeasibility x the
+// highest SFOP impact"), looked up via the spec's canonical combination table.
+//
+//fusa:req REQ-TARA008
+std::string derive_risk(const std::string& attack_feasibility, const SFOPImpact& impact) {
+    int fr = feasibility_rank(attack_feasibility);
+    int ir = impact_rank(highest_impact(impact));
+    return kRiskTable[ir][fr];
+}
 
 //fusa:req REQ-TARA001 REQ-TARA002 REQ-TARA003 REQ-TARA004 REQ-TARA005
 Result<TARAReport> generate(const fs::path& /*dir*/, const config::ProjectConfig& cfg) {
@@ -200,8 +207,13 @@ Result<TARAReport> generate(const fs::path& /*dir*/, const config::ProjectConfig
     rpt.summary.assets_analyzed = static_cast<int>(assets.size());
     rpt.summary.assets_in_project = static_cast<int>(assets.size());
     // Trivially 100% by construction (see asset_inventory_method below for
-    // why that is not the same claim as "complete asset coverage").
-    rpt.summary.coverage_pct = 100.0;
+    // why that is not the same claim as "complete asset coverage"). §9.2
+    // MUST: coveragePct MUST NOT exceed 100 — clamped defensively so a
+    // future change that decouples assetsAnalyzed from assetsInProject can't
+    // silently reintroduce the >100 bug the spec calls out for `fmea`.
+    rpt.summary.coverage_pct = std::min(100.0, 100.0 *
+        static_cast<double>(rpt.summary.assets_analyzed) /
+        static_cast<double>(std::max(1, rpt.summary.assets_in_project)));
     rpt.summary.asset_inventory_method =
         "assetsInProject counts the distinct `asset` values named in this TARA's own "
         "hand-curated scenario catalogue. cpp-FuSa does not yet perform automated asset "

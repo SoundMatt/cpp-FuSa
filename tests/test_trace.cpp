@@ -18,6 +18,7 @@
 //fusa:test REQ-TRACE018
 //fusa:test REQ-TRACE019
 //fusa:test REQ-TRACE020
+//fusa:test REQ-TRACE021
 //fusa:test REQ-HLR001
 //fusa:test REQ-HLR002
 //fusa:test REQ-HLR003
@@ -639,6 +640,26 @@ TEST_CASE("trace: is_func_exempt does not exempt ordinary functions", "[trace][t
     REQUIRE_FALSE(trace::is_func_exempt("load"));
     REQUIRE_FALSE(trace::is_func_exempt("save"));
     REQUIRE_FALSE(trace::is_func_exempt("run"));
+}
+
+// ─── §1.6 rule 4 implementer guidance ────────────────────────────────────────
+
+TEST_CASE("trace: is_test_tree_path recognises test/tests directory components", "[trace][trace021]") {
+    //fusa:test REQ-TRACE021
+    REQUIRE(trace::is_test_tree_path("tests/test_widget.cpp"));
+    REQUIRE(trace::is_test_tree_path("project/tests/nested/test_widget.cpp"));
+    REQUIRE(trace::is_test_tree_path("test/widget_test.cpp"));
+    REQUIRE(trace::is_test_tree_path("a/b/tests/c/d.cpp"));
+}
+
+TEST_CASE("trace: is_test_tree_path does not flag ordinary source paths", "[trace][trace021]") {
+    //fusa:test REQ-TRACE021
+    REQUIRE_FALSE(trace::is_test_tree_path("src/widget/widget.cpp"));
+    REQUIRE_FALSE(trace::is_test_tree_path("include/cpfusa/fusa.hpp"));
+    // A file merely named with a "test"-like substring, but not a path
+    // component, must not false-positive.
+    REQUIRE_FALSE(trace::is_test_tree_path("src/latest/latest.cpp"));
+    REQUIRE_FALSE(trace::is_test_tree_path("src/attestation.cpp"));
 }
 
 TEST_CASE("trace: scan_func_coverage counts a tagged function as covered", "[trace][trace018]") {
