@@ -69,7 +69,7 @@ TEST_CASE("sas: build sets present=true for an existing artifact", "[sas][sas001
 
 // ─── write_json ───────────────────────────────────────────────────────────────
 
-TEST_CASE("sas: write_json creates valid §9.3 JSON", "[sas][sas005]") {
+TEST_CASE("sas: write_json creates valid spec 9.3 JSON", "[sas][sas005]") {
     TempDir tmp;
     auto s = sas::build(tmp.path(), "p", "1.0", "DAL-B");
     auto out = tmp.path() / sas::SAS_JSON_FILE;

@@ -189,7 +189,7 @@ TEST_CASE("fmea: fmea.csv has header row", "[fmea][fmea002]") {
     REQUIRE(header.find(',') != std::string::npos);
 }
 
-TEST_CASE("fmea: JSON entries have item field (spec §9.2 identity)", "[fmea][fmea002]") {
+TEST_CASE("fmea: JSON entries have item field (spec 9.2 identity)", "[fmea][fmea002]") {
     TempDir tmp;
     tmp.write("src/x.cpp", "class Actuator { public:\n  void move();\n};\n");
     config::ProjectConfig cfg;

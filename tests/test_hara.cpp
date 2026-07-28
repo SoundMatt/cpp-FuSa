@@ -194,7 +194,7 @@ TEST_CASE("hara: scan_quality is clean for genuine, item-specific descriptions",
 
 // ─── hara-report (§9.2) JSON document ─────────────────────────────────────────
 
-TEST_CASE("hara: to_report_json emits the §3.1 header and completeness block",
+TEST_CASE("hara: to_report_json emits the spec 3.1 header and completeness block",
           "[hara][hara011]") {
     hara::HARA h;
     h.project = "P"; h.standard = "ISO 26262";

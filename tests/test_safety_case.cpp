@@ -197,7 +197,7 @@ TEST_CASE("safety_case: scan_quality flags a placeholder goal", "[safety_case][s
     REQUIRE(found);
 }
 
-TEST_CASE("safety_case: to_json emits the §3.1 header and §9.2 shape",
+TEST_CASE("safety_case: to_json emits the spec 3.1 header and spec 9.2 shape",
           "[safety_case][safetycase006]") {
     TempDir tmp;
     config::ProjectConfig cfg;
