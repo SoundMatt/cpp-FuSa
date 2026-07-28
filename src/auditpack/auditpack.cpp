@@ -44,6 +44,22 @@ std::string strip_trailing_sep(std::string s) {
     return s;
 }
 
+// Builds a `cd "<dir>" && ` command prefix. On Windows, cmd.exe's `cd`
+// (unlike `pushd` or a real shell's `cd`) does NOT switch drives unless
+// given the `/d` flag -- without it, `cd "C:\...\Temp"` from a process
+// whose working directory is on a different drive (e.g. this repo checked
+// out under D:\) silently no-ops, leaving the subsequent `zip` command
+// running with the WRONG cwd and failing with "zip error: Nothing to do!"
+// because it can't find the file it was asked to add. POSIX shells have no
+// such distinction, so the flag is Windows-only.
+std::string cd_cmd(const std::string& dir) {
+#ifdef _WIN32
+    return "cd /d \"" + strip_trailing_sep(dir) + "\" && ";
+#else
+    return "cd \"" + strip_trailing_sep(dir) + "\" && ";
+#endif
+}
+
 std::string now_iso8601() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
@@ -195,7 +211,7 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     // though that's not a failure; the archive still gets created below
     // when manifest.json is added.
     if (!present.empty()) {
-        std::string zip_cmd = "cd \"" + strip_trailing_sep(project_root.string()) + "\" && zip -q \""
+        std::string zip_cmd = cd_cmd(project_root.string()) + "zip -q \""
                             + output_path.string() + "\" "
                             + file_list
                             + " 2>&1";
@@ -210,8 +226,8 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     }
 
     // Add manifest.json (from tmp) into the zip at the root.
-    std::string add_manifest = "cd \"" + strip_trailing_sep(fs::temp_directory_path().string())
-                             + "\" && zip -q \"" + output_path.string()
+    std::string add_manifest = cd_cmd(fs::temp_directory_path().string()) + "zip -q \""
+                             + output_path.string()
                              + "\" manifest.json 2>&1";
     auto manifest_res = run_cmd(add_manifest);
     if (manifest_res.exit_code != 0) {
