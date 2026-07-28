@@ -56,6 +56,12 @@
   covered by the registered `REQ-TMPL004`) was removed rather than
   registered. Zero orphan tags and zero untested requirements remain.
 
+### CI
+- `windows-2022` matrix job now installs `zip` via Chocolatey. The runner
+  image doesn't ship one by default (unlike the ubuntu/macos jobs), which
+  the `audit-pack` zip-missing hard error above now correctly surfaces as a
+  test failure instead of silently degrading.
+
 ## [0.14.4] — 2026-07-27
 
 ### Fixed (issue #30)
