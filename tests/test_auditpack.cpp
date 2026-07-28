@@ -16,6 +16,12 @@ TEST_CASE("auditpack: pack succeeds for empty project dir", "[auditpack][audit00
     TempDir tmp;
     auto out = tmp.path() / "audit-pack.zip";
     auto r = auditpack::pack(tmp.path(), out);
+    if (!is_ok(r)) {
+        // Temporary diagnostic (removed once the Windows CI failure is root-
+        // caused): Catch2's boolean expansion doesn't surface the wrapped
+        // error string, and this is the only reliable way to see it.
+        WARN("auditpack::pack error: " << error_of(r));
+    }
     REQUIRE(is_ok(r));
 }
 
