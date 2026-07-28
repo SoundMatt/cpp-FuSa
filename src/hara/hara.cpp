@@ -263,10 +263,17 @@ std::vector<Finding> scan_quality(const HARA& h) {
 //fusa:req REQ-HARA011
 json to_report_json(const HARA& h, const config::ProjectConfig& cfg,
                     const std::vector<std::string>& requirement_ids) {
-    auto now = std::chrono::system_clock::now();
-    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    // Reentrant gmtime — std::gmtime uses a shared static buffer (CWE-676 /
+    // CodeQL cpp/potentially-dangerous-function); gmtime_r/gmtime_s do not.
+    std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    struct tm tm_buf{};
+#ifdef _WIN32
+    gmtime_s(&tm_buf, &t);
+#else
+    gmtime_r(&t, &tm_buf);
+#endif
     std::ostringstream ts;
-    ts << std::put_time(std::gmtime(&t), "%FT%TZ");
+    ts << std::put_time(&tm_buf, "%FT%TZ");
 
     json j;
     j["schemaVersion"] = std::string(SpecVersion);
