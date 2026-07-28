@@ -59,7 +59,15 @@ jobs:
 
       - name: Install zip (Windows)
         if: runner.os == 'Windows'
-        run: choco install zip -y --no-progress
+        # choco installs zip.exe's shim into $ChocolateyInstall\bin, but that
+        # directory only reaches later steps' subprocesses if we add it to
+        # $GITHUB_PATH explicitly -- the Actions runner's own process doesn't
+        # pick up PATH changes choco makes at the registry/session level, so
+        # `zip` was silently unavailable to every later step (including the
+        # audit-pack tests) despite this install step reporting success.
+        run: |
+          choco install zip -y --no-progress
+          echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: pwsh
 
       - name: Configure
