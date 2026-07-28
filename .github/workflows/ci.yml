@@ -59,15 +59,30 @@ jobs:
 
       - name: Install zip (Windows)
         if: runner.os == 'Windows'
-        # choco installs zip.exe's shim into $ChocolateyInstall\bin, but that
-        # directory only reaches later steps' subprocesses if we add it to
-        # $GITHUB_PATH explicitly -- the Actions runner's own process doesn't
-        # pick up PATH changes choco makes at the registry/session level, so
-        # `zip` was silently unavailable to every later step (including the
-        # audit-pack tests) despite this install step reporting success.
+        run: choco install zip -y --no-progress
+        shell: pwsh
+
+      - name: Diagnose zip availability (Windows)
+        if: runner.os == 'Windows'
+        # Temporary diagnostic: the audit-pack tests fail on this runner even
+        # though the install step above reports success. Prove out, in the
+        # log, exactly what a later step sees -- whether `zip` resolves on
+        # PATH at all, and if so, whether invoking it actually produces a
+        # valid archive -- so the real fix can be targeted instead of guessed.
         run: |
-          choco install zip -y --no-progress
-          echo "$env:ChocolateyInstall\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Write-Host "PATH = $env:PATH"
+          Write-Host "--- where.exe zip ---"
+          where.exe zip
+          Write-Host "--- zip -v (version banner) ---"
+          zip -v
+          Write-Host "--- functional smoke test ---"
+          $tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "zipdiag-$(Get-Random)")
+          "hello" | Out-File -FilePath (Join-Path $tmp "a.txt") -Encoding ascii
+          Push-Location $tmp
+          zip -q test.zip a.txt
+          Write-Host "zip exit code: $LASTEXITCODE"
+          Get-ChildItem
+          Pop-Location
         shell: pwsh
 
       - name: Configure
