@@ -100,7 +100,7 @@ TEST_CASE("iso21434: write_json has spec v1.10.12 envelope", "[iso21434][iso2143
     iso21434::write_json(out, r);
     std::ifstream f(out);
     auto j = json::parse(f);
-    REQUIRE(j["schemaVersion"] == "1.10.12");
+    REQUIRE(j["schemaVersion"] == std::string(SpecVersion));
     REQUIRE(j["kind"]          == "gap-report");
     REQUIRE(j["tool"]          == "cpp-FuSa");
     REQUIRE(j["language"]      == "cpp");

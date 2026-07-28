@@ -1,40 +1,103 @@
 {
-  "createdAt": "2026-06-09T00:00:00Z",
+  "project": "cpp-FuSa",
+  "standard": "ISO 26262",
+  "createdAt": "2026-07-28T00:00:00Z",
+  "operationalSituations": [
+    {
+      "id": "OS-001",
+      "description": "cpp-FuSa runs as part of a CI pipeline gate before a merge or release is allowed to proceed."
+    },
+    {
+      "id": "OS-002",
+      "description": "cpp-FuSa's own evidence-generation commands (fmea/tara/hara/safety-case/sas/sci) are run to produce artifacts a certification reviewer will read as a record of the project's actual safety analysis."
+    },
+    {
+      "id": "OS-003",
+      "description": "A project author edits .fusa-hara.json, .fusa-dispositions.json, or .fusa.json directly to record hazard analysis, waive a finding, or configure the safety standard/ASIL cpp-FuSa is held to."
+    }
+  ],
   "hazards": [
     {
-      "description": "Example hazard — replace with project-specific hazard",
       "id": "H-001",
-      "risk": {
-        "asil": "ASIL-C",
-        "controllability": "C2",
-        "exposure": "E3",
-        "severity": "S2"
-      },
-      "safetyGoals": [
-        "SG-001"
-      ],
-      "situations": [
-        "OS-001"
-      ]
+      "description": "cpp-FuSa's `check` command fails to detect a genuine safety-relevant defect (a false negative in the engine/lint/analyze/cyber rule set), so defective code passes the CI gate believing the tool found nothing.",
+      "source": "Design review of src/engine/engine.cpp — a rule that throws or silently returns no findings is indistinguishable from a rule that ran and found nothing.",
+      "situations": ["OS-001"],
+      "risk": { "severity": "S2", "exposure": "E4", "controllability": "C2", "asil": "ASIL-C" },
+      "safetyGoals": ["SG-001"]
+    },
+    {
+      "id": "H-002",
+      "description": "A generated evidence artifact (fmea.json, tara.json, .fusa-hara.json, safety-case.json, sas.json) ships with untouched template/placeholder text or a single hardcoded qualitative string applied to every entry, and a certification reviewer mistakes it for genuine, item-specific analysis.",
+      "source": "2026-07-28 cross-tool content audit (x-FuSa spec §1.6) — found exactly this pattern in this repo's own .fusa-hara.json before the fix that accompanies this file.",
+      "situations": ["OS-002"],
+      "risk": { "severity": "S2", "exposure": "E3", "controllability": "C1", "asil": "ASIL-B" },
+      "safetyGoals": ["SG-002"]
+    },
+    {
+      "id": "H-003",
+      "description": "hara::determine_asil's S x E x C lookup table (ISO 26262-3:2018 Table 4) contains a transcription error, so a hazard is assigned a lower ASIL than the standard actually requires.",
+      "source": "Code review of src/hara/hara.cpp's hand-encoded Table 4 lookup — a static lookup table has no built-in cross-check against the published standard.",
+      "situations": ["OS-003"],
+      "risk": { "severity": "S3", "exposure": "E2", "controllability": "C2", "asil": "ASIL-C" },
+      "safetyGoals": ["SG-003"]
+    },
+    {
+      "id": "H-004",
+      "description": "A disposition entry in .fusa-dispositions.json is added at rule-level scope (the only scope this tool's disposition mechanism currently supports) and silently suppresses every current and future finding for that rule project-wide, including ones the author did not intend to waive.",
+      "source": "Design review of src/disposition/disposition.cpp — find_by_rule matches on ruleId alone, with no file/line/fingerprint granularity.",
+      "situations": ["OS-003"],
+      "risk": { "severity": "S2", "exposure": "E3", "controllability": "C2", "asil": "ASIL-B" },
+      "safetyGoals": ["SG-004"]
+    },
+    {
+      "id": "H-005",
+      "description": "An evidence artifact carries a stale or self-attested §1.6.2 attestation (independentReviewer equal to implementationAuthor, or a contentHash left over from a prior version of the file), and a consumer trusts it as a genuine independent review.",
+      "source": "Design review of src/quality/quality.cpp's is_valid_reviewed — an attestation object is only as trustworthy as the check that validates it.",
+      "situations": ["OS-002", "OS-003"],
+      "risk": { "severity": "S2", "exposure": "E2", "controllability": "C1", "asil": "ASIL-B" },
+      "safetyGoals": ["SG-005"]
     }
   ],
-  "project": "cpp-FuSa",
   "safetyGoals": [
     {
-      "asil": "ASIL-C",
-      "description": "Example safety goal — replace with project-specific goal",
-      "hazardIds": [
-        "H-001"
-      ],
       "id": "SG-001",
-      "safeState": "safe state description"
-    }
-  ],
-  "situations": [
+      "description": "cpp-FuSa's check gate shall never report a clean result when a rule encountered an error or produced no findings due to a bug, so a defect is never mistaken for an absence of defects.",
+      "hazards": ["H-001"],
+      "asil": "ASIL-C",
+      "safeState": "A rule that errors surfaces as a WARNING/ERROR finding of its own (never silently swallowed), and `check` exits non-zero.",
+      "fssrRefs": ["REQ-ENG002", "REQ-ENG003"]
+    },
     {
-      "description": "Normal operation",
-      "id": "OS-001"
+      "id": "SG-002",
+      "description": "Every generated evidence artifact with free-text qualitative content shall be scanned for placeholder text and blanket qualitative fallback before a reviewer sees it, and shall carry an honest attestation of its review status.",
+      "hazards": ["H-002"],
+      "asil": "ASIL-B",
+      "safeState": "FUSA-STUB001 always fires as an ERROR (disposition-suppressible only); FUSA-STUB002 fires as an advisory WARNING unless a valid attestation is present.",
+      "fssrRefs": ["REQ-QUAL006", "REQ-QUAL007"]
+    },
+    {
+      "id": "SG-003",
+      "description": "cpp-FuSa's ASIL determination shall be independently verified against every cell of ISO 26262-3:2018 Table 4, not merely spot-checked, so a transcription error cannot silently under-classify a hazard.",
+      "hazards": ["H-003"],
+      "asil": "ASIL-C",
+      "safeState": "determine_asil is covered by an exhaustive S×E×C test matrix; any mismatch against the published table fails the test suite before release.",
+      "fssrRefs": ["REQ-HARA002"]
+    },
+    {
+      "id": "SG-004",
+      "description": "A disposition waiver shall always carry an identified reviewer and rationale, and shall be visible in code review, so an overly broad rule-level waiver is a deliberate, auditable decision rather than an accident.",
+      "hazards": ["H-004"],
+      "asil": "ASIL-B",
+      "safeState": "disposition add requires --reviewer and --rationale; .fusa-dispositions.json changes go through the same PR review as any other change.",
+      "fssrRefs": ["REQ-DISP002", "REQ-DISP003"]
+    },
+    {
+      "id": "SG-005",
+      "description": "An attestation shall only be treated as a valid independent review when the reviewer differs from the implementation author and the recorded content hash matches the artifact's current content; a stale or self-attested one shall fall back to heuristic.",
+      "hazards": ["H-005"],
+      "asil": "ASIL-B",
+      "safeState": "quality::is_valid_reviewed enforces both checks before FUSA-STUB002 is suppressed.",
+      "fssrRefs": ["REQ-QUAL005"]
     }
-  ],
-  "standard": "ISO 26262"
+  ]
 }

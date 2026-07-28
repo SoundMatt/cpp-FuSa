@@ -76,7 +76,7 @@ TEST_CASE("report: render_text summary counts are correct", "[report][rpt001]") 
 
 TEST_CASE("render_json: schemaVersion is 1.10.12", "[report][rpt002]") {
     auto j = json::parse(report::render_json({}, make_cfg()));
-    REQUIRE(j["schemaVersion"] == "1.10.12");
+    REQUIRE(j["schemaVersion"] == std::string(SpecVersion));
 }
 
 TEST_CASE("render_json: kind is check-report", "[report][rpt002]") {

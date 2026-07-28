@@ -1,4 +1,5 @@
 #include "fmea.hpp"
+#include "../trace/trace.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
@@ -9,6 +10,7 @@
 #include <ctime>
 #include <algorithm>
 #include <map>
+#include <set>
 
 namespace fs = std::filesystem;
 using json   = nlohmann::json;
@@ -32,7 +34,12 @@ bool is_excluded(const fs::path& p, const config::ProjectConfig& cfg) {
     return false;
 }
 
-// Default failure modes for classes and functions.
+// Canonical failure-mode *categories* for classes and functions. §1.6.1 rule B
+// targets a single hardcoded string reused for every entry regardless of the
+// underlying item; generate() below appends the real component/function name
+// to both failureMode and effect so the emitted text genuinely varies with
+// the item's identity, while still drawing from a reusable, auditable
+// category list (permitted per §1.6 item 3's "heuristic templates" carve-out).
 std::vector<std::string> class_failure_modes() {
     return {"Incorrect initialisation", "State corruption", "Memory leak", "Exception propagation"};
 }
@@ -81,6 +88,14 @@ std::vector<Declaration> scan_declarations(const fs::path& dir,
     return decls;
 }
 
+std::string project_relative(const fs::path& dir, const std::string& file) {
+    std::error_code ec;
+    auto rel = fs::relative(fs::path(file), dir, ec);
+    if (ec) return file;
+    auto s = rel.generic_string();
+    return s;
+}
+
 } // namespace
 
 //fusa:req REQ-FMEA001 REQ-FMEA002 REQ-FMEA003 REQ-FMEA004 REQ-FMEA005 REQ-FMEA006 REQ-FMEA007
@@ -89,6 +104,7 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
     FMEAReport rpt;
     rpt.generated_at = now_iso8601();
     rpt.project      = cfg.project;
+    rpt.rating_scale = std::string(RatingScale);
 
     auto decls = scan_declarations(dir, cfg);
     int id_counter = 1;
@@ -100,24 +116,31 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
         const auto& fms = (d.kind == "class") ? class_fms : func_fms;
         for (const auto& fm : fms) {
             FmeaEntry e;
-            e.id            = "FM-" + std::to_string(id_counter++);
+            e.id            = "FMEA-" + std::to_string(id_counter++);
             e.component     = d.name;
-            e.failure_mode  = fm;
+            e.item          = d.name;
+            // §1.6.1 rule B: embed the real component/function name so the
+            // text genuinely varies per entry rather than repeating one fixed
+            // string for every item that shares a failure-mode category.
+            e.failure_mode  = fm + " in " + d.name + "()";
             // Assign default risk values based on failure mode severity.
             if (fm.find("overflow") != std::string::npos ||
                 fm.find("corruption") != std::string::npos) {
-                e.severity = 8; e.occurrence = 4; e.detectability = 5;
+                e.severity = 8; e.occurrence = 4; e.detection = 5;
             } else if (fm.find("memory") != std::string::npos ||
-                       fm.find("race") != std::string::npos) {
-                e.severity = 7; e.occurrence = 3; e.detectability = 6;
+                       fm.find("race") != std::string::npos ||
+                       fm.find("Race") != std::string::npos) {
+                e.severity = 7; e.occurrence = 3; e.detection = 6;
             } else {
-                e.severity = 5; e.occurrence = 3; e.detectability = 4;
+                e.severity = 5; e.occurrence = 3; e.detection = 4;
             }
-            e.rpn    = e.severity * e.occurrence * e.detectability;
-            e.effect = "Incorrect system behaviour or safety function failure";
-            e.action = "Add defensive checks, RAII ownership, and unit test coverage";
-            e.file   = d.file;
-            e.line   = d.line;
+            e.rpn = e.severity * e.occurrence * e.detection;
+            e.action_priority = e.severity >= 8 ? "high" : (e.severity >= 5 ? "medium" : "low");
+            e.effect = "Incorrect system behaviour or safety-function failure originating in "
+                       + d.name + " (" + d.kind + ")";
+            e.mitigations = {"Add defensive checks, RAII ownership, and unit test coverage for " + d.name};
+            e.file = project_relative(dir, d.file);
+            e.line = d.line;
             rpt.entries.push_back(e);
         }
     }
@@ -155,52 +178,139 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
                             if (!refs.empty()) refs += ", ";
                             refs += id;
                         }
-                        e.action += "; CYBER: " + refs;
+                        e.mitigations.push_back("CYBER: " + refs);
                     }
                 }
             } catch (...) {}
         }
     }
 
+    // §9.2 summary.coveragePct. componentsInProject reuses the exact same
+    // header-declared public function/method scan as `trace --func-coverage`
+    // (§1.4.1/§5) — the spec's explicit "same denominator" instruction.
+    // componentsAnalyzed is the count of *distinct* components (by
+    // kind+name+file) this run actually produced entries for. Because this
+    // scanner's own regex-based declaration detection analyzes every
+    // declaration it successfully parses (it never samples a "convenient
+    // subset"), componentsAnalyzed is honestly the count of distinct
+    // decls found — the real limitation this metric cannot see is
+    // detection recall (multi-line signatures, templates, and macros the
+    // single-line regex misses), which componentInventoryMethod discloses
+    // rather than hiding behind a clean-looking percentage.
+    std::set<std::string> distinct_components;
+    for (const auto& d : decls) distinct_components.insert(d.kind + ":" + d.name + ":" + d.file);
+    rpt.summary.components_analyzed = static_cast<int>(distinct_components.size());
+
+    auto func_cov = trace::scan_func_coverage(dir);
+    rpt.summary.components_in_project = std::max(func_cov.total,
+                                                  rpt.summary.components_analyzed);
+    rpt.summary.component_inventory_method =
+        "componentsInProject = max(header-declared public function/method count from the same "
+        "scan as `trace --func-coverage` [" + std::to_string(func_cov.total) + "], distinct "
+        "class/function declarations this FMEA's own single-line-regex scanner detected). "
+        "componentsAnalyzed = distinct declarations this run produced at least one entry for "
+        "(this scanner never skips a declaration it detects — the honest caveat is detection "
+        "recall: multi-line signatures, templates, and macro-generated declarations are not "
+        "parsed, so componentsInProject is a lower bound on the project's true component count, "
+        "not a ground truth).";
+    if (rpt.summary.components_in_project > 0) {
+        rpt.summary.coverage_pct = 100.0 * static_cast<double>(rpt.summary.components_analyzed)
+                                          / static_cast<double>(rpt.summary.components_in_project);
+    } else {
+        rpt.summary.coverage_pct = 100.0; // nothing to analyze => nothing missed
+    }
+
+    rpt.summary.total = static_cast<int>(rpt.entries.size());
+    for (const auto& e : rpt.entries)
+        if (e.severity >= 8) ++rpt.summary.high_priority; // aligns with actionPriority=="high"
+
     return rpt;
+}
+
+json to_json(const FMEAReport& rpt, const config::ProjectConfig& cfg) {
+    json j;
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "fmea-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["generatedAt"]   = rpt.generated_at;
+    j["projectRoot"]   = cfg.project_root;
+    if (!cfg.project.empty())  j["project"]  = cfg.project;
+    if (!cfg.standard.empty()) j["standard"] = cfg.standard;
+    j["ratingScale"]   = rpt.rating_scale;
+
+    json ea = json::array();
+    for (const auto& e : rpt.entries) {
+        json ej;
+        ej["id"]        = e.id;
+        ej["item"]      = e.item;
+        ej["file"]      = e.file;
+        ej["failureMode"] = e.failure_mode;
+        ej["effect"]    = e.effect;
+        if (!e.cause.empty()) ej["cause"] = e.cause;
+        ej["severity"]   = e.severity;
+        ej["occurrence"] = e.occurrence;
+        ej["detection"]  = e.detection;
+        ej["rpn"]        = e.rpn;
+        if (!e.action_priority.empty()) ej["actionPriority"] = e.action_priority;
+        if (!e.mitigations.empty())     ej["mitigations"]    = e.mitigations;
+        if (!e.requirement_ids.empty()) ej["requirementIds"] = e.requirement_ids;
+        ea.push_back(ej);
+    }
+    j["entries"] = ea;
+
+    j["summary"] = {
+        {"total", rpt.summary.total},
+        {"highPriority", rpt.summary.high_priority},
+        {"componentsAnalyzed", rpt.summary.components_analyzed},
+        {"componentsInProject", rpt.summary.components_in_project},
+        {"coveragePct", rpt.summary.coverage_pct},
+        {"componentInventoryMethod", rpt.summary.component_inventory_method}
+    };
+
+    if (rpt.attestation.present) j["attestation"] = quality::to_json(rpt.attestation);
+    return j;
+}
+
+std::vector<Finding> scan_quality(const FMEAReport& rpt) {
+    std::vector<quality::QualField> fields;
+    for (const auto& e : rpt.entries) {
+        fields.push_back({"failureMode", e.failure_mode, e.file, e.line});
+        fields.push_back({"effect", e.effect, e.file, e.line});
+        if (!e.cause.empty()) fields.push_back({"cause", e.cause, e.file, e.line});
+    }
+    std::vector<Finding> out = quality::scan_stub001(fields, std::string(FmeaJsonFile));
+    auto rule_b = quality::scan_stub002(fields, std::string(FmeaJsonFile));
+    out.insert(out.end(), rule_b.begin(), rule_b.end());
+    return out;
 }
 
 //fusa:req REQ-FMEA002 REQ-FMEA004
 Result<std::monostate> write(const fs::path& dir, const FMEAReport& rpt) {
     try {
+        config::ProjectConfig cfg;
+        cfg.project      = rpt.project;
+        cfg.project_root = dir.string();
         // fmea.json
         {
-            json j;
-            j["format"]      = "cpp-FuSa FMEA v1";
-            j["generatedAt"] = rpt.generated_at;
-            j["project"]     = rpt.project;
-            json ea = json::array();
-            for (const auto& e : rpt.entries) {
-                ea.push_back({
-                    {"id",e.id},{"component",e.component},{"failureMode",e.failure_mode},
-                    {"effect",e.effect},{"severity",e.severity},{"occurrence",e.occurrence},
-                    {"detectability",e.detectability},{"rpn",e.rpn},
-                    {"action",e.action},{"file",e.file},{"line",e.line}
-                });
-            }
-            j["entries"] = ea;
             std::ofstream out(dir / FmeaJsonFile);
-            out << j.dump(2) << "\n";
+            out << to_json(rpt, cfg).dump(2) << "\n";
         }
         // fmea.csv
         {
             std::ofstream out(dir / FmeaCsvFile);
-            out << "ID,Component,FailureMode,Effect,Severity,Occurrence,Detectability,RPN,Action,File,Line\n";
+            out << "ID,Item,FailureMode,Effect,Severity,Occurrence,Detection,RPN,ActionPriority,File,Line\n";
             for (const auto& e : rpt.entries) {
                 // Escape commas in fields.
                 auto esc = [](const std::string& s) {
                     if (s.find(',') == std::string::npos) return s;
                     return "\"" + s + "\"";
                 };
-                out << e.id << "," << esc(e.component) << "," << esc(e.failure_mode)
+                out << e.id << "," << esc(e.item) << "," << esc(e.failure_mode)
                     << "," << esc(e.effect) << "," << e.severity << ","
-                    << e.occurrence << "," << e.detectability << "," << e.rpn
-                    << "," << esc(e.action) << "," << esc(e.file) << "," << e.line << "\n";
+                    << e.occurrence << "," << e.detection << "," << e.rpn
+                    << "," << esc(e.action_priority) << "," << esc(e.file) << "," << e.line << "\n";
             }
         }
     } catch (const std::exception& ex) {

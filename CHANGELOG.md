@@ -2,12 +2,89 @@
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-07-28
+
+x-FuSa spec v1.13.0/v1.14.0 conformance: `hara`/`fmea`/`tara`/`safety-case`/`sas`/`sci`
+schema formalization, the §1.6 content-quality baseline (`FUSA-STUB001`/`FUSA-STUB002`),
+§1.6.2 attestation, and `fmea`/`tara` coverage metrics (`SoundMatt/FuSaOps` issue #42).
+
 ### Added
+- **New `quality` module** (`src/quality/`) shared by every evidence-artifact
+  command: RFC 8785-subset JSON canonicalisation, the §4.2 fingerprint
+  algorithm, §1.6.2 attestation parse/serialise/validity, and the two §1.6.1
+  detection heuristics:
+  - **`FUSA-STUB001`** (always `ERROR`, disposition-suppressible only) — a
+    deny-list scan for literal placeholder/template text (`"[describe ...]"`,
+    `"replace with"`, `"TBD"`, `"lorem ipsum"`, `"fill in"`) in any qualitative
+    field.
+  - **`FUSA-STUB002`** (`WARNING` by default, not gating) — a distinct-value-ratio
+    check (<0.1 across >=10 entries) that flags a single hardcoded qualitative
+    string applied to every entry regardless of the underlying item.
+- **§1.6.2 attestation** — `fmea`/`hara`/`tara`/`safety-case`/`sas` now accept
+  and preserve a document-level `attestation` object (`status`/
+  `implementationAuthor`/`independentReviewer`/`reviewedAt`/`contentHash`). A
+  non-stale, genuinely-independent `"reviewed"` attestation suppresses
+  `FUSA-STUB002`. New `--strict`/`--require-attestation` flags on each of
+  those five commands escalate an unsuppressed `FUSA-STUB002` warning to
+  exit `1`; regenerating an artifact no longer silently discards a real
+  human review as long as the reviewed content is unchanged.
+- **`fmea`/`tara` coverage metrics** — new `summary.coveragePct` plus
+  `--min-coverage N` (0 disables), each with a stated, honestly-documented
+  denominator methodology (`componentInventoryMethod`/`assetInventoryMethod`)
+  rather than an inflated percentage. `fmea`'s denominator reuses the same
+  header-declared-public-function scan as `trace --func-coverage`; `tara`'s
+  documents plainly that its asset catalogue is hand-curated, not
+  automatically discovered.
+- `hara --format json --output <file>` now emits the §9.2 `hara-report`
+  document (§3.1 header + `.fusa-hara.json` content verbatim + a
+  `completeness` block that counts dangling `fssrRefs` against
+  `.fusa-reqs.json`).
 - `docker-publish.yml` now notifies `SoundMatt/FuSaOps` via `repository_dispatch`
   (`xfusa-released`) after a successful image push, so FuSaOps rebuilds its
   bundled image promptly instead of waiting for its weekly cron. Requires a
   `FUSAOPS_DISPATCH_TOKEN` secret in this repo; falls back silently
   (`continue-on-error`) to the weekly rebuild if it's not set.
+
+### Changed (schema conformance — breaking JSON shape changes)
+- **`.fusa-hara.json` / `hara`**: `situations` renamed to `operationalSituations`
+  (top level, §1.2.5); `safetyGoals[].hazardIds` renamed to `safetyGoals[].hazards`;
+  new `safetyGoals[].fssrRefs` (**MUST, >=1 entry**) links a safety goal to the
+  Functional Safety Requirement(s) that decompose it in `.fusa-reqs.json`.
+  `hara init`/`--init` now scaffolds **empty** collections — it no longer writes
+  the `"Example hazard — replace with project-specific hazard"` placeholder row
+  §1.6 explicitly forbids (this repo's own `.fusa-hara.json` shipped exactly that
+  placeholder until this release; it now carries five genuine, tool-specific
+  hazards).
+- **`fmea.json`**: entries now use `item`/`file`/`failureMode`/`effect`/`cause`/
+  `severity`/`occurrence`/`detection`/`actionPriority`/`mitigations`/
+  `requirementIds` (previously `component`/`detectability`/a single `action`
+  string); `failureMode`/`effect` now embed the real component/function name so
+  the text varies per entry instead of repeating one of four fixed strings
+  (§1.6.1 rule B). New `ratingScale` field.
+- **`tara.json`**: top-level key renamed `scenarios` → `threats`; `impact` is now
+  an SFOP object (`safety`/`financial`/`operational`/`privacy`) instead of one
+  generic 1-4 integer; `riskValue`/`riskLevel` replaced by a single `risk` field
+  derived from `attackFeasibility` × the highest SFOP axis; `feasibility`
+  renamed `attackFeasibility` (high/medium/low/very-low, ISO 21434 wording);
+  new `attackVector`, `treatment`, `mitigations`. `standard` is now the
+  canonical id `"iso21434"` rather than a display string.
+- **`safety-case.json`**: `nodes[].type` is now one of the six lowercase GSN
+  Community Standard v3 node types (`goal`/`strategy`/`solution`/`context`/
+  `assumption`/`justification`) instead of capitalised tool-defined labels;
+  `edges[].type` is now `supportedBy`/`inContextOf` instead of
+  `supported-by`/`in-context-of`. New `completeness` block
+  (`totalGoals`/`goalsWithEvidence`/`undeveloped`).
+- **`sas.json`**: `evidence`/`summary.complete` replaced by `checklist`
+  (`item`/`clause`/`present`/`evidence`) and `summary.present`, per x-FuSa spec
+  §9.3.
+- **`sci.json`**: `items` renamed `artifacts`; `artifact`/`sha256` renamed
+  `file`/`hash`; **`hash` is now `sha256:`-prefixed** — it was previously bare
+  hex, which is only correct for a field literally named `sha256` (§2.7), not
+  one named `hash` (whose algorithm is meant to be self-describing).
+- Every `fmea`/`hara`/`tara`/`safety-case`/`sas`/`sci` JSON document now carries
+  the §3.1 common header (`schemaVersion`/`kind`/`tool`/`toolVersion`/
+  `language`/`generatedAt`) it previously lacked.
+- `SpecVersion` bumped `1.10.12` → `1.14.0`.
 
 ## [0.14.6] — 2026-07-28
 

@@ -1,8 +1,10 @@
 #pragma once
-// tara generates a Threat Analysis and Risk Assessment (TARA) per ISO 21434 Chapter 9.
-// Outputs: tara.json + tara.md
+// tara generates a Threat Analysis and Risk Assessment (TARA) per ISO/SAE
+// 21434:2021 Clause 15 (x-FuSa spec §9.2). Outputs: tara.json + tara.md
 #include "cpfusa/fusa.hpp"
 #include "../config/config.hpp"
+#include "../quality/quality.hpp"
+#include <nlohmann/json.hpp>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -12,17 +14,40 @@ namespace cpfusa::tara {
 constexpr std::string_view TaraJsonFile = "tara.json";
 constexpr std::string_view TaraMdFile   = "tara.md";
 
+// Impact rates one SFOP (Safety/Financial/Operational/Privacy) axis, ISO
+// 21434 Clause 15.7 — a threat rates differently on each axis, so §9.2's
+// `impact` is an object of four of these, not one generic severity.
+struct SFOPImpact {
+    std::string safety{"low"};
+    std::string financial{"low"};
+    std::string operational{"low"};
+    std::string privacy{"low"};
+};
+
 struct ThreatScenario {
     std::string id;
-    std::string asset;
-    std::string threat;
-    std::string damage_scenario;
-    int         feasibility{1};   // 1–4 (ATTACK path factors)
-    int         impact{1};        // 1–4 (Safety/Financial/Operational/Privacy)
-    int         risk_value{0};    // feasibility * impact
-    std::string risk_level;       // low/medium/high/critical
-    std::string treatment;        // accept/mitigate/transfer/avoid
-    std::string cyber_goal;
+    std::string asset;              // MUST
+    std::string threat;             // MUST — specific attack scenario, not a bare category
+    std::string cwe;                // SHOULD when applicable
+    std::string attack_vector;      // MUST
+    std::string attack_feasibility; // MUST: high|medium|low|very-low
+    SFOPImpact  impact;             // MUST
+    std::string risk;               // MUST: derived from feasibility x highest SFOP impact
+    std::string treatment;          // MUST: mitigate|accept|transfer|avoid
+    std::vector<std::string> mitigations; // SHOULD
+    std::string location_file;      // SHOULD when code-derived
+    int         location_line{0};
+    std::string cyber_rule_id;      // SHOULD — links to the triggering `cyber` finding
+};
+
+struct Summary {
+    int    assets_analyzed{0};
+    int    assets_in_project{0};
+    double coverage_pct{0.0};
+    // assetInventoryMethod (SHOULD) — honestly names how assets_in_project was
+    // enumerated (§9.2: "asset discovery methodology varies more than
+    // function enumeration does").
+    std::string asset_inventory_method;
 };
 
 struct TARAReport {
@@ -30,6 +55,8 @@ struct TARAReport {
     std::string                  project;
     std::string                  standard;
     std::vector<ThreatScenario>  scenarios;
+    Summary                      summary;
+    quality::Attestation         attestation;
 };
 
 // generate creates a TARA with default threat scenarios for the project.
@@ -42,5 +69,15 @@ Result<TARAReport> generate(const std::filesystem::path& dir,
 //
 //fusa:req REQ-TARA002
 Result<std::monostate> write(const std::filesystem::path& dir, const TARAReport& rpt);
+
+// to_json builds the §9.2 tara.json document.
+//
+//fusa:req REQ-TARA006
+[[nodiscard]] nlohmann::json to_json(const TARAReport& rpt, const config::ProjectConfig& cfg);
+
+// scan_quality runs §1.6.1 rule A/B over every qualitative field (threat).
+//
+//fusa:req REQ-TARA007
+[[nodiscard]] std::vector<Finding> scan_quality(const TARAReport& rpt);
 
 } // namespace cpfusa::tara

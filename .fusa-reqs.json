@@ -2030,6 +2030,153 @@
       "description": "SAS_MD_FILE (sas.md) and SAS_JSON_FILE (sas.json) name the Markdown and JSON Software Accomplishment Summary documents written by write_markdown()/write_json().",
       "standard_ref": "DO-178C \u00a711.20",
       "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL001",
+      "title": "SHA-256 hashing helpers",
+      "description": "quality shall provide sha256_hex (bare hex, for an algorithm-named field) and sha256_prefixed (\"sha256:\"-prefixed, for a field named \"hash\") per x-FuSa spec \u00a72.7.",
+      "standard_ref": "x-FuSa spec \u00a72.7",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL002",
+      "title": "RFC 8785-subset canonicalisation and content hash",
+      "description": "quality shall canonicalise a JSON document (sorted keys, no insignificant whitespace) and derive a reproducible sha256:-prefixed content hash from it, per x-FuSa spec \u00a76/\u00a71.6.2.",
+      "standard_ref": "x-FuSa spec \u00a71.6.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL003",
+      "title": "Canonical finding fingerprint",
+      "description": "quality shall compute the x-FuSa spec \u00a74.2 canonical fingerprint (ruleId + file + normalised message, SHA-256, sha256:-prefixed) for a Finding.",
+      "standard_ref": "x-FuSa spec \u00a74.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL004",
+      "title": "Attestation parse/serialise",
+      "description": "quality shall parse an optional attestation object from a document (defaulting to status \"heuristic\" when absent or malformed) and serialise a present attestation back to JSON, per x-FuSa spec \u00a71.6.2.",
+      "standard_ref": "x-FuSa spec \u00a71.6.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL005",
+      "title": "Attestation independence and staleness check",
+      "description": "quality shall treat an attestation as validly \"reviewed\" only when independentReviewer differs from implementationAuthor and contentHash matches the artifact's current content; otherwise it shall fall back to \"heuristic\".",
+      "standard_ref": "x-FuSa spec \u00a71.6.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL006",
+      "title": "FUSA-STUB001 placeholder-text scan",
+      "description": "quality shall flag bracketed instructional text or a deny-listed substring (\"replace with\", \"example hazard\", \"tbd\", \"lorem ipsum\", \"fill in\") in a qualitative field as an ERROR finding, ruleId FUSA-STUB001, category safety.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1 rule A",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-QUAL007",
+      "title": "FUSA-STUB002 distinct-value-ratio scan",
+      "description": "quality shall flag a qualitative field whose distinct-value ratio is below 0.1 across >=10 entries as a WARNING finding, ruleId FUSA-STUB002, category safety.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1 rule B",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-HARA009",
+      "title": "HARA completeness roll-up",
+      "description": "hara shall compute the \u00a79.2 completeness block (totalHazards, hazardsWithAsil, hazardsWithSafetyGoal, safetyGoalsWithFssrRefs, danglingReferences) including a dangling fssrRefs id absent from .fusa-reqs.json.",
+      "standard_ref": "x-FuSa spec \u00a79.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-HARA010",
+      "title": "HARA quality scan wiring",
+      "description": "hara shall run \u00a71.6.1 rule A/B over hazards[].description and safetyGoals[].description.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-HARA011",
+      "title": "hara-report JSON document",
+      "description": "hara shall emit the \u00a79.2 hara-report document: the \u00a73.1 header, .fusa-hara.json content verbatim, completeness, and attestation passthrough.",
+      "standard_ref": "x-FuSa spec \u00a79.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-HARA012",
+      "title": "HARA content JSON for attestation hashing",
+      "description": "hara shall expose the substantive (attestation-excluding) content of a HARA document so a stored attestation's contentHash can be verified against the file's current content.",
+      "standard_ref": "x-FuSa spec \u00a71.6.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-FMEA008",
+      "title": "fmea.json \u00a79.2 document shape",
+      "description": "fmea shall emit the \u00a79.2 fmea-report document: header, ratingScale, entries[] (item/file/failureMode/effect/severity/occurrence/detection/actionPriority/mitigations/requirementIds), and summary (coveragePct/componentsInProject/componentInventoryMethod).",
+      "standard_ref": "x-FuSa spec \u00a79.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-FMEA009",
+      "title": "FMEA quality scan and coverage honesty",
+      "description": "fmea shall run \u00a71.6.1 rule A/B over failureMode/effect/cause, and shall document componentsInProject's counting method rather than presenting an inflated coverage percentage.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-TARA006",
+      "title": "tara.json \u00a79.2 SFOP impact and coverage",
+      "description": "tara shall emit threats[] with an SFOP impact object (safety/financial/operational/privacy) and a risk level derived from attackFeasibility \u00d7 the highest SFOP axis, plus summary.coveragePct/assetInventoryMethod.",
+      "standard_ref": "x-FuSa spec \u00a79.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-TARA007",
+      "title": "TARA quality scan wiring",
+      "description": "tara shall run \u00a71.6.1 rule A/B over each threat scenario's threat description.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAFETYCASE006",
+      "title": "safety-case.json \u00a79.2 GSN document shape",
+      "description": "safety_case shall emit nodes[].type as one of the six lowercase GSN types (goal/strategy/solution/context/assumption/justification) and edges[].type as supportedBy/inContextOf, per the GSN Community Standard v3.",
+      "standard_ref": "GSN Community Standard v3",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAFETYCASE007",
+      "title": "Safety case completeness roll-up",
+      "description": "safety_case shall compute the \u00a79.2 completeness block (totalGoals, goalsWithEvidence, undeveloped).",
+      "standard_ref": "x-FuSa spec \u00a79.2",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAFETYCASE008",
+      "title": "Safety case quality scan wiring",
+      "description": "safety_case shall run \u00a71.6.1 rule A/B over every GSN node's text.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAS005",
+      "title": "sas.json \u00a79.3 checklist document shape",
+      "description": "sas shall emit checklist[] (item/clause/present/evidence) and summary (total/present) per the x-FuSa spec \u00a79.3 schema, replacing the prior tool-defined \"evidence\"/\"complete\" shape.",
+      "standard_ref": "x-FuSa spec \u00a79.3",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SAS006",
+      "title": "SAS quality scan wiring",
+      "description": "sas shall run \u00a71.6.1 rule A/B over each checklist item's free-text name.",
+      "standard_ref": "x-FuSa spec \u00a71.6.1",
+      "severity": "safety"
+    },
+    {
+      "id": "REQ-SCI003",
+      "title": "sci.json \u00a79.3 artifacts document shape",
+      "description": "sci shall emit artifacts[] (file/hash/version), with hash as a real, sha256:-prefixed SHA-256 of the file's current contents, per the x-FuSa spec \u00a79.3 schema and \u00a72.7 hash convention.",
+      "standard_ref": "x-FuSa spec \u00a79.3",
+      "severity": "safety"
     }
   ]
 }
