@@ -11,6 +11,13 @@ using namespace cpfusa;
 using namespace cpfusa::testutil;
 using json = nlohmann::json;
 
+namespace {
+const iec61508::Objective* find_obj(const iec61508::Report& r, const std::string& id) {
+    for (auto& o : r.objectives) if (o.id == id) return &o;
+    return nullptr;
+}
+} // namespace
+
 // ─── parse_sil / sil_str ─────────────────────────────────────────────────────
 
 TEST_CASE("iec61508: parse_sil SIL1", "[iec61508][iec61508001]") {
@@ -97,4 +104,104 @@ TEST_CASE("iec61508: JSON summary uses satisfied and gaps keys (spec 9.3)", "[ie
     REQUIRE(j["summary"].contains("gaps"));
     REQUIRE_FALSE(j["summary"].contains("addressed"));
     REQUIRE_FALSE(j["summary"].contains("gap"));
+}
+
+// ─── detect_status: previously-unhandled objectives (issue #57) ───────────────
+//
+// Prior to the fix, every one of these objective ids fell through
+// detect_status()'s final `return Status::Gap;` unconditionally, regardless of
+// what evidence existed on disk.
+
+TEST_CASE("iec61508: 1-7.1 safety lifecycle clears with project config", "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write(".fusa.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "1-7.1");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status != iec61508::Status::Gap);
+}
+
+TEST_CASE("iec61508: 1-7.1 is gap with no config", "[iec61508][iec61508002]") {
+    TempDir tmp;
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "1-7.1");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status == iec61508::Status::Gap);
+}
+
+TEST_CASE("iec61508: 1-8.1 safety requirements spec clears with reqs registry", "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "1-8.1");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status != iec61508::Status::Gap);
+}
+
+TEST_CASE("iec61508: 1-8.2 requirements allocation is Addressed with HARA and reqs",
+          "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json", "{}");
+    tmp.write(".fusa-reqs.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "1-8.2");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status == iec61508::Status::Addressed);
+}
+
+TEST_CASE("iec61508: 1-8.2 is partial with only reqs and no HARA", "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "1-8.2");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status == iec61508::Status::Partial);
+}
+
+TEST_CASE("iec61508: 3-7.2 software architecture design clears with sas.md", "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write("sas.md", "# SAS\n");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "3-7.2");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status != iec61508::Status::Gap);
+}
+
+TEST_CASE("iec61508: 3-7.6 software validation testing clears with test evidence",
+          "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write(".fusa-evidence.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "3-7.6");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status != iec61508::Status::Gap);
+}
+
+TEST_CASE("iec61508: 3-7.7 software modification clears with CHANGELOG.md", "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write("CHANGELOG.md", "# Changelog\n");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "3-7.7");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status != iec61508::Status::Gap);
+}
+
+TEST_CASE("iec61508: 3-7.8 software verification clears with check-report.json",
+          "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write("check-report.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "3-7.8");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status == iec61508::Status::Addressed);
+}
+
+TEST_CASE("iec61508: 2-7.1 hardware safety requirements clears with reqs registry",
+          "[iec61508][iec61508002]") {
+    TempDir tmp;
+    tmp.write(".fusa-reqs.json", "{}");
+    auto r = iec61508::assess(tmp.path(), "p", iec61508::SIL::SIL2);
+    auto* o = find_obj(r, "2-7.1");
+    REQUIRE(o != nullptr);
+    REQUIRE(o->status != iec61508::Status::Gap);
 }

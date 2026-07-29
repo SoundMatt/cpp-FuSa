@@ -1,4 +1,5 @@
 #include "iso26262.hpp"
+#include "../quality/quality.hpp"
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -97,6 +98,62 @@ Status detect_status(const std::string& obj_id, const fs::path& dir) {
     }
     if (obj_id == "6-5.1") {
         return fs::exists(dir / ".fusa.json") ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "6-5.2") {
+        // Software design criteria specification — the SQAP records the
+        // coding-standard / design-rule criteria the project is held to.
+        return fs::exists(dir / "SQAP.md") ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "6-6.1") {
+        // Software architectural design — cpfusa's own `sas` command output.
+        return (fs::exists(dir / "sas.json") || fs::exists(dir / "sas.md"))
+               ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "6-6.2") {
+        // Software unit design — component boundary diagrams from `cpfusa boundary`.
+        return (fs::exists(dir / "boundary.mermaid") || fs::exists(dir / "boundary.dot"))
+               ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "6-6.3") {
+        // Software unit implementation — the aggregated `check` finding report.
+        return fs::exists(dir / "check-report.json") ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "6-8.1") {
+        // Software integration and testing — same ctest evidence as unit testing.
+        return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "6-9.1") {
+        // Verification of software safety requirements — requires both a
+        // requirements registry *and* test evidence tying results back to it.
+        bool reqs = fs::exists(dir / ".fusa-reqs.json");
+        bool ev   = fs::exists(dir / ".fusa-evidence.json");
+        if (reqs && ev) return Status::Addressed;
+        return (reqs || ev) ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "8-6.1") {
+        // ASIL decomposition — recorded as part of the HARA's safety goals.
+        return fs::exists(dir / ".fusa-hara.json") ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "8-6.2") {
+        // Safety manual — a project-authored artifact, not cpfusa-generated.
+        return fs::exists(dir / "SAFETY_MANUAL.md") ? Status::Partial : Status::Gap;
+    }
+    if (obj_id == "9-1.1") {
+        // ASIL-B verification independence — an independently-reviewed
+        // attestation on the safety case (§1.6.2 of the x-FuSa spec).
+        auto path = dir / "safety-case.json";
+        if (!fs::exists(path)) return Status::Gap;
+        std::ifstream f(path);
+        json j;
+        try {
+            f >> j;
+        } catch (...) {
+            return Status::Partial;
+        }
+        auto att = quality::parse(j);
+        if (att.present && att.status == "reviewed" && !att.independent_reviewer.empty())
+            return Status::Addressed;
+        return Status::Partial;
     }
     if (obj_id == "9-2.1") {
         return fs::exists(dir / "safety-case.json") ? Status::Partial : Status::Gap;

@@ -66,20 +66,57 @@ bool is_required(const Objective& obj, SIL sil) {
 }
 
 Status detect_status(const std::string& id, const fs::path& dir) {
+    if (id == "1-7.1") {
+        // Safety lifecycle — the project configuration anchors the lifecycle.
+        return fs::exists(dir / ".fusa.json") ? Status::Partial : Status::Gap;
+    }
     if (id == "1-7.2") return fs::exists(dir / ".fusa-hara.json") ? Status::Addressed : Status::Gap;
+    if (id == "1-8.1") {
+        // Safety requirements specification.
+        return fs::exists(dir / ".fusa-reqs.json") ? Status::Partial : Status::Gap;
+    }
+    if (id == "1-8.2") {
+        // Safety requirements allocation — hazard analysis allocated into the
+        // requirements registry.
+        bool hara = fs::exists(dir / ".fusa-hara.json");
+        bool reqs = fs::exists(dir / ".fusa-reqs.json");
+        if (hara && reqs) return Status::Addressed;
+        return (hara || reqs) ? Status::Partial : Status::Gap;
+    }
     if (id == "3-7.1") return fs::exists(dir / ".fusa-reqs.json") ? Status::Partial : Status::Gap;
+    if (id == "3-7.2") {
+        // Software architecture design — cpfusa's own `sas` command output.
+        return (fs::exists(dir / "sas.json") || fs::exists(dir / "sas.md"))
+               ? Status::Partial : Status::Gap;
+    }
     if (id == "3-7.3") return fs::exists(dir / ".fusa.json")      ? Status::Partial : Status::Gap;
     if (id == "3-7.4") {
         if (fs::exists(dir / "fmea.json") && fs::exists(dir / ".fusa-evidence.json")) return Status::Addressed;
         return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
     }
     if (id == "3-7.5") return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
+    if (id == "3-7.6") {
+        // Software validation testing — same ctest evidence, validation level.
+        return fs::exists(dir / ".fusa-evidence.json") ? Status::Partial : Status::Gap;
+    }
+    if (id == "3-7.7") {
+        // Software modification — change history/log.
+        return fs::exists(dir / "CHANGELOG.md") ? Status::Partial : Status::Gap;
+    }
+    if (id == "3-7.8") {
+        // Software verification — the aggregated `check` finding report.
+        return fs::exists(dir / "check-report.json") ? Status::Addressed : Status::Gap;
+    }
     if (id == "3-B.1") return fs::exists(dir / ".fusa.json")      ? Status::Partial : Status::Gap;
     if (id == "3-B.2") return fs::exists(dir / "cyber-report.json")? Status::Partial : Status::Gap;
     if (id == "3-B.3") return fs::exists(dir / "coverage-report.json") ? Status::Addressed : Status::Gap;
     if (id == "3-B.4") return fs::exists(dir / ".fusa-reqs.json") ? Status::Addressed : Status::Gap;
     if (id == "3-B.5") return fs::exists(dir / "qualify-report.json") ? Status::Addressed : Status::Gap;
     if (id == "3-B.6") return fs::exists(dir / "sci.json") ? Status::Addressed : Status::Gap;
+    if (id == "2-7.1") {
+        // Hardware safety requirements — tracked in the same requirements registry.
+        return fs::exists(dir / ".fusa-reqs.json") ? Status::Partial : Status::Gap;
+    }
     if (id == "2-8.1") return fs::exists(dir / "safety-case.json") ? Status::Partial : Status::Gap;
     return Status::Gap;
 }

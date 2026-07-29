@@ -36,6 +36,16 @@ struct EvidenceBundle {
 Result<EvidenceBundle> run_ctest(const std::filesystem::path& project_dir,
                                  const config::ProjectConfig& cfg);
 
+// parse_ctest_output parses `ctest --output-on-failure -V` text into
+// per-test results. Test names may contain internal whitespace (Catch2's
+// TEST_CASE convention is almost always multi-word) — the name capture must
+// stop only at CTest's fixed dot-run separator, not at the first space.
+// Exposed (rather than kept file-local) so this parsing logic is directly
+// unit-testable against captured ctest output text.
+//
+//fusa:req REQ-VERIFY001
+[[nodiscard]] std::vector<TestResult> parse_ctest_output(const std::string& output);
+
 // write_evidence serialises the bundle to .fusa-evidence.json in dir.
 //
 //fusa:req REQ-VERIFY002

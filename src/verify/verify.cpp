@@ -54,12 +54,22 @@ fs::path find_build_dir(const fs::path& project_dir) {
     return project_dir / "build";
 }
 
+} // namespace
+
 // Parse ctest --verbose output into test results.
+//
+// Test names may contain internal spaces (Catch2's TEST_CASE convention is
+// almost always multi-word, e.g. "validate_frame: valid frame ID 0x00").
+// CTest always separates the name from its Passed/Failed/Skipped column with
+// a fixed-width run of 2+ dots, so the name capture must be lazy and match
+// up to that dot run — not `\S+`, which truncates at the name's first space
+// and drops any line that doesn't happen to land back on a literal "." run
+// immediately afterwards.
 std::vector<TestResult> parse_ctest_output(const std::string& output) {
     std::vector<TestResult> results;
-    // Lines like: "  1/43 Test  #1: SomeName ......... Passed  0.01 sec"
+    // Lines like: "  1/43 Test  #1: Some Multi Word Name ......... Passed  0.01 sec"
     static const std::regex test_re(
-        R"re(\s*\d+/\d+\s+Test\s+#\d+:\s+(\S+)\s+\.+\s+(Passed|Failed|Skipped)\s+([\d.]+)\s+sec)re",
+        R"re(\s*\d+/\d+\s+Test\s+#\d+:\s+(.+?)\s+\.{2,}\s+(Passed|Failed|Skipped)\s+([\d.]+)\s+sec)re",
         std::regex::icase);
     std::istringstream ss(output);
     std::string line;
@@ -78,8 +88,6 @@ std::vector<TestResult> parse_ctest_output(const std::string& output) {
     }
     return results;
 }
-
-} // namespace
 
 //fusa:req REQ-VERIFY001 REQ-VERIFY003 REQ-VERIFY004 REQ-VERIFY005
 Result<EvidenceBundle> run_ctest(const fs::path& project_dir,

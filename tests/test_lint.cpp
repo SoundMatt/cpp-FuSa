@@ -181,6 +181,42 @@ TEST_CASE("lint: LINT015 detects throw in destructor", "[lint][lint015]") {
     REQUIRE(has_finding(lint::check_throw_in_destructor(tmp.path()), "LINT015"));
 }
 
+TEST_CASE("lint: LINT015 does not misattribute a throw in a later member function "
+          "after a single-line destructor", "[lint][lint015]") {
+    // Regression for issue #59: a single-line destructor body (open and close
+    // brace on the destructor's own match line) must close its tracked scope
+    // immediately — a throw in a later, ordinary member function must not be
+    // blamed on the long-since-closed destructor.
+    TempDir tmp;
+    tmp.write("src/t.hpp",
+        "struct DepthGuard {\n"
+        "    int& d;\n"
+        "    ~DepthGuard() { --d; }\n"
+        "};\n"
+        "\n"
+        "char peek() const {\n"
+        "    if (true) throw 1;\n"
+        "    return 0;\n"
+        "}\n");
+    REQUIRE(lint::check_throw_in_destructor(tmp.path()).empty());
+}
+
+TEST_CASE("lint: LINT015 still detects a throw in a second, later destructor",
+          "[lint][lint015]") {
+    // A single-line destructor's scope closing correctly must not blind the
+    // scanner to a genuine throw in a *different* destructor later in the file.
+    TempDir tmp;
+    tmp.write("src/t.hpp",
+        "struct A { ~A() { cleanup(); } };\n"
+        "\n"
+        "struct B {\n"
+        "    ~B() { throw std::runtime_error(\"bad\"); }\n"
+        "};\n");
+    auto findings = lint::check_throw_in_destructor(tmp.path());
+    REQUIRE(has_finding(findings, "LINT015"));
+    REQUIRE(findings.size() == 1);
+}
+
 // ─── LINT016 — function-like macro ───────────────────────────────────────────
 
 TEST_CASE("lint: LINT016 detects function-like macro", "[lint][lint016]") {
