@@ -1,4 +1,5 @@
 #pragma once
+#include "../config/config.hpp"
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -27,6 +28,13 @@ struct Diagram {
 };
 
 [[nodiscard]] Diagram scan(const std::filesystem::path& dir);
+
+// Overload filtered by cfg's excludePatterns (§1.2.1 MUST). The unfiltered
+// overload above is retained for direct callers that intentionally want an
+// unfiltered scan of dir/"src".
+//
+//fusa:req REQ-CFG005
+[[nodiscard]] Diagram scan(const std::filesystem::path& dir, const config::ProjectConfig& cfg);
 void write_mermaid(const std::filesystem::path& out, const Diagram& d);
 void write_dot(const std::filesystem::path& out, const Diagram& d);
 

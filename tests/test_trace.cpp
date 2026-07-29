@@ -24,6 +24,7 @@
 //fusa:test REQ-HLR003
 //fusa:test REQ-HLR004
 //fusa:test REQ-HLR005
+//fusa:test REQ-CFG006
 #include <catch2/catch_all.hpp>
 #include "trace/trace.hpp"
 #include "testutil/testutil.hpp"
@@ -86,6 +87,37 @@ TEST_CASE("trace: scan_annotations finds annotations in both src and tests", "[t
     }
     REQUIRE(found_req);
     REQUIRE(found_test);
+}
+
+// §1.2.1 MUST: the cfg-aware overload must exclude annotations outside every
+// configured sourceDirs entry — regression test for trace previously
+// scanning the whole project unconditionally.
+TEST_CASE("trace: scan_annotations(dir, cfg) excludes files outside sourceDirs",
+          "[trace][cfg006]") {
+    TempDir tmp;
+    tmp.write("src/a.cpp", "// fusa:req REQ-001\nvoid a() {}\n");
+    // Outside every configured source dir — must not contribute an annotation.
+    tmp.write("build-audit/generated.cpp", "// fusa:req REQ-999\nvoid gen() {}\n");
+
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"src", "include"};
+    auto anns = trace::scan_annotations(tmp.path(), cfg);
+    bool found_real = false, found_stray = false;
+    for (const auto& a : anns) {
+        if (a.req_id == "REQ-001") found_real  = true;
+        if (a.req_id == "REQ-999") found_stray = true;
+    }
+    REQUIRE(found_real);
+    REQUIRE_FALSE(found_stray);
+}
+
+TEST_CASE("trace: scan_annotations(dir, cfg) with empty source_dirs behaves like "
+          "the unfiltered overload", "[trace][cfg006]") {
+    TempDir tmp;
+    tmp.write("src/a.cpp", "// fusa:req REQ-001\nvoid a() {}\n");
+    config::ProjectConfig cfg; // source_dirs left empty
+    REQUIRE(trace::scan_annotations(tmp.path(), cfg).size()
+            == trace::scan_annotations(tmp.path()).size());
 }
 
 // ─── load_requirements ────────────────────────────────────────────────────────

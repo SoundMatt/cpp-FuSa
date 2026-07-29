@@ -100,6 +100,16 @@ struct TraceOptions {
 [[nodiscard]] std::vector<Annotation> scan_annotations(
     const std::filesystem::path& dir);
 
+// Overload filtered by cfg's sourceDirs/excludePatterns (§1.2.1 MUST) — used
+// by run() to build the coverage matrix, so an out-of-scope directory (a
+// stray build tree, vendor code, etc.) can never contribute to or dilute
+// requirement coverage. The unfiltered overload above remains for direct,
+// whole-project lookups (e.g. `req show`).
+//
+//fusa:req REQ-CFG006
+[[nodiscard]] std::vector<Annotation> scan_annotations(
+    const std::filesystem::path& dir, const config::ProjectConfig& cfg);
+
 // §1.4.1 / §5 --func-coverage — scans src/*/*.hpp for header-declared public
 // functions with a matching .cpp definition in the same directory, and reports
 // how many carry a //fusa:req tag directly above that definition. Trivial

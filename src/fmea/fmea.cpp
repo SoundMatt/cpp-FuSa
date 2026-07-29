@@ -75,6 +75,10 @@ std::vector<Declaration> scan_declarations(const fs::path& dir,
         if (!entry.is_regular_file()) continue;
         if (!std::regex_search(entry.path().string(), ext_re)) continue;
         if (is_excluded(entry.path(), cfg)) continue;
+        // §1.2.1 MUST: honour sourceDirs, not just excludePatterns — a file
+        // outside every configured source dir (e.g. a stray build tree's
+        // CMake compiler-probe file) must never be scanned as project code.
+        if (!config::under_source_dirs(entry.path(), dir, cfg)) continue;
 
         std::ifstream f(entry.path());
         std::string line;

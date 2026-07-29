@@ -1,6 +1,7 @@
 //fusa:test REQ-COUPLING001
 //fusa:test REQ-COUPLING002
 //fusa:test REQ-COUPLING003
+//fusa:test REQ-CFG005
 #include <catch2/catch_all.hpp>
 #include "coupling/coupling.hpp"
 #include "testutil/testutil.hpp"
@@ -110,4 +111,33 @@ TEST_CASE("coupling: JSON report data and control counts are non-negative", "[co
     json j; f >> j;
     REQUIRE(j["dataCount"].get<int>() >= 0);
     REQUIRE(j["controlCount"].get<int>() >= 0);
+}
+
+// §1.2.1 MUST: excludePatterns must be honoured — regression test for the
+// cfg-aware overload.
+TEST_CASE("coupling: analyse(dir, cfg) excludes a file matching excludePatterns",
+          "[coupling][cfg005]") {
+    TempDir tmp;
+    tmp.write("src/engine/engine.cpp",
+        "#include \"config/config.hpp\"\nvoid f(){}\n");
+    tmp.write("src/vendor/vendor.cpp",
+        "#include \"config/config.hpp\"\nvoid g(){}\n");
+
+    config::ProjectConfig cfg;
+    auto r_unfiltered = coupling::analyse(tmp.path());
+
+    cfg.exclude_patterns = {"src/vendor/"};
+    auto r_filtered = coupling::analyse(tmp.path(), cfg);
+    REQUIRE(r_filtered.data_count < r_unfiltered.data_count);
+}
+
+TEST_CASE("coupling: analyse(dir, cfg) with empty excludePatterns matches "
+          "the unfiltered overload", "[coupling][cfg005]") {
+    TempDir tmp;
+    tmp.write("src/engine/engine.cpp",
+        "#include \"config/config.hpp\"\nvoid f(){}\n");
+    config::ProjectConfig cfg;
+    auto r1 = coupling::analyse(tmp.path());
+    auto r2 = coupling::analyse(tmp.path(), cfg);
+    REQUIRE(r1.data_count == r2.data_count);
 }

@@ -8,6 +8,7 @@
 //fusa:test REQ-FMEA008
 //fusa:test REQ-FMEA009
 //fusa:test REQ-FMEA010
+//fusa:test REQ-CFG006
 #include <catch2/catch_all.hpp>
 #include "fmea/fmea.hpp"
 #include "testutil/testutil.hpp"
@@ -186,6 +187,37 @@ TEST_CASE("fmea: summary.coveragePct never exceeds 100 with a non-trivial test-s
     const auto& s = value_of(r).summary;
     REQUIRE(s.coverage_pct <= 100.0);
     REQUIRE(s.components_analyzed <= s.components_in_project);
+}
+
+// §1.2.1 MUST: sourceDirs must be honoured, not just excludePatterns —
+// regression test for a stray/differently-named build directory (e.g.
+// CMake's own compiler-probe file under build-audit/) being fabricated into
+// the FMEA as if it were real project code.
+TEST_CASE("fmea: a file outside every configured sourceDirs is never scanned, "
+          "even when it doesn't match any excludePatterns",
+          "[fmea][cfg006]") {
+    TempDir tmp;
+    tmp.write("src/widget/widget.hpp", "class Widget {\npublic:\n  void draw();\n};\n");
+    tmp.write("src/widget/widget.cpp",
+        "//fusa:req REQ-X001\nvoid Widget::draw() {}\n");
+    // Simulates CMake's own compiler-probe file under a stray build
+    // directory that doesn't match any excludePatterns entry (only the
+    // literal "build/" substring is excluded, not "build-audit/").
+    tmp.write("build-audit/CMakeFiles/4.3.3/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+              "class CompilerIdCXX {\npublic:\n  int main();\n};\n");
+
+    config::ProjectConfig cfg;
+    cfg.source_dirs      = {"src", "include"};
+    cfg.exclude_patterns = {"build/", "build-cov/", "_deps/"};
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    const auto& rpt = value_of(r);
+
+    REQUIRE_FALSE(rpt.entries.empty());
+    for (const auto& e : rpt.entries) {
+        REQUIRE(e.file.find("build-audit") == std::string::npos);
+        REQUIRE(e.component != "CompilerIdCXX");
+    }
 }
 
 // ─── write ────────────────────────────────────────────────────────────────────

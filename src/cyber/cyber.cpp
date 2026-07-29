@@ -188,6 +188,8 @@ CyberReport run(const fs::path& dir, const config::ProjectConfig& cfg) {
         if (!entry.is_regular_file()) continue;
         if (!is_source(entry.path())) continue;
         if (is_excluded(entry.path(), cfg)) continue;
+        // §1.2.1 MUST: honour sourceDirs, not just excludePatterns.
+        if (!config::under_source_dirs(entry.path(), dir, cfg)) continue;
 
         ++rpt.total_files;
         std::ifstream f(entry.path());

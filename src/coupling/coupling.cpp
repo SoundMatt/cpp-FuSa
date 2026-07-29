@@ -22,10 +22,15 @@ std::string now_iso() {
     ss << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%SZ");
     return ss.str();
 }
-} // namespace
 
-//fusa:req REQ-COUPLING001 REQ-COUPLING002 REQ-COUPLING003
-CouplingReport analyse(const fs::path& dir) {
+bool is_excluded(const fs::path& p, const std::vector<std::string>& exclude_patterns) {
+    auto s = p.string();
+    for (const auto& pat : exclude_patterns)
+        if (s.find(pat) != std::string::npos) return true;
+    return false;
+}
+
+CouplingReport analyse_impl(const fs::path& dir, const std::vector<std::string>& exclude_patterns) {
     CouplingReport r;
     r.generated_at = now_iso();
     r.project = dir.filename().string();
@@ -49,6 +54,7 @@ CouplingReport analyse(const fs::path& dir) {
             dir / "src", fs::directory_options::skip_permission_denied)) {
         if (!entry.is_regular_file()) continue;
         if (!std::regex_search(entry.path().string(), ext_re)) continue;
+        if (is_excluded(entry.path(), exclude_patterns)) continue;
 
         std::string from_comp = component_of(entry.path());
         std::ifstream f(entry.path());
@@ -86,6 +92,18 @@ CouplingReport analyse(const fs::path& dir) {
     r.data_count    = static_cast<int>(r.data_edges.size());
     r.control_count = static_cast<int>(r.control_edges.size());
     return r;
+}
+
+} // namespace
+
+//fusa:req REQ-COUPLING001 REQ-COUPLING002 REQ-COUPLING003
+CouplingReport analyse(const fs::path& dir) {
+    return analyse_impl(dir, {});
+}
+
+//fusa:req REQ-CFG005
+CouplingReport analyse(const fs::path& dir, const config::ProjectConfig& cfg) {
+    return analyse_impl(dir, cfg.exclude_patterns);
 }
 
 void write_json(const fs::path& out, const CouplingReport& r) {

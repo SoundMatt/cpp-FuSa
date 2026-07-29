@@ -107,4 +107,36 @@ using json = nlohmann::json;
     return std::monostate{};
 }
 
+//fusa:req REQ-CFG006
+[[nodiscard]] bool under_source_dirs(const std::filesystem::path& candidate,
+                                     const std::filesystem::path& project_root,
+                                     const ProjectConfig& cfg) {
+    namespace fs = std::filesystem;
+    if (cfg.source_dirs.empty()) return true; // MAY field absent -> whole-project scan
+
+    std::error_code ec;
+    fs::path abs_candidate = fs::weakly_canonical(candidate, ec);
+    if (ec) { abs_candidate = fs::absolute(candidate); ec.clear(); }
+
+    for (const auto& sd : cfg.source_dirs) {
+        if (sd.empty() || sd == ".") return true;
+
+        fs::path base = fs::weakly_canonical(project_root / sd, ec);
+        if (ec) { base = fs::absolute(project_root / sd); ec.clear(); }
+
+        // `base` is a path-component prefix of `abs_candidate` — this
+        // matches both a file directly inside sd and one nested arbitrarily
+        // deep under it, without the false positives a raw string::find
+        // substring check would produce (e.g. "src" matching "src2/").
+        auto bit = base.begin();
+        auto cit = abs_candidate.begin();
+        bool is_prefix = true;
+        for (; bit != base.end(); ++bit, ++cit) {
+            if (cit == abs_candidate.end() || *cit != *bit) { is_prefix = false; break; }
+        }
+        if (is_prefix) return true;
+    }
+    return false;
+}
+
 } // namespace cpfusa::config

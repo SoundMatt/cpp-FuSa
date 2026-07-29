@@ -1049,7 +1049,12 @@ int run(int argc, char* argv[]) {
     boundary_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         fs::path outdir = boundary_outdir.empty() ? dir : fs::path(boundary_outdir);
-        auto d = boundary::scan(dir);
+        // §1.2.1 MUST: honour excludePatterns when a config is present;
+        // boundary works without .fusa.json too, so fall back to defaults()
+        // (empty exclude_patterns) rather than erroring when it's absent.
+        auto cfg_r = config::load(dir);
+        auto cfg = is_ok(cfg_r) ? value_of(cfg_r) : config::defaults(dir);
+        auto d = boundary::scan(dir, cfg);
         boundary::write_mermaid(outdir / boundary::BOUNDARY_FILE, d);
         boundary::write_dot(outdir / boundary::BOUNDARY_DOT_FILE, d);
         print_ok("boundary.mermaid written");
@@ -1385,7 +1390,12 @@ int run(int argc, char* argv[]) {
     coupling_cmd->add_option("--output", coupling_output, "Write JSON report to file");
     coupling_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
-        auto r = coupling::analyse(dir);
+        // §1.2.1 MUST: honour excludePatterns when a config is present;
+        // coupling works without .fusa.json too, so fall back to defaults()
+        // (empty exclude_patterns) rather than erroring when it's absent.
+        auto cfg_r = config::load(dir);
+        auto cfg = is_ok(cfg_r) ? value_of(cfg_r) : config::defaults(dir);
+        auto r = coupling::analyse(dir, cfg);
         if (!coupling_output.empty()) {
             coupling::write_json(fs::path(coupling_output), r);
             print_ok("coupling-report.json written");

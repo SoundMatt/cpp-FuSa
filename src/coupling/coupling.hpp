@@ -1,4 +1,5 @@
 #pragma once
+#include "../config/config.hpp"
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -30,6 +31,14 @@ struct CouplingReport {
 };
 
 [[nodiscard]] CouplingReport analyse(const std::filesystem::path& dir);
+
+// Overload filtered by cfg's excludePatterns (§1.2.1 MUST). The unfiltered
+// overload above is retained for direct callers that intentionally want an
+// unfiltered scan of dir/"src".
+//
+//fusa:req REQ-CFG005
+[[nodiscard]] CouplingReport analyse(const std::filesystem::path& dir,
+                                     const config::ProjectConfig& cfg);
 void write_json(const std::filesystem::path& out, const CouplingReport& r);
 void render_text(const CouplingReport& r);
 
