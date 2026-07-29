@@ -36,7 +36,10 @@ bool is_excluded(const fs::path& p, const config::ProjectConfig& cfg) {
     // a real project component — exactly the §1.6 rule 4 MUST violation
     // ("not... a test fixture mistaken for project code").
     if (trace::is_test_tree_path(p)) return true;
-    auto s = p.string();
+    // generic_string() (always "/"-separated) — excludePatterns are "/"-style
+    // gitignore globs (§1.2.1) regardless of platform; p.string() would use
+    // "\"-separated native form on Windows and silently never match.
+    auto s = p.generic_string();
     for (const auto& pat : cfg.exclude_patterns)
         if (s.find(pat) != std::string::npos) return true;
     return false;
@@ -75,6 +78,10 @@ std::vector<Declaration> scan_declarations(const fs::path& dir,
         if (!entry.is_regular_file()) continue;
         if (!std::regex_search(entry.path().string(), ext_re)) continue;
         if (is_excluded(entry.path(), cfg)) continue;
+        // §1.2.1 MUST: honour sourceDirs, not just excludePatterns — a file
+        // outside every configured source dir (e.g. a stray build tree's
+        // CMake compiler-probe file) must never be scanned as project code.
+        if (!config::under_source_dirs(entry.path(), dir, cfg)) continue;
 
         std::ifstream f(entry.path());
         std::string line;

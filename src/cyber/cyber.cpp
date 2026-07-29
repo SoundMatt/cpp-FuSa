@@ -39,7 +39,10 @@ bool is_source(const fs::path& p) {
 }
 
 bool is_excluded(const fs::path& p, const config::ProjectConfig& cfg) {
-    auto s = p.string();
+    // generic_string() (always "/"-separated) — excludePatterns are "/"-style
+    // gitignore globs (§1.2.1) regardless of platform; p.string() would use
+    // "\"-separated native form on Windows and silently never match.
+    auto s = p.generic_string();
     for (const auto& pat : cfg.exclude_patterns) {
         if (s.find(pat) != std::string::npos) return true;
     }
@@ -188,6 +191,8 @@ CyberReport run(const fs::path& dir, const config::ProjectConfig& cfg) {
         if (!entry.is_regular_file()) continue;
         if (!is_source(entry.path())) continue;
         if (is_excluded(entry.path(), cfg)) continue;
+        // §1.2.1 MUST: honour sourceDirs, not just excludePatterns.
+        if (!config::under_source_dirs(entry.path(), dir, cfg)) continue;
 
         ++rpt.total_files;
         std::ifstream f(entry.path());

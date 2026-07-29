@@ -124,7 +124,56 @@ TEST_CASE("qualify: saved hash matches computed hash", "[qualify][qualify002]") 
     std::ifstream f(path);
     json j;
     f >> j;
-    REQUIRE(j["hash"].get<std::string>() == report.hash);
+    REQUIRE(j["hash"].get<std::string>() == "sha256:" + report.hash);
+}
+
+// §2.7: a field named `hash` MUST carry the "<algo>:<value>" prefix — always
+// `sha256:` for qualify.hash. Regression test for the bare-hex bug.
+TEST_CASE("qualify: JSON hash field carries the sha256: prefix, not bare hex",
+          "[qualify][qualify002]") {
+    auto cases = qualify::builtin_cases();
+    auto rr    = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto j = qualify::to_json(value_of(rr));
+    REQUIRE(j.contains("hash"));
+    std::string h = j["hash"].get<std::string>();
+    REQUIRE(h.rfind("sha256:", 0) == 0);
+    REQUIRE(h.size() == 7 + 64); // "sha256:" + 64 hex chars
+}
+
+// ─── §6 results[] shape ─────────────────────────────────────────────────────
+
+// §6: results[].result MUST be one of PASS|FAIL|SKIP|ERROR, and results[]
+// entries carry a top-level `name` — not a nested `case.name` with a boolean
+// `passed` (the pre-fix shape).
+TEST_CASE("qualify: to_json results[] entries carry top-level name and result "
+          "PASS/FAIL enum, not nested case/passed",
+          "[qualify][qualify002]") {
+    auto cases = qualify::builtin_cases();
+    auto rr    = qualify::run(cases);
+    REQUIRE(is_ok(rr));
+    auto j = qualify::to_json(value_of(rr));
+    REQUIRE(j.contains("results"));
+    REQUIRE_FALSE(j["results"].empty());
+    for (auto& rj : j["results"]) {
+        REQUIRE(rj.contains("name"));
+        REQUIRE(rj["name"].get<std::string>().empty() == false);
+        REQUIRE(rj.contains("result"));
+        std::string result = rj["result"].get<std::string>();
+        REQUIRE((result == "PASS" || result == "FAIL" ||
+                 result == "SKIP" || result == "ERROR"));
+        REQUIRE_FALSE(rj.contains("case"));
+        REQUIRE_FALSE(rj.contains("passed"));
+    }
+}
+
+TEST_CASE("qualify: result_enum returns PASS for a passing case and FAIL for a failing one",
+          "[qualify][qualify002]") {
+    qualify::Case c{"c1", "FUSA001", "desc", {}, true};
+    qualify::CaseResult ok{c, true, ""};
+    qualify::CaseResult bad{c, false, "expected finding FUSA001 but none produced"};
+    REQUIRE(qualify::result_enum(ok) == "PASS");
+    REQUIRE(qualify::result_enum(bad) == "FAIL");
 }
 
 // ─── Tool Qualification Display (REQ-QUALIFY005..REQ-QUALIFY007) ──────────────

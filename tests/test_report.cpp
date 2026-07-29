@@ -136,6 +136,45 @@ TEST_CASE("render_json: finding has category, standard, clause", "[report][rpt00
     REQUIRE(f["clause"]   == "A18-5-2");
 }
 
+// §4 MUST (v1.9+): "fingerprint is MUST from spec v1.9. Every conformant
+// tool MUST emit it." make_finding() never sets Finding.fingerprint (as
+// every non-quality rule set — engine/FUSA00x, lint/LINT0xx, analyze, hara,
+// req, ... — does today), so this is a direct regression test for the bug
+// where only FUSA-STUB001/002 carried a fingerprint.
+TEST_CASE("render_json: every finding carries a sha256:-prefixed fingerprint, "
+          "even when the rule never set one", "[report][rpt003]") {
+    auto j = json::parse(report::render_json({make_finding()}, make_cfg()));
+    auto& f = j["findings"][0];
+    REQUIRE(f.contains("fingerprint"));
+    std::string fp = f["fingerprint"].get<std::string>();
+    REQUIRE(fp.rfind("sha256:", 0) == 0);
+    REQUIRE(fp.size() == 7 + 64);
+}
+
+TEST_CASE("render_json: auto-computed fingerprint is deterministic for identical findings",
+          "[report][rpt003]") {
+    auto j1 = json::parse(report::render_json({make_finding()}, make_cfg()));
+    auto j2 = json::parse(report::render_json({make_finding()}, make_cfg()));
+    REQUIRE(j1["findings"][0]["fingerprint"] == j2["findings"][0]["fingerprint"]);
+}
+
+TEST_CASE("render_json: auto-computed fingerprint differs across different rule ids",
+          "[report][rpt003]") {
+    auto f1 = make_finding();
+    auto f2 = make_finding();
+    f2.rule_id = "LINT002";
+    auto j = json::parse(report::render_json({f1, f2}, make_cfg()));
+    REQUIRE(j["findings"][0]["fingerprint"] != j["findings"][1]["fingerprint"]);
+}
+
+TEST_CASE("render_json: a rule-supplied fingerprint is preserved, not overwritten",
+          "[report][rpt003]") {
+    auto f = make_finding();
+    f.fingerprint = "sha256:deadbeef";
+    auto j = json::parse(report::render_json({f}, make_cfg()));
+    REQUIRE(j["findings"][0]["fingerprint"] == "sha256:deadbeef");
+}
+
 TEST_CASE("render_json: summary has total count", "[report][rpt004]") {
     auto j = json::parse(report::render_json({make_finding(), make_finding()}, make_cfg()));
     REQUIRE(j["summary"]["total"] == 2);

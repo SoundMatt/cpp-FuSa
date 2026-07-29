@@ -4,6 +4,7 @@ digraph boundary {
     "disposition";
     "std::filesystem" [style=dashed];
     "iec62443";
+    "iso21434";
     "metrics";
     "cmd";
     "vuln";
@@ -11,7 +12,9 @@ digraph boundary {
     "lint";
     "cyber";
     "trace";
+    "unece";
     "do178";
+    "quality";
     "verify";
     "config";
     "boundary";
@@ -21,6 +24,7 @@ digraph boundary {
     "diff";
     "release";
     "auditpack";
+    "comp";
     "slsa";
     "pr";
     "safety_case";
@@ -29,6 +33,7 @@ digraph boundary {
     "fix";
     "misra";
     "fmea";
+    "ast";
     "analyze";
     "report";
     "coupling";
@@ -45,6 +50,7 @@ digraph boundary {
     "badge";
     "disposition" -> "std::filesystem";
     "iec62443" -> "std::filesystem";
+    "iso21434" -> "std::filesystem";
     "metrics" -> "std::filesystem";
     "cmd" -> "std::filesystem";
     "vuln" -> "std::filesystem";
@@ -52,7 +58,9 @@ digraph boundary {
     "lint" -> "std::filesystem";
     "cyber" -> "std::filesystem";
     "trace" -> "std::filesystem";
+    "unece" -> "std::filesystem";
     "do178" -> "std::filesystem";
+    "quality" -> "std::filesystem";
     "verify" -> "std::filesystem";
     "config" -> "std::filesystem";
     "boundary" -> "std::filesystem";
@@ -61,6 +69,7 @@ digraph boundary {
     "diff" -> "std::filesystem";
     "release" -> "std::filesystem";
     "auditpack" -> "std::filesystem";
+    "comp" -> "std::filesystem";
     "slsa" -> "std::filesystem";
     "pr" -> "std::filesystem";
     "safety_case" -> "std::filesystem";
@@ -68,6 +77,7 @@ digraph boundary {
     "sas" -> "std::filesystem";
     "fix" -> "std::filesystem";
     "fmea" -> "std::filesystem";
+    "ast" -> "std::filesystem";
     "analyze" -> "std::filesystem";
     "report" -> "std::filesystem";
     "coupling" -> "std::filesystem";

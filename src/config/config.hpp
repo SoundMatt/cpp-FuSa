@@ -28,4 +28,18 @@ constexpr std::string_view ConfigFile = ".fusa.json";
 [[nodiscard]] ProjectConfig defaults(const std::filesystem::path& dir);
 [[nodiscard]] bool exists(const std::filesystem::path& dir);
 
+// under_source_dirs reports whether `candidate` (any path under `project_root`,
+// absolute or relative) falls inside one of cfg.source_dirs. Every
+// source-walking command (check, trace, fmea, coupling, boundary, cyber —
+// §1.2.1 MUST) should call this alongside its own exclude_patterns check so a
+// stray/differently-named build directory or any other out-of-scope tree
+// never gets scanned as project source. When cfg.source_dirs is empty (the
+// field is MAY — a project need not set it), every path is in scope, which
+// preserves the pre-existing whole-tree-scan default.
+//
+//fusa:req REQ-CFG006
+[[nodiscard]] bool under_source_dirs(const std::filesystem::path& candidate,
+                                     const std::filesystem::path& project_root,
+                                     const ProjectConfig& cfg);
+
 } // namespace cpfusa::config

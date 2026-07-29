@@ -1,27 +1,27 @@
 {
   "components": [
     {
-      "hash": "",
+      "hash": "sha256:46f9e16bdef0d2c6ca69f4c8e14bbfe85462e4f28f7abc5c45e8566ab98b42fa",
       "name": "nlohmann_json",
       "version": "3.11.3"
     },
     {
-      "hash": "",
+      "hash": "sha256:6d6ecad8f614332fb4c4ef740d5f57d2b21c4fd62642edea2f23e74ecd07a41c",
       "name": "CLI11",
       "version": "2.4.2"
     },
     {
-      "hash": "",
+      "hash": "sha256:490009cba2c2f84b6ceee9edb953068f8a8a437512fa98fbfed6004c62fe64b4",
       "name": "Catch2",
       "version": "3.6.0"
     }
   ],
   "format": "x-FuSa SBOM v1",
-  "generatedAt": "2026-06-10T19:14:28Z",
+  "generatedAt": "2026-07-29T03:26:43Z",
   "kind": "sbom",
   "language": "cpp",
   "module": "github.com/SoundMatt/cpp-FuSa",
-  "schemaVersion": "1.8",
+  "schemaVersion": "1.15.0",
   "tool": "cpp-FuSa",
-  "toolVersion": "0.6.1"
+  "toolVersion": "0.16.0"
 }

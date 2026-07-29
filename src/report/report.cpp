@@ -1,5 +1,6 @@
 #include "report.hpp"
 #include "cpfusa/fusa.hpp"
+#include "../quality/quality.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
@@ -40,6 +41,22 @@ json make_header(std::string_view kind) {
     h["language"]      = "cpp";
     h["generatedAt"]   = now_iso8601();
     return h;
+}
+
+// §4.2 / §4: "fingerprint is MUST from spec v1.9. Every conformant tool MUST
+// emit it." Most rule sets (engine/FUSA00x, lint/LINT0xx, analyze, hara,
+// req, ...) construct a Finding via the plain 7-arg constructor and never
+// set fingerprint themselves — quality.cpp's two rules (FUSA-STUB001/002)
+// are the only ones that do. Rather than touching every one of those
+// construction sites individually, compute the canonical fingerprint here,
+// once, at the single point every Finding passes through on its way into
+// the JSON document — this is where the MUST is actually observable, and it
+// makes the guarantee unconditional regardless of which rule produced the
+// finding. A rule that already set its own fingerprint (still computed via
+// the same quality::fingerprint algorithm) is left untouched.
+std::string finding_fingerprint(const Finding& f) {
+    if (!f.fingerprint.empty()) return f.fingerprint;
+    return quality::fingerprint(f.rule_id, f.file, f.message);
 }
 
 // §3.2 report envelope (report documents add these fields to the §3.1 header).
@@ -119,7 +136,7 @@ std::string render_json(const std::vector<Finding>& findings,
         if (!f.standard_id.empty())  item["standard"]    = f.standard_id;
         if (!f.clause.empty())       item["clause"]      = f.clause;
         if (!f.remediation.empty())  item["remediation"] = f.remediation; // §4: NOT "fix"
-        if (!f.fingerprint.empty())  item["fingerprint"] = f.fingerprint;
+        item["fingerprint"] = finding_fingerprint(f); // §4 MUST (v1.9+)
         farr.push_back(item);
         switch (f.severity) {
             case Severity::ERROR:   ++errors;   break;

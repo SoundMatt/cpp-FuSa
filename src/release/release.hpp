@@ -79,7 +79,19 @@ Result<std::monostate> write_all(const std::filesystem::path& dir,
                                  const Provenance& prov,
                                  const Manifest& manifest);
 
-// The evidence files collected by hash_artifacts / audit-pack.
+// The fixed §1.2 input-file / §1.3 generated-evidence filenames collected by
+// hash_artifacts / audit-pack. Does NOT include the open-ended
+// `<standard>-gap-report.json` family (§1.3) — see list_present_evidence_files.
 extern const std::vector<std::string> EvidenceFiles;
+
+// list_present_evidence_files scans `dir` (project root, non-recursive) for
+// every EvidenceFiles name that exists, plus every `<standard>-gap-report.json`
+// file present (§1.3's glob pattern — the standard-id set is open-ended, so it
+// can't be a fixed list). Returns matches sorted, so hash_artifacts and
+// audit-pack both pick up any generated evidence file at the project root
+// rather than only a hardcoded subset (§8 MUST).
+//
+//fusa:req REQ-RELEASE006 REQ-AUDIT001
+std::vector<std::string> list_present_evidence_files(const std::filesystem::path& dir);
 
 } // namespace cpfusa::release

@@ -230,3 +230,56 @@ TEST_CASE("config: exists() correctly reports presence", "[config][cfg006]") {
     REQUIRE(is_ok(config::save(tmp.path(), config::defaults(tmp.path()))));
     REQUIRE(config::exists(tmp.path()));
 }
+
+// ─── under_source_dirs (§1.2.1 MUST) ──────────────────────────────────────────
+
+TEST_CASE("config: under_source_dirs is true for everything when source_dirs is empty",
+          "[config][cfg006]") {
+    config::ProjectConfig cfg;
+    REQUIRE(cfg.source_dirs.empty());
+    TempDir tmp;
+    REQUIRE(config::under_source_dirs(tmp.path() / "anything/at/all.cpp", tmp.path(), cfg));
+}
+
+TEST_CASE("config: under_source_dirs is true for a file directly inside a source dir",
+          "[config][cfg006]") {
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"src", "include"};
+    TempDir tmp;
+    REQUIRE(config::under_source_dirs(tmp.path() / "src" / "foo.cpp", tmp.path(), cfg));
+    REQUIRE(config::under_source_dirs(tmp.path() / "include" / "foo.hpp", tmp.path(), cfg));
+}
+
+TEST_CASE("config: under_source_dirs is true for a file nested deep inside a source dir",
+          "[config][cfg006]") {
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"src"};
+    TempDir tmp;
+    REQUIRE(config::under_source_dirs(tmp.path() / "src" / "a" / "b" / "c.cpp", tmp.path(), cfg));
+}
+
+TEST_CASE("config: under_source_dirs is false for a path outside every configured source dir",
+          "[config][cfg006]") {
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"src", "include"};
+    TempDir tmp;
+    REQUIRE_FALSE(config::under_source_dirs(
+        tmp.path() / "build-audit" / "CMakeFiles" / "CMakeCXXCompilerId.cpp", tmp.path(), cfg));
+}
+
+TEST_CASE("config: under_source_dirs does not false-positive-match a similarly-named directory",
+          "[config][cfg006]") {
+    // "src" must not match "src2" via a naive substring check.
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"src"};
+    TempDir tmp;
+    REQUIRE_FALSE(config::under_source_dirs(tmp.path() / "src2" / "foo.cpp", tmp.path(), cfg));
+}
+
+TEST_CASE("config: under_source_dirs treats \".\" as the whole project",
+          "[config][cfg006]") {
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"."};
+    TempDir tmp;
+    REQUIRE(config::under_source_dirs(tmp.path() / "anywhere" / "file.cpp", tmp.path(), cfg));
+}

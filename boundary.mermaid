@@ -6,6 +6,7 @@ graph TD
     subgraph internal["cpp-FuSa Modules"]
     disposition["disposition"]
     iec62443["iec62443"]
+    iso21434["iso21434"]
     metrics["metrics"]
     cmd["cmd"]
     vuln["vuln"]
@@ -13,7 +14,9 @@ graph TD
     lint["lint"]
     cyber["cyber"]
     trace["trace"]
+    unece["unece"]
     do178["do178"]
+    quality["quality"]
     verify["verify"]
     config["config"]
     boundary["boundary"]
@@ -23,6 +26,7 @@ graph TD
     diff["diff"]
     release["release"]
     auditpack["auditpack"]
+    comp["comp"]
     slsa["slsa"]
     pr["pr"]
     safety_case["safety_case"]
@@ -31,6 +35,7 @@ graph TD
     fix["fix"]
     misra["misra"]
     fmea["fmea"]
+    ast["ast"]
     analyze["analyze"]
     report["report"]
     coupling["coupling"]
@@ -49,6 +54,7 @@ graph TD
 
     disposition --> std::filesystem
     iec62443 --> std::filesystem
+    iso21434 --> std::filesystem
     metrics --> std::filesystem
     cmd --> std::filesystem
     vuln --> std::filesystem
@@ -56,7 +62,9 @@ graph TD
     lint --> std::filesystem
     cyber --> std::filesystem
     trace --> std::filesystem
+    unece --> std::filesystem
     do178 --> std::filesystem
+    quality --> std::filesystem
     verify --> std::filesystem
     config --> std::filesystem
     boundary --> std::filesystem
@@ -65,6 +73,7 @@ graph TD
     diff --> std::filesystem
     release --> std::filesystem
     auditpack --> std::filesystem
+    comp --> std::filesystem
     slsa --> std::filesystem
     pr --> std::filesystem
     safety_case --> std::filesystem
@@ -72,6 +81,7 @@ graph TD
     sas --> std::filesystem
     fix --> std::filesystem
     fmea --> std::filesystem
+    ast --> std::filesystem
     analyze --> std::filesystem
     report --> std::filesystem
     coupling --> std::filesystem

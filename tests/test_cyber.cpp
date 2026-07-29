@@ -8,6 +8,7 @@
 //fusa:test REQ-CYBER008
 //fusa:test REQ-CYBER009
 //fusa:test REQ-CYBER010
+//fusa:test REQ-CFG006
 #include <catch2/catch_all.hpp>
 #include "cyber/cyber.hpp"
 #include "testutil/testutil.hpp"
@@ -135,4 +136,22 @@ TEST_CASE("cyber: run() sets generated_at timestamp", "[cyber]") {
     config::ProjectConfig cfg;
     auto r = cyber::run(tmp.path(), cfg);
     REQUIRE_FALSE(r.generated_at.empty());
+}
+
+// §1.2.1 MUST: sourceDirs must be honoured, not just excludePatterns —
+// regression test for cyber scanning a stray build directory outside every
+// configured source dir.
+TEST_CASE("cyber: files outside every configured sourceDirs are never scanned",
+          "[cyber][cfg006]") {
+    TempDir tmp;
+    tmp.write("src/main.cpp", "int main() { std::string s = \"ok\"; return 0; }\n");
+    // Outside sourceDirs and not matched by excludePatterns — must still be skipped.
+    tmp.write("build-audit/probe.cpp", "int f() { return rand(); }\n");
+
+    config::ProjectConfig cfg;
+    cfg.source_dirs      = {"src"};
+    cfg.exclude_patterns = {"build/"};
+    auto r = cyber::run(tmp.path(), cfg);
+    REQUIRE(r.findings.empty());
+    REQUIRE(r.total_files == 1);
 }

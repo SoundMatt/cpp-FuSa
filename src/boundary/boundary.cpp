@@ -9,8 +9,19 @@ namespace fs = std::filesystem;
 
 namespace cpfusa::boundary {
 
-//fusa:req REQ-BOUNDARY001 REQ-BOUNDARY002 REQ-BOUNDARY003
-Diagram scan(const fs::path& dir) {
+namespace {
+
+bool is_excluded(const fs::path& p, const std::vector<std::string>& exclude_patterns) {
+    // generic_string() (always "/"-separated) — excludePatterns are "/"-style
+    // gitignore globs (§1.2.1) regardless of platform; p.string() would use
+    // "\"-separated native form on Windows and silently never match.
+    auto s = p.generic_string();
+    for (const auto& pat : exclude_patterns)
+        if (s.find(pat) != std::string::npos) return true;
+    return false;
+}
+
+Diagram scan_impl(const fs::path& dir, const std::vector<std::string>& exclude_patterns) {
     Diagram d;
     std::set<std::string> seen_nodes;
 
@@ -45,6 +56,7 @@ Diagram scan(const fs::path& dir) {
             if (!entry.is_regular_file()) continue;
             std::string s = entry.path().string();
             if (!std::regex_search(s, ext_re)) continue;
+            if (is_excluded(entry.path(), exclude_patterns)) continue;
 
             std::string comp = component_of(entry.path());
             add_node(comp, comp, false);
@@ -79,6 +91,7 @@ Diagram scan(const fs::path& dir) {
             if (!entry.is_regular_file()) continue;
             std::string s = entry.path().string();
             if (s.find(".cpp") == std::string::npos) continue;
+            if (is_excluded(entry.path(), exclude_patterns)) continue;
             std::string from_comp = component_of(entry.path());
             std::ifstream f(entry.path());
             std::string line;
@@ -100,6 +113,18 @@ Diagram scan(const fs::path& dir) {
     }
 
     return d;
+}
+
+} // namespace
+
+//fusa:req REQ-BOUNDARY001 REQ-BOUNDARY002 REQ-BOUNDARY003
+Diagram scan(const fs::path& dir) {
+    return scan_impl(dir, {});
+}
+
+//fusa:req REQ-CFG005
+Diagram scan(const fs::path& dir, const config::ProjectConfig& cfg) {
+    return scan_impl(dir, cfg.exclude_patterns);
 }
 
 void write_mermaid(const fs::path& out, const Diagram& d) {

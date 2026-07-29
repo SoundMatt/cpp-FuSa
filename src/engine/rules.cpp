@@ -1,4 +1,5 @@
 #include "rules.hpp"
+#include "../config/config.hpp"
 #include <filesystem>
 #include <fstream>
 #include <regex>
@@ -14,20 +15,36 @@ namespace cpfusa::engine {
 namespace {
 
 // Returns true if any file in the directory tree matches the predicate.
-bool any_file(const fs::path& dir,
+// §1.2.1 MUST: honours both sourceDirs and excludePatterns, so a stray
+// build directory (or anything else outside the configured source tree)
+// can never satisfy a project-wide existence check like FUSA002's.
+bool any_file(const fs::path& dir, const config::ProjectConfig& cfg,
               const std::function<bool(const fs::path&)>& pred) {
     if (!fs::exists(dir)) return false;
     for (const auto& entry : fs::recursive_directory_iterator(
              dir, fs::directory_options::skip_permission_denied)) {
-        if (entry.is_regular_file() && pred(entry.path())) return true;
+        if (!entry.is_regular_file()) continue;
+        if (!config::under_source_dirs(entry.path(), dir, cfg)) continue;
+        // generic_string() (always "/"-separated) — excludePatterns are
+        // "/"-style gitignore globs (§1.2.1) regardless of platform;
+        // .string() would use "\"-separated native form on Windows and
+        // silently never match.
+        auto s = entry.path().generic_string();
+        bool excluded = false;
+        for (const auto& pat : cfg.exclude_patterns) {
+            if (s.find(pat) != std::string::npos) { excluded = true; break; }
+        }
+        if (excluded) continue;
+        if (pred(entry.path())) return true;
     }
     return false;
 }
 
 // Searches all .cpp/.hpp/.h/.cxx/.cc files for a regex pattern.
-bool source_contains(const fs::path& dir, const std::regex& pat) {
+bool source_contains(const fs::path& dir, const config::ProjectConfig& cfg,
+                     const std::regex& pat) {
     static const std::regex cpp_ext(R"(\.(cpp|hpp|h|cxx|cc|hxx|c\+\+)$)");
-    return any_file(dir, [&](const fs::path& p) {
+    return any_file(dir, cfg, [&](const fs::path& p) {
         if (!std::regex_search(p.string(), cpp_ext)) return false;
         std::ifstream f(p);
         std::string line;
@@ -63,9 +80,9 @@ Rule make_fusa002() {
         RuleInfo{"FUSA002", "Requirements annotations",
                  "Source must contain at least one //fusa:req annotation.",
                  Severity::WARNING},
-        [](const fs::path& dir, const config::ProjectConfig&) -> std::vector<Finding> {
+        [](const fs::path& dir, const config::ProjectConfig& cfg) -> std::vector<Finding> {
             static const std::regex req_pat(R"(//\s*fusa:req\s+\S)");
-            if (source_contains(dir, req_pat)) return {};
+            if (source_contains(dir, cfg, req_pat)) return {};
             return {Finding{"FUSA002", Severity::WARNING,
                             "No //fusa:req annotations found — traceability cannot be established",
                             "", 0,

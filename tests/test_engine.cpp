@@ -17,6 +17,7 @@
 //fusa:test REQ-HARA003
 //fusa:test REQ-HARA004
 //fusa:test REQ-VERIFY006
+//fusa:test REQ-CFG006
 #include <catch2/catch_all.hpp>
 #include "engine/engine.hpp"
 #include "engine/rules.hpp"
@@ -82,6 +83,21 @@ TEST_CASE("engine: FUSA002 finding has requirement category", "[engine][fusa002]
     auto findings = engine::make_fusa002().check(tmp.path(), cfg);
     REQUIRE_FALSE(findings.empty());
     REQUIRE(findings[0].category == "requirement");
+}
+
+// §1.2.1 MUST: a //fusa:req annotation outside every configured sourceDirs
+// must not satisfy FUSA002 — regression test for the whole-project scan
+// previously ignoring sourceDirs entirely.
+TEST_CASE("engine: FUSA002 still fires when the only annotation is outside sourceDirs",
+          "[engine][fusa002][cfg006]") {
+    TempDir tmp;
+    tmp.write("src/main.cpp", "int main() { return 0; }\n");
+    // A stray build/vendor tree carrying an annotation-shaped comment — must
+    // not count, since it's outside every configured source dir.
+    tmp.write("build-audit/generated.cpp", "// fusa:req REQ-999\nvoid gen() {}\n");
+    config::ProjectConfig cfg;
+    cfg.source_dirs = {"src"};
+    REQUIRE(has_finding(engine::make_fusa002().check(tmp.path(), cfg), "FUSA002"));
 }
 
 // ─── FUSA003 — version field ───────────────────────────────────────────────────

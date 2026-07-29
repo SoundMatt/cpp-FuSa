@@ -159,18 +159,32 @@ static std::string sha256_file(const fs::path& p) {
 } // namespace
 
 //fusa:req REQ-AUDIT001 REQ-AUDIT002 REQ-AUDIT003 REQ-AUDIT004
-Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_path) {
+Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_path_in) {
+    // A relative `output_path` (the common case: --dir "." with no --output,
+    // e.g. `cpfusa audit-pack --dir .`) must be resolved against the
+    // *current* working directory up front. Below, the two `zip` invocations
+    // `cd` into two different directories (project_root, then the system
+    // temp dir) — embedding a still-relative output_path verbatim into both
+    // silently resolves it against two different locations, so the second
+    // command (adding manifest.json) creates/updates a stray file in the
+    // temp dir instead of the real target, while fs::exists(output_path)
+    // below still reports success because the *first* zip (without the
+    // manifest) really did land at the right place.
+    fs::path output_path = fs::absolute(output_path_in);
+
     AuditManifest manifest;
     manifest.format       = "cpp-FuSa Audit Pack v1";
     manifest.generated_at = now_iso8601();
     manifest.project      = project_root.filename().string();
 
-    // Collect present evidence files and compute SHA-256.
+    // Collect present evidence files and compute SHA-256. §8 MUST: every
+    // §1.2 input file and §1.3 generated file present at the project root
+    // (including the open-ended `<standard>-gap-report.json` family) — not
+    // just a hardcoded subset.
     struct FileInfo { std::string name; std::string sha256; long long size; };
     std::vector<FileInfo> present;
-    for (const auto& name : release::EvidenceFiles) {
+    for (const auto& name : release::list_present_evidence_files(project_root)) {
         auto p = project_root / name;
-        if (!fs::exists(p)) continue;
         present.push_back({name, sha256_file(p), static_cast<long long>(fs::file_size(p))});
         manifest.files.push_back({name, present.back().sha256, present.back().size});
     }

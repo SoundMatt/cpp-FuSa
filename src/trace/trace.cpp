@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -302,8 +303,9 @@ Result<std::vector<Requirement>> load_requirements(const fs::path& dir) {
     }
 }
 
-//fusa:req REQ-TRACE020
-std::vector<Annotation> scan_annotations(const fs::path& dir) {
+namespace {
+std::vector<Annotation> scan_annotations_impl(
+        const fs::path& dir, const std::function<bool(const fs::path&)>& in_scope) {
     std::vector<Annotation> out;
     if (!fs::exists(dir)) return out;
     static const std::regex ext_re(R"(\.(cpp|hpp|h|hxx|cxx|cc|c\+\+)$)");
@@ -315,6 +317,7 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
              dir, fs::directory_options::skip_permission_denied)) {
         if (!entry.is_regular_file()) continue;
         if (!std::regex_search(entry.path().string(), ext_re)) continue;
+        if (!in_scope(entry.path())) continue;
         std::ifstream f(entry.path());
         std::string line;
         int n = 0;
@@ -332,6 +335,27 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
     }
     return out;
 }
+} // namespace
+
+//fusa:req REQ-TRACE020
+std::vector<Annotation> scan_annotations(const fs::path& dir) {
+    return scan_annotations_impl(dir, [](const fs::path&) { return true; });
+}
+
+//fusa:req REQ-CFG006
+std::vector<Annotation> scan_annotations(const fs::path& dir, const config::ProjectConfig& cfg) {
+    return scan_annotations_impl(dir, [&](const fs::path& p) {
+        if (!config::under_source_dirs(p, dir, cfg)) return false;
+        // generic_string() (always "/"-separated) — excludePatterns are
+        // "/"-style gitignore globs (§1.2.1) regardless of platform;
+        // .string() would use "\"-separated native form on Windows and
+        // silently never match.
+        auto s = p.generic_string();
+        for (const auto& pat : cfg.exclude_patterns)
+            if (s.find(pat) != std::string::npos) return false;
+        return true;
+    });
+}
 
 //fusa:req REQ-TRACE018 REQ-TRACE019
 Result<TraceResult> run(const fs::path& dir,
@@ -341,7 +365,7 @@ Result<TraceResult> run(const fs::path& dir,
     if (!is_ok(reqs_result)) return error_of(reqs_result);
     auto reqs = value_of(reqs_result);
 
-    auto annotations = scan_annotations(dir);
+    auto annotations = scan_annotations(dir, cfg);
 
     TraceResult result;
     result.requirements = reqs;

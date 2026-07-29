@@ -1,21 +1,21 @@
 # Safety Case — cpp-FuSa
 
 **Standard:** iso26262  
-**Generated:** 2026-07-28T21:42:51Z  
+**Generated:** 2026-07-29T03:26:43Z  
 
 ## Goals
 
 | ID | Type | Status | Description |
 |----|------|--------|-------------|
 | G1 | goal | undeveloped | cpp-FuSa produces conformant, non-fabricated safety evidence for iso26262 ASIL-B |
-| G2 | goal | undeveloped | cpp-FuSa's own development process satisfies iso26262's tool-confidence-level requirements (ISO 26262-8 Clause 11) |
+| G2 | goal | supported | cpp-FuSa's own development process satisfies iso26262's tool-confidence-level requirements (ISO 26262-8 Clause 11) |
 | G3 | goal | supported | Every generated evidence artifact (fmea/tara/hara/safety-case/sas) passes the §1.6 content-quality baseline (no placeholder text, no blanket qualitative fallback) |
 | G4 | goal | supported | Every requirement in .fusa-reqs.json is implemented and independently verified |
 | G5 | goal | supported | Static analysis (check/lint/analyze/cyber) reports no unmitigated ERROR findings |
 | G6 | goal | supported | cpp-FuSa itself is qualified as a verification tool per ISO 26262-8 Clause 11 |
 | St1 | strategy |  | Argument by direct inspection of generated evidence artifacts |
 | St2 | strategy |  | Argument over independent verification and qualification records |
-| Sn1 | solution |  | SAFETY_PLAN.md — documented development and evidence-generation plan |
+| Sn1 | solution |  | docs/tool-safety-manual.md — documented development process, scope, and evidence-generation plan |
 | Sn2 | solution |  | .fusa.json — declares the standard/ASIL this project is held to |
 | Sn3 | solution |  | .fusa-reqs.json — requirement registry with req/test traceability |
 | Sn4 | solution |  | qualify-report.json — tool qualification cases and pass/fail record |
@@ -26,11 +26,14 @@
 | A1 | assumption |  | The compiler toolchain used to build cpp-FuSa is itself qualified or independently trusted for its intended use |
 | J1 | justification |  | §1.6.1's FUSA-STUB001/002 heuristics are an automatable proxy for content quality, not a substitute for a human reviewer's judgement — hence §1.6.2's attestation mechanism rather than a purely mechanical gate |
 
-## Evidence (19 files)
+## Evidence (22 files)
 
 - `.fusa.json`
 - `.fusa-reqs.json`
+- `.fusa-hara.json`
 - `.fusa-evidence.json`
+- `.fusa-dispositions.json`
+- `.fusa-problems.json`
 - `check-report.json`
 - `cyber-report.json`
 - `fmea.json`

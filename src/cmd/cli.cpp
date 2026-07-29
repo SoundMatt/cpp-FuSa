@@ -124,8 +124,12 @@ bool apply_quality_gate(const std::vector<Finding>& findings, const fs::path& di
         bool suppressed = false;
         if (f.rule_id == std::string(quality::kStub001RuleId)) {
             disposition::Entry e;
+            // §4.1: "accepted" and "deferred" are both waivers that suppress
+            // the gate; "rejected" is a denied waiver — the finding must
+            // still gate.
             if (disposition::find_by_rule(log, f.rule_id, e) &&
-                e.action == disposition::Action::Accept)
+                (e.status == disposition::Status::Accepted ||
+                 e.status == disposition::Status::Deferred))
                 suppressed = true;
         } else if (f.rule_id == std::string(quality::kStub002RuleId)) {
             if (attestation_valid) suppressed = true;
@@ -489,9 +493,17 @@ int run(int argc, char* argv[]) {
     std::string qualify_out;
     qualify_cmd->add_option("--output", qualify_out,
                             "Output file path (default: <dir>/qualify-report.json)");
+    std::string qualify_fmt = "text";
+    qualify_cmd->add_option("--format", qualify_fmt,
+                            "text|json (default: text). §2.2: JSON is always also "
+                            "written to the qualify-report.json default/--output path.");
     qualify_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
-        std::cout << "Running qualification suite for cpfusa v" << Version << "...\n";
+        const bool as_json = (qualify_fmt == "json");
+        // §2.2: progress/diagnostic lines are fine on stdout in text mode;
+        // in JSON mode keep stdout reserved for the machine-readable payload.
+        if (!as_json)
+            std::cout << "Running qualification suite for cpfusa v" << Version << "...\n";
         auto cases  = qualify::builtin_cases();
         auto r = qualify::run(cases);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
@@ -506,35 +518,49 @@ int run(int argc, char* argv[]) {
         rpt.independent_test_executor = ind_test_executor;
         rpt.achievable_asil          = achievable_asil;
 
+        // §6: "Writes qualify-report.json by default" — the evidence file is
+        // always produced regardless of --format (other commands, e.g.
+        // audit-pack/safety-case, depend on it existing on disk).
         fs::path out_path = qualify_out.empty() ? dir / std::string(qualify::ReportFile)
                                                 : fs::path(qualify_out);
         auto wr = qualify::save(out_path, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
-        std::cout << "Cases: " << rpt.total
-                  << "  Passed: " << rpt.passed
-                  << "  Failed: " << rpt.failed << "\n"
-                  << "Hash: " << rpt.hash << "\n";
 
-        // Show badge and independence status
-        std::string status = rpt.independence_status();
-        std::string badge;
-        if (rpt.qualification_method == "independent" || status == "independent")
-            badge = "independently-qualified";
-        else if (rpt.qualification_method == "self" || status == "self")
-            badge = "self-qualified";
-        else
-            badge = "unqualified";
-        std::cout << "Badge: [" << badge << "]\n";
-        if (!rpt.achievable_asil.empty())
-            std::cout << "Achievable ASIL: " << rpt.achievable_asil << "\n";
+        if (as_json) {
+            // §2.2: "--output redirects the report (MUST) ... MUST NOT also
+            // write it to stdout" — when --output was given the JSON already
+            // landed there via qualify::save() above.
+            if (qualify_out.empty())
+                std::cout << qualify::to_json(rpt).dump(2) << "\n";
+        } else {
+            std::cout << "Cases: " << rpt.total
+                      << "  Passed: " << rpt.passed
+                      << "  Failed: " << rpt.failed << "\n"
+                      << "Hash: sha256:" << rpt.hash << "\n";
+
+            // Show badge and independence status
+            std::string status = rpt.independence_status();
+            std::string badge;
+            if (rpt.qualification_method == "independent" || status == "independent")
+                badge = "independently-qualified";
+            else if (rpt.qualification_method == "self" || status == "self")
+                badge = "self-qualified";
+            else
+                badge = "unqualified";
+            std::cout << "Badge: [" << badge << "]\n";
+            if (!rpt.achievable_asil.empty())
+                std::cout << "Achievable ASIL: " << rpt.achievable_asil << "\n";
+        }
 
         if (rpt.failed > 0) {
-            for (const auto& cr : rpt.results)
-                if (!cr.passed)
-                    std::cerr << "  FAIL " << cr.test_case.name << ": " << cr.error << "\n";
+            if (!as_json) {
+                for (const auto& cr : rpt.results)
+                    if (!cr.passed)
+                        std::cerr << "  FAIL " << cr.test_case.name << ": " << cr.error << "\n";
+            }
             std::exit(1);
         }
-        print_ok(out_path.filename().string() + " written");
+        if (!as_json) print_ok(out_path.filename().string() + " written");
     });
 
     // ── release ───────────────────────────────────────────────────────────────
@@ -1023,7 +1049,12 @@ int run(int argc, char* argv[]) {
     boundary_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
         fs::path outdir = boundary_outdir.empty() ? dir : fs::path(boundary_outdir);
-        auto d = boundary::scan(dir);
+        // §1.2.1 MUST: honour excludePatterns when a config is present;
+        // boundary works without .fusa.json too, so fall back to defaults()
+        // (empty exclude_patterns) rather than erroring when it's absent.
+        auto cfg_r = config::load(dir);
+        auto cfg = is_ok(cfg_r) ? value_of(cfg_r) : config::defaults(dir);
+        auto d = boundary::scan(dir, cfg);
         boundary::write_mermaid(outdir / boundary::BOUNDARY_FILE, d);
         boundary::write_dot(outdir / boundary::BOUNDARY_DOT_FILE, d);
         print_ok("boundary.mermaid written");
@@ -1106,11 +1137,11 @@ int run(int argc, char* argv[]) {
     auto* disp_add   = disp_cmd->add_subcommand("add",  "Add a disposition");
     auto* disp_list  = disp_cmd->add_subcommand("list", "List dispositions");
     auto* disp_show  = disp_cmd->add_subcommand("show", "Show disposition for a rule");
-    std::string disp_rule, disp_action = "accept", disp_reviewer, disp_rationale, disp_ref;
+    std::string disp_rule, disp_status = "accepted", disp_by, disp_note, disp_ref;
     disp_add->add_option("--rule",      disp_rule,      "Rule ID")->required();
-    disp_add->add_option("--action",    disp_action,    "accept|fix");
-    disp_add->add_option("--reviewer",  disp_reviewer,  "Reviewer name")->required();
-    disp_add->add_option("--rationale", disp_rationale, "Rationale")->required();
+    disp_add->add_option("--status",    disp_status,    "accepted|deferred|rejected (§1.2.3)");
+    disp_add->add_option("--by",        disp_by,        "Reviewer identity")->required();
+    disp_add->add_option("--note",      disp_note,      "Rationale / note")->required();
     disp_add->add_option("--ref",       disp_ref,       "Reference (ticket, issue)");
     disp_show->add_option("--rule",     disp_rule,      "Rule ID")->required();
     disp_add->callback([&]() -> void {
@@ -1118,17 +1149,27 @@ int run(int argc, char* argv[]) {
         auto log = disposition::load(dir);
         auto now = std::chrono::system_clock::now();
         auto t   = std::chrono::system_clock::to_time_t(now);
+        std::tm tm_buf{};
+#ifdef _WIN32
+        gmtime_s(&tm_buf, &t);
+#else
+        gmtime_r(&t, &tm_buf);
+#endif
         char buf[32];
-        std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::gmtime(&t));
-        disposition::Entry e{disp_rule, disp_rationale, disp_reviewer,
-                             std::string(buf),
-                             disposition::parse_action(disp_action), disp_ref};
+        std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm_buf); // §1.2.3: `at` is RFC 3339
+        disposition::Entry e;
+        e.rule_id = disp_rule;
+        e.status  = disposition::parse_status(disp_status);
+        e.note    = disp_note;
+        e.by      = disp_by;
+        e.at      = std::string(buf);
+        e.reference = disp_ref;
         log = disposition::add(log, e);
         std::string err;
         if (!disposition::save(dir / disposition::DISPOSITIONS_FILE, log, err)) {
             print_err(err); std::exit(1);
         }
-        print_ok("Disposition added: rule=" + disp_rule + " action=" + disp_action);
+        print_ok("Disposition added: rule=" + disp_rule + " status=" + disp_status);
     });
     disp_list->callback([&]() -> void {
         disposition::render_entries(disposition::load(fs::path(dir_str)));
@@ -1140,10 +1181,10 @@ int run(int argc, char* argv[]) {
             print_err("No disposition for rule: " + disp_rule); std::exit(1);
         }
         std::cout << "Rule:      " << e.rule_id << "\n"
-                  << "Action:    " << disposition::action_str(e.action) << "\n"
-                  << "Reviewer:  " << e.reviewer << "\n"
-                  << "Date:      " << e.date << "\n"
-                  << "Rationale: " << e.rationale << "\n";
+                  << "Status:    " << disposition::status_str(e.status) << "\n"
+                  << "By:        " << e.by << "\n"
+                  << "At:        " << e.at << "\n"
+                  << "Note:      " << e.note << "\n";
         if (!e.reference.empty()) std::cout << "Reference: " << e.reference << "\n";
     });
 
@@ -1321,6 +1362,7 @@ int run(int argc, char* argv[]) {
         fmts["trace"]   = {"text","json"};
         fmts["diff"]    = {"text","json"};
         fmts["version"] = {"text","json"};
+        fmts["qualify"] = {"text","json"};
         j["formats"]    = fmts;
         j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c",
                                                    "iec62443","unece-r155","unece-r156","slsa"});
@@ -1348,7 +1390,12 @@ int run(int argc, char* argv[]) {
     coupling_cmd->add_option("--output", coupling_output, "Write JSON report to file");
     coupling_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
-        auto r = coupling::analyse(dir);
+        // §1.2.1 MUST: honour excludePatterns when a config is present;
+        // coupling works without .fusa.json too, so fall back to defaults()
+        // (empty exclude_patterns) rather than erroring when it's absent.
+        auto cfg_r = config::load(dir);
+        auto cfg = is_ok(cfg_r) ? value_of(cfg_r) : config::defaults(dir);
+        auto r = coupling::analyse(dir, cfg);
         if (!coupling_output.empty()) {
             coupling::write_json(fs::path(coupling_output), r);
             print_ok("coupling-report.json written");

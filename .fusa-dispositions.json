@@ -1,12 +1,12 @@
 {
-  "entries": [
+  "dispositions": [
     {
-      "action": "accept",
-      "date": "2026-06-09",
-      "rationale": "Test files use new for test fixtures",
-      "reference": "test-only",
-      "reviewer": "Matt Jones",
-      "ruleId": "LINT001"
+      "ruleId": "LINT001",
+      "status": "accepted",
+      "note": "Test files use new for test fixtures",
+      "by": "Matt Jones",
+      "at": "2026-06-09T00:00:00Z",
+      "reference": "test-only"
     }
   ]
 }

@@ -1,6 +1,7 @@
 //fusa:test REQ-BOUNDARY001
 //fusa:test REQ-BOUNDARY002
 //fusa:test REQ-BOUNDARY003
+//fusa:test REQ-CFG005
 #include <catch2/catch_all.hpp>
 #include "boundary/boundary.hpp"
 #include "testutil/testutil.hpp"
@@ -51,6 +52,36 @@ TEST_CASE("boundary: scan internal components are not external", "[boundary][bou
     for (auto& n : d.nodes)
         if (n.id == "engine")
             REQUIRE_FALSE(n.is_external);
+}
+
+// §1.2.1 MUST: excludePatterns must be honoured — regression test for the
+// cfg-aware overload.
+TEST_CASE("boundary: scan(dir, cfg) excludes a component matching excludePatterns",
+          "[boundary][cfg005]") {
+    TempDir tmp;
+    tmp.write("src/engine/engine.cpp", "#include \"engine.hpp\"\nvoid f(){}\n");
+    tmp.write("src/vendor/vendor.cpp", "#include \"vendor.hpp\"\nvoid g(){}\n");
+
+    config::ProjectConfig cfg;
+    cfg.exclude_patterns = {"src/vendor/"};
+    auto d = boundary::scan(tmp.path(), cfg);
+    bool found_engine = false, found_vendor = false;
+    for (auto& n : d.nodes) {
+        if (n.id == "engine") found_engine = true;
+        if (n.id == "vendor") found_vendor = true;
+    }
+    REQUIRE(found_engine);
+    REQUIRE_FALSE(found_vendor);
+}
+
+TEST_CASE("boundary: scan(dir, cfg) with empty excludePatterns matches the unfiltered overload",
+          "[boundary][cfg005]") {
+    TempDir tmp;
+    tmp.write("src/engine/engine.cpp", "#include \"engine.hpp\"\nvoid f(){}\n");
+    config::ProjectConfig cfg;
+    auto d1 = boundary::scan(tmp.path());
+    auto d2 = boundary::scan(tmp.path(), cfg);
+    REQUIRE(d1.nodes.size() == d2.nodes.size());
 }
 
 // ─── write_mermaid ────────────────────────────────────────────────────────────

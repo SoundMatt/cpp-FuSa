@@ -128,6 +128,16 @@ std::string sha256_hex(const std::string& data) {
     return out;
 }
 
+} // namespace
+
+// §6: results[].result MUST be one of PASS|FAIL|SKIP|ERROR.
+//fusa:req REQ-QUALIFY002
+std::string result_enum(const CaseResult& cr) {
+    return cr.passed ? "PASS" : "FAIL";
+}
+
+namespace {
+
 // Compute hash of the report without the hash field.
 std::string compute_hash(const QualifyReport& r) {
     json j;
@@ -140,11 +150,11 @@ std::string compute_hash(const QualifyReport& r) {
     json ra = json::array();
     for (const auto& cr : r.results) {
         json rj;
-        rj["case"]["name"]         = cr.test_case.name;
-        rj["case"]["ruleId"]       = cr.test_case.rule_id;
-        rj["case"]["description"]  = cr.test_case.description;
-        rj["case"]["expectFinding"]= cr.test_case.expect_finding;
-        rj["passed"]               = cr.passed;
+        rj["name"]          = cr.test_case.name;
+        rj["result"]        = result_enum(cr);
+        rj["ruleId"]        = cr.test_case.rule_id;
+        rj["description"]   = cr.test_case.description;
+        rj["expectFinding"] = cr.test_case.expect_finding;
         if (!cr.error.empty()) rj["error"] = cr.error;
         ra.push_back(rj);
     }
@@ -312,7 +322,8 @@ Result<QualifyReport> run(const std::vector<Case>& cases) {
     return report;
 }
 
-Result<std::monostate> save(const fs::path& path, const QualifyReport& r) {
+//fusa:req REQ-QUALIFY002
+json to_json(const QualifyReport& r) {
     json j;
     // §3.1 common header
     j["schemaVersion"] = std::string(SpecVersion);
@@ -329,18 +340,20 @@ Result<std::monostate> save(const fs::path& path, const QualifyReport& r) {
     json ra = json::array();
     for (const auto& cr : r.results) {
         json rj;
-        json cj;
-        cj["name"]          = cr.test_case.name;
-        cj["ruleId"]        = cr.test_case.rule_id;
-        cj["description"]   = cr.test_case.description;
-        cj["expectFinding"] = cr.test_case.expect_finding;
-        rj["case"]   = cj;
-        rj["passed"] = cr.passed;
+        // §6: results[] entries carry a top-level name/result pair —
+        // { "name": "...", "result": "PASS"|"FAIL"|"SKIP"|"ERROR" } — with
+        // case detail kept as additive fields alongside it.
+        rj["name"]          = cr.test_case.name;
+        rj["result"]        = result_enum(cr);
+        rj["ruleId"]        = cr.test_case.rule_id;
+        rj["description"]   = cr.test_case.description;
+        rj["expectFinding"] = cr.test_case.expect_finding;
         if (!cr.error.empty()) rj["error"] = cr.error;
         ra.push_back(rj);
     }
     j["results"] = ra;
-    j["hash"]    = r.hash;
+    // §2.7: a field named `hash` always carries the "sha256:" prefix.
+    j["hash"] = r.hash.empty() ? "" : ("sha256:" + r.hash);
 
     // Feature 2: tool qualification display fields (REQ-QUALIFY005..REQ-QUALIFY007)
     if (!r.qualification_method.empty())
@@ -375,9 +388,13 @@ Result<std::monostate> save(const fs::path& path, const QualifyReport& r) {
         j["badge"] = badge;
     }
 
+    return j;
+}
+
+Result<std::monostate> save(const fs::path& path, const QualifyReport& r) {
     try {
         std::ofstream out(path);
-        out << j.dump(2) << "\n";
+        out << to_json(r).dump(2) << "\n";
     } catch (const std::exception& e) {
         return std::string("qualify: save: ") + e.what();
     }

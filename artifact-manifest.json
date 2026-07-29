@@ -1,87 +1,111 @@
 {
   "artifacts": [
     {
-      "path": ".fusa.json",
-      "sha256": "06ff989ad583d12c6aae7c7821be6167b06d9b235dd216d6dff9ca5c3ce75ca9"
-    },
-    {
-      "path": ".fusa-reqs.json",
-      "sha256": "14f8d4254eb89c0dd933d6ed1848b0f064c7a8e4fade796d7c18b0f4155da154"
+      "path": ".fusa-dispositions.json",
+      "sha256": "018a8831220c0ab1ac89ce7639e27b2d329d133c3883d3110f9f91408ac417f4"
     },
     {
       "path": ".fusa-evidence.json",
       "sha256": "29214ee688507630657204977fe74e12b4b32b26a8a5e9fd408901af42e1a6ce"
     },
     {
-      "path": "check-report.json",
-      "sha256": "0d2137f853b6f6ae8aeea4da40d908ea9a97b6d60abedf0067d9ce2d8c92ce4e"
+      "path": ".fusa-hara.json",
+      "sha256": "49a5600545e33490440425ae2b8d34648c4138cf6f03bb0ddb8d4c19931b0343"
     },
     {
-      "path": "cyber-report.json",
-      "sha256": "dd11a104de7c3f605c7347979b53f351dd43db3a00a6d15f68c44c066496e3e8"
+      "path": ".fusa-problems.json",
+      "sha256": "8be1cfaa63406db1abeab98e7b9f203d9b1e3ff586d2d5ef6c4def66b40c8666"
     },
     {
-      "path": "fmea.json",
-      "sha256": "81948e5c2753c0277e52b2f90cf356990e5190a00236798ee265f42369f0b9a6"
+      "path": ".fusa-reqs.json",
+      "sha256": "4d28287bbf82cb71502e4d388c6fbc87481d040c3fdbb9bee5534b3565a23604"
     },
     {
-      "path": "fmea.csv",
-      "sha256": "5a72bdf2291b6f9d35c8d008cf1aecb6f02ee24313dcfaa696b8058c34f6a615"
-    },
-    {
-      "path": "boundary.mermaid",
-      "sha256": "5f4888dea659f5b1b18f9acbc616d56a093656d299d5e40b79483e8b7950b28e"
-    },
-    {
-      "path": "boundary.dot",
-      "sha256": "7658507b2a825a113dddf35c9c3a3e0c23af64fcaa1dd11340930d337231aa41"
-    },
-    {
-      "path": "safety-case.json",
-      "sha256": "0cb37ac90425ffa653cd73ae22b0119b2f3fcc2a18f85d4c11450cf4801463ec"
-    },
-    {
-      "path": "safety-case.md",
-      "sha256": "9bade5547a55ce47c602991e960eaf5f5aac6489b9ad65883cdcf4d8b6a58f20"
-    },
-    {
-      "path": "safety-case.mermaid",
-      "sha256": "61fe9b0d7f8ca83508a9d13ef6ce19a27c59b192db2c64216be1b8907d2fa1c6"
-    },
-    {
-      "path": "sbom.json",
-      "sha256": "3ae5595c2986a7f5f70057477b0e34c642b55893ed3f7edb0deecfe159741c3b"
-    },
-    {
-      "path": "provenance.json",
-      "sha256": "8601fd107cd1dd32b9301451bee6698accb1edea0fc12f754e4141feddb1d15f"
+      "path": ".fusa.json",
+      "sha256": "1b37174c68775dd0b8b2f8eeb83960d023abe4f3f05359fed41e06008d7f0b17"
     },
     {
       "path": "artifact-manifest.json",
-      "sha256": "06436517553d166d3f3fe5d343641c84a4760d55ae540c30b7108dfaccf1dbd2"
+      "sha256": "a10553c026e1fa73d033a3a7ed0e68973f88e6d6a129e730a9a50ee04f68190a"
+    },
+    {
+      "path": "boundary.dot",
+      "sha256": "4d2ffa8149446d12d20bb911145b0f557d46f7bfb2139550d485ce1a8e764e17"
+    },
+    {
+      "path": "boundary.mermaid",
+      "sha256": "f76262b26cf23dd01a3eaee169d4885aa66fc01f42e3ad58ebd7cf1a053b696e"
+    },
+    {
+      "path": "check-report.json",
+      "sha256": "d69c15a93962c242ae1ed597e41416ea088fca627bbcece5ebe3a3d539351044"
+    },
+    {
+      "path": "cyber-report.json",
+      "sha256": "fda743325381787331f3453d71f3da478e9bd3370a0440b9c8698356ead47693"
+    },
+    {
+      "path": "do178-gap-report.json",
+      "sha256": "50f4e3fa121000747e877287198ae66f735c3a0272284eb36446f8923d1ab4cb"
+    },
+    {
+      "path": "fmea.csv",
+      "sha256": "ee233c3c9c73425ad7ff1707d1eff6c61d081a46263edd6a8d97c139c7a65766"
+    },
+    {
+      "path": "fmea.json",
+      "sha256": "c320d696e6ba1edf71ed09cafc9a9751eb8d5282ad9283a305424bf6158e670a"
+    },
+    {
+      "path": "iec61508-gap-report.json",
+      "sha256": "83633145aad846848e31b97a26e52220bb6d8ed3600864dc37b0352e7ee4b625"
+    },
+    {
+      "path": "iso26262-gap-report.json",
+      "sha256": "b063c7091b5818afecfb0069e89594d34bfc36ad9b0d690032626a437004661c"
+    },
+    {
+      "path": "provenance.json",
+      "sha256": "45164360d0a2cffeef71f99a18b9b7eb6302b055e7cb2c4819e79d7b5df210e2"
     },
     {
       "path": "qualify-report.json",
-      "sha256": "dc09797b9a57956db968a649e014092da3a79e05ff355845e792abf772a86e17"
+      "sha256": "8120384de69ce484bb24aaf8fd6aca7038b31fdc395a13f9b1ba5fc0c34f26fc"
+    },
+    {
+      "path": "safety-case.json",
+      "sha256": "c4d4b2228982af0e70d2650aff8cc8612caac3fc3e1d9d6f187478da2cfdd4bf"
+    },
+    {
+      "path": "safety-case.md",
+      "sha256": "f92aad77519b9d6840ccdeaa6d5950cf2cd45440f912f3dc16d7da93c7ad5052"
+    },
+    {
+      "path": "safety-case.mermaid",
+      "sha256": "c1c9305ac638fbedacbd456b6001c64b86ef6681648d2fb4d6178f23fef7203e"
+    },
+    {
+      "path": "sbom.json",
+      "sha256": "35e621dc60b80300884f867bb1abce8d3ee4874b9043e731f26834cfc136618e"
+    },
+    {
+      "path": "tara.json",
+      "sha256": "2e7a97baeb6b8325bcb7b1eb69250bcec9a93edbfe61a00c4067b38b59c9d5f4"
+    },
+    {
+      "path": "tara.md",
+      "sha256": "bc9fb18412e73156d74ce2654fa89e4d2ea0c7b184b4f8d887268b4ff1ba1a32"
     },
     {
       "path": "vuln.json",
       "sha256": "88f97dad92b3762abcf204b123a3503cb09b193ca9146b1cf76f06977ec7bf3e"
-    },
-    {
-      "path": "tara.json",
-      "sha256": "b1247e828c0ab125916235c0cebd4572f3218d8208f9e1dfb54cf017b688851e"
-    },
-    {
-      "path": "tara.md",
-      "sha256": "206f5d5a406c8753fd83abaa6d0a323282b75ba5da41fdea9b26c13167ad959d"
     }
   ],
   "format": "x-FuSa manifest v1",
-  "generatedAt": "2026-06-10T19:14:28Z",
+  "generatedAt": "2026-07-29T03:26:44Z",
   "kind": "artifact-manifest",
   "language": "cpp",
-  "schemaVersion": "1.8",
+  "schemaVersion": "1.15.0",
   "tool": "cpp-FuSa",
-  "toolVersion": "0.6.1"
+  "toolVersion": "0.16.0"
 }
