@@ -12,7 +12,7 @@ FMEA-1035,show,Buffer overflow in show(),Incorrect system behaviour or safety-fu
 FMEA-1039,list_all,Buffer overflow in list_all(),Incorrect system behaviour or safety-function failure originating in list_all (function),8,4,5,160,high,src/fix/fix.hpp,20
 FMEA-374,Requirement,State corruption in Requirement(),Incorrect system behaviour or safety-function failure originating in Requirement (class),8,4,5,160,high,src/trace/trace.hpp,12
 FMEA-1043,build_report,Buffer overflow in build_report(),Incorrect system behaviour or safety-function failure originating in build_report (function),8,4,5,160,high,src/misra/misra.cpp,71
-FMEA-371,save_requirements,Buffer overflow in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),8,4,5,160,high,src/trace/trace.cpp,790
+FMEA-371,save_requirements,Buffer overflow in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),8,4,5,160,high,src/trace/trace.cpp,794
 FMEA-1047,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/misra/misra.cpp,92
 FMEA-367,scan_annotations_impl,Buffer overflow in scan_annotations_impl(),Incorrect system behaviour or safety-function failure originating in scan_annotations_impl (function),8,4,5,160,high,src/trace/trace.cpp,347
 FMEA-390,FuncCoverage,State corruption in FuncCoverage(),Incorrect system behaviour or safety-function failure originating in FuncCoverage (class),8,4,5,160,high,src/trace/trace.hpp,50
@@ -24,8 +24,8 @@ FMEA-359,scan_func_coverage,Buffer overflow in scan_func_coverage(),Incorrect sy
 FMEA-1067,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/misra/misra.hpp,34
 FMEA-1071,is_excluded,Buffer overflow in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),8,4,5,160,high,src/fmea/fmea.cpp,30
 FMEA-355,func_has_tag_above,Buffer overflow in func_has_tag_above(),Incorrect system behaviour or safety-function failure originating in func_has_tag_above (function),8,4,5,160,high,src/trace/trace.cpp,195
-FMEA-1074,Declaration,State corruption in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),8,4,5,160,high,src/fmea/fmea.cpp,58
-FMEA-1079,to_json,Buffer overflow in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),8,4,5,160,high,src/fmea/fmea.cpp,249
+FMEA-1074,Declaration,State corruption in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),8,4,5,160,high,src/fmea/fmea.cpp,61
+FMEA-1079,to_json,Buffer overflow in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),8,4,5,160,high,src/fmea/fmea.cpp,252
 FMEA-350,Block,State corruption in Block(),Incorrect system behaviour or safety-function failure originating in Block (class),8,4,5,160,high,src/trace/trace.cpp,111
 FMEA-1082,FmeaEntry,State corruption in FmeaEntry(),Incorrect system behaviour or safety-function failure originating in FmeaEntry (class),8,4,5,160,high,src/fmea/fmea.hpp,25
 FMEA-1086,Summary,State corruption in Summary(),Incorrect system behaviour or safety-function failure originating in Summary (class),8,4,5,160,high,src/fmea/fmea.hpp,44
@@ -65,17 +65,17 @@ FMEA-1011,to_json,Buffer overflow in to_json(),Incorrect system behaviour or saf
 FMEA-1219,parse_exposure,Buffer overflow in parse_exposure(),Incorrect system behaviour or safety-function failure originating in parse_exposure (function),8,4,5,160,high,src/hara/hara.cpp,49
 FMEA-1183,is_excluded,Buffer overflow in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),8,4,5,160,high,src/coupling/coupling.cpp,26
 FMEA-299,suppressed,Buffer overflow in suppressed(),Incorrect system behaviour or safety-function failure originating in suppressed (function),8,4,5,160,high,src/lint/lint.cpp,44
-FMEA-1187,analyse_impl,Buffer overflow in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),8,4,5,160,high,src/coupling/coupling.cpp,33
+FMEA-1187,analyse_impl,Buffer overflow in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),8,4,5,160,high,src/coupling/coupling.cpp,36
 FMEA-295,for_each_source,Buffer overflow in for_each_source(),Incorrect system behaviour or safety-function failure originating in for_each_source (function),8,4,5,160,high,src/lint/lint.cpp,30
-FMEA-1191,analyse,Buffer overflow in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),8,4,5,160,high,src/coupling/coupling.cpp,100
-FMEA-1195,analyse_impl,Buffer overflow in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),8,4,5,160,high,src/coupling/coupling.cpp,101
+FMEA-1191,analyse,Buffer overflow in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),8,4,5,160,high,src/coupling/coupling.cpp,103
+FMEA-1195,analyse_impl,Buffer overflow in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),8,4,5,160,high,src/coupling/coupling.cpp,104
 FMEA-290,QualifyReport,State corruption in QualifyReport(),Incorrect system behaviour or safety-function failure originating in QualifyReport (class),8,4,5,160,high,src/qualify/qualify.hpp,34
-FMEA-1199,analyse,Buffer overflow in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),8,4,5,160,high,src/coupling/coupling.cpp,105
-FMEA-1203,analyse_impl,Buffer overflow in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),8,4,5,160,high,src/coupling/coupling.cpp,106
+FMEA-1199,analyse,Buffer overflow in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),8,4,5,160,high,src/coupling/coupling.cpp,108
+FMEA-1203,analyse_impl,Buffer overflow in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),8,4,5,160,high,src/coupling/coupling.cpp,109
 FMEA-286,CaseResult,State corruption in CaseResult(),Incorrect system behaviour or safety-function failure originating in CaseResult (class),8,4,5,160,high,src/qualify/qualify.hpp,27
-FMEA-1207,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/coupling/coupling.cpp,109
+FMEA-1207,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/coupling/coupling.cpp,112
 FMEA-282,Case,State corruption in Case(),Incorrect system behaviour or safety-function failure originating in Case (class),8,4,5,160,high,src/qualify/qualify.hpp,18
-FMEA-1211,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/coupling/coupling.cpp,125
+FMEA-1211,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/coupling/coupling.cpp,128
 FMEA-279,to_json,Buffer overflow in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),8,4,5,160,high,src/qualify/qualify.cpp,326
 FMEA-1215,parse_severity,Buffer overflow in parse_severity(),Incorrect system behaviour or safety-function failure originating in parse_severity (function),8,4,5,160,high,src/hara/hara.cpp,43
 FMEA-1179,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/coupling/coupling.hpp,43
@@ -102,7 +102,7 @@ FMEA-1107,class_member_visitor,Buffer overflow in class_member_visitor(),Incorre
 FMEA-339,is_func_exempt,Buffer overflow in is_func_exempt(),Incorrect system behaviour or safety-function failure originating in is_func_exempt (function),8,4,5,160,high,src/trace/trace.cpp,35
 FMEA-1110,ShadowCtx,State corruption in ShadowCtx(),Incorrect system behaviour or safety-function failure originating in ShadowCtx (class),8,4,5,160,high,src/ast/ast.cpp,68
 FMEA-1115,shadow_visitor,Buffer overflow in shadow_visitor(),Incorrect system behaviour or safety-function failure originating in shadow_visitor (function),8,4,5,160,high,src/ast/ast.cpp,74
-FMEA-335,run,Buffer overflow in run(),Incorrect system behaviour or safety-function failure originating in run (function),8,4,5,160,high,src/cyber/cyber.cpp,178
+FMEA-335,run,Buffer overflow in run(),Incorrect system behaviour or safety-function failure originating in run (function),8,4,5,160,high,src/cyber/cyber.cpp,181
 FMEA-1119,tu_visitor,Buffer overflow in tu_visitor(),Incorrect system behaviour or safety-function failure originating in tu_visitor (function),8,4,5,160,high,src/ast/ast.cpp,82
 FMEA-331,is_excluded,Buffer overflow in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),8,4,5,160,high,src/cyber/cyber.cpp,41
 FMEA-1122,FnScopeCtx,State corruption in FnScopeCtx(),Incorrect system behaviour or safety-function failure originating in FnScopeCtx (class),8,4,5,160,high,src/ast/ast.cpp,165
@@ -158,14 +158,14 @@ FMEA-763,r2_final_hex,Buffer overflow in r2_final_hex(),Incorrect system behavio
 FMEA-767,r2_final_hex,Buffer overflow in r2_final_hex(),Incorrect system behaviour or safety-function failure originating in r2_final_hex (function),8,4,5,160,high,src/release/release.cpp,170
 FMEA-523,sha256_prefixed,Buffer overflow in sha256_prefixed(),Incorrect system behaviour or safety-function failure originating in sha256_prefixed (function),8,4,5,160,high,src/quality/quality.cpp,206
 FMEA-590,Diagram,State corruption in Diagram(),Incorrect system behaviour or safety-function failure originating in Diagram (class),8,4,5,160,high,src/boundary/boundary.hpp,25
-FMEA-615,scan_impl,Buffer overflow in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),8,4,5,160,high,src/boundary/boundary.cpp,119
-FMEA-611,scan,Buffer overflow in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),8,4,5,160,high,src/boundary/boundary.cpp,118
-FMEA-619,scan,Buffer overflow in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),8,4,5,160,high,src/boundary/boundary.cpp,123
-FMEA-607,scan_impl,Buffer overflow in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),8,4,5,160,high,src/boundary/boundary.cpp,21
-FMEA-623,scan_impl,Buffer overflow in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),8,4,5,160,high,src/boundary/boundary.cpp,124
-FMEA-627,write_mermaid,Buffer overflow in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),8,4,5,160,high,src/boundary/boundary.cpp,127
+FMEA-615,scan_impl,Buffer overflow in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),8,4,5,160,high,src/boundary/boundary.cpp,122
+FMEA-611,scan,Buffer overflow in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),8,4,5,160,high,src/boundary/boundary.cpp,121
+FMEA-619,scan,Buffer overflow in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),8,4,5,160,high,src/boundary/boundary.cpp,126
+FMEA-607,scan_impl,Buffer overflow in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),8,4,5,160,high,src/boundary/boundary.cpp,24
+FMEA-623,scan_impl,Buffer overflow in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),8,4,5,160,high,src/boundary/boundary.cpp,127
+FMEA-627,write_mermaid,Buffer overflow in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),8,4,5,160,high,src/boundary/boundary.cpp,130
 FMEA-603,is_excluded,Buffer overflow in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),8,4,5,160,high,src/boundary/boundary.cpp,14
-FMEA-631,write_dot,Buffer overflow in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),8,4,5,160,high,src/boundary/boundary.cpp,144
+FMEA-631,write_dot,Buffer overflow in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),8,4,5,160,high,src/boundary/boundary.cpp,147
 FMEA-599,write_dot,Buffer overflow in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),8,4,5,160,high,src/boundary/boundary.hpp,39
 FMEA-634,ConfigItem,State corruption in ConfigItem(),Incorrect system behaviour or safety-function failure originating in ConfigItem (class),8,4,5,160,high,src/sci/sci.hpp,17
 FMEA-638,SCI,State corruption in SCI(),Incorrect system behaviour or safety-function failure originating in SCI (class),8,4,5,160,high,src/sci/sci.hpp,25
@@ -243,7 +243,7 @@ FMEA-827,run_cmd,Buffer overflow in run_cmd(),Incorrect system behaviour or safe
 FMEA-494,Sha256Ctx,State corruption in Sha256Ctx(),Incorrect system behaviour or safety-function failure originating in Sha256Ctx (class),8,4,5,160,high,src/quality/quality.cpp,23
 FMEA-830,SHA256Ctx3,State corruption in SHA256Ctx3(),Incorrect system behaviour or safety-function failure originating in SHA256Ctx3 (class),8,4,5,160,high,src/auditpack/auditpack.cpp,103
 FMEA-491,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/do178/do178.cpp,187
-FMEA-834,FileInfo,State corruption in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),8,4,5,160,high,src/auditpack/auditpack.cpp,172
+FMEA-834,FileInfo,State corruption in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),8,4,5,160,high,src/auditpack/auditpack.cpp,184
 FMEA-839,count_complexity,Buffer overflow in count_complexity(),Incorrect system behaviour or safety-function failure originating in count_complexity (function),8,4,5,160,high,src/comp/comp.cpp,20
 FMEA-487,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/do178/do178.cpp,168
 FMEA-842,FuncInfo,State corruption in FuncInfo(),Incorrect system behaviour or safety-function failure originating in FuncInfo (class),8,4,5,160,high,src/comp/comp.cpp,38
@@ -251,21 +251,21 @@ FMEA-847,analyse,Buffer overflow in analyse(),Incorrect system behaviour or safe
 FMEA-483,assess,Buffer overflow in assess(),Incorrect system behaviour or safety-function failure originating in assess (function),8,4,5,160,high,src/do178/do178.cpp,143
 FMEA-851,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/comp/comp.cpp,142
 FMEA-103,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/iec62443/iec62443.hpp,44
-FMEA-1475,make_coup003,Buffer overflow in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),8,4,5,160,high,src/engine/rules.cpp,141
-FMEA-1479,make_hara005,Buffer overflow in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),8,4,5,160,high,src/engine/rules.cpp,157
+FMEA-1475,make_coup003,Buffer overflow in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),8,4,5,160,high,src/engine/rules.cpp,145
+FMEA-1479,make_hara005,Buffer overflow in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),8,4,5,160,high,src/engine/rules.cpp,161
 FMEA-123,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/iso21434/iso21434.hpp,45
-FMEA-1483,make_iso26262002,Buffer overflow in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),8,4,5,160,high,src/engine/rules.cpp,200
+FMEA-1483,make_iso26262002,Buffer overflow in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),8,4,5,160,high,src/engine/rules.cpp,204
 FMEA-119,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/iso21434/iso21434.hpp,44
-FMEA-1487,make_iso26262003,Buffer overflow in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),8,4,5,160,high,src/engine/rules.cpp,230
-FMEA-1491,make_hara002,Buffer overflow in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),8,4,5,160,high,src/engine/rules.cpp,256
+FMEA-1487,make_iso26262003,Buffer overflow in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),8,4,5,160,high,src/engine/rules.cpp,234
+FMEA-1491,make_hara002,Buffer overflow in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),8,4,5,160,high,src/engine/rules.cpp,260
 FMEA-114,Report,State corruption in Report(),Incorrect system behaviour or safety-function failure originating in Report (class),8,4,5,160,high,src/iso21434/iso21434.hpp,31
-FMEA-1495,make_hara003,Buffer overflow in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),8,4,5,160,high,src/engine/rules.cpp,288
-FMEA-1499,make_hara004,Buffer overflow in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),8,4,5,160,high,src/engine/rules.cpp,317
+FMEA-1495,make_hara003,Buffer overflow in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),8,4,5,160,high,src/engine/rules.cpp,292
+FMEA-1499,make_hara004,Buffer overflow in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),8,4,5,160,high,src/engine/rules.cpp,321
 FMEA-110,Objective,State corruption in Objective(),Incorrect system behaviour or safety-function failure originating in Objective (class),8,4,5,160,high,src/iso21434/iso21434.hpp,17
-FMEA-1503,make_verify002,Buffer overflow in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),8,4,5,160,high,src/engine/rules.cpp,346
+FMEA-1503,make_verify002,Buffer overflow in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),8,4,5,160,high,src/engine/rules.cpp,350
 FMEA-107,parse_cal,Buffer overflow in parse_cal(),Incorrect system behaviour or safety-function failure originating in parse_cal (function),8,4,5,160,high,src/iso21434/iso21434.hpp,12
 FMEA-1507,make_default_engine,Buffer overflow in make_default_engine(),Incorrect system behaviour or safety-function failure originating in make_default_engine (function),8,4,5,160,high,src/engine/engine.cpp,38
-FMEA-1471,make_fusa005,Buffer overflow in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),8,4,5,160,high,src/engine/rules.cpp,124
+FMEA-1471,make_fusa005,Buffer overflow in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),8,4,5,160,high,src/engine/rules.cpp,128
 FMEA-1510,SHACtx,State corruption in SHACtx(),Incorrect system behaviour or safety-function failure originating in SHACtx (class),8,4,5,160,high,src/sign/sign.cpp,15
 FMEA-1515,from_hex,Buffer overflow in from_hex(),Incorrect system behaviour or safety-function failure originating in from_hex (function),8,4,5,160,high,src/sign/sign.cpp,100
 FMEA-99,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/iec62443/iec62443.hpp,43
@@ -298,15 +298,15 @@ FMEA-83,render_text,Buffer overflow in render_text(),Incorrect system behaviour 
 FMEA-1439,register_rule,Buffer overflow in register_rule(),Incorrect system behaviour or safety-function failure originating in register_rule (function),8,4,5,160,high,src/engine/engine.hpp,32
 FMEA-1443,any_file,Buffer overflow in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),8,4,5,160,high,src/engine/rules.cpp,21
 FMEA-147,render_text,Buffer overflow in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),8,4,5,160,high,src/iso21434/iso21434.cpp,205
-FMEA-1447,source_contains,Buffer overflow in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),8,4,5,160,high,src/engine/rules.cpp,40
+FMEA-1447,source_contains,Buffer overflow in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),8,4,5,160,high,src/engine/rules.cpp,44
 FMEA-143,write_json,Buffer overflow in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),8,4,5,160,high,src/iso21434/iso21434.cpp,175
-FMEA-1451,any_file,Buffer overflow in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),8,4,5,160,high,src/engine/rules.cpp,43
-FMEA-1455,make_fusa001,Buffer overflow in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),8,4,5,160,high,src/engine/rules.cpp,58
+FMEA-1451,any_file,Buffer overflow in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),8,4,5,160,high,src/engine/rules.cpp,47
+FMEA-1455,make_fusa001,Buffer overflow in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),8,4,5,160,high,src/engine/rules.cpp,62
 FMEA-139,assess,Buffer overflow in assess(),Incorrect system behaviour or safety-function failure originating in assess (function),8,4,5,160,high,src/iso21434/iso21434.cpp,155
-FMEA-1459,make_fusa002,Buffer overflow in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),8,4,5,160,high,src/engine/rules.cpp,74
+FMEA-1459,make_fusa002,Buffer overflow in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),8,4,5,160,high,src/engine/rules.cpp,78
 FMEA-135,detect_status,Buffer overflow in detect_status(),Incorrect system behaviour or safety-function failure originating in detect_status (function),8,4,5,160,high,src/iso21434/iso21434.cpp,125
-FMEA-1463,make_fusa003,Buffer overflow in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),8,4,5,160,high,src/engine/rules.cpp,92
-FMEA-1467,make_fusa004,Buffer overflow in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),8,4,5,160,high,src/engine/rules.cpp,108
+FMEA-1463,make_fusa003,Buffer overflow in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),8,4,5,160,high,src/engine/rules.cpp,96
+FMEA-1467,make_fusa004,Buffer overflow in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),8,4,5,160,high,src/engine/rules.cpp,112
 FMEA-131,is_required,Buffer overflow in is_required(),Incorrect system behaviour or safety-function failure originating in is_required (function),8,4,5,160,high,src/iso21434/iso21434.cpp,116
 FMEA-1655,parse_asil,Buffer overflow in parse_asil(),Incorrect system behaviour or safety-function failure originating in parse_asil (function),8,4,5,160,high,src/iso26262/iso26262.cpp,15
 FMEA-43,load,Buffer overflow in load(),Incorrect system behaviour or safety-function failure originating in load (function),8,4,5,160,high,src/disposition/disposition.cpp,66
@@ -421,16 +421,16 @@ FMEA-1399,make_hara005,Buffer overflow in make_hara005(),Incorrect system behavi
 FMEA-1387,make_fusa004,Buffer overflow in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),8,4,5,160,high,src/engine/rules.hpp,15
 FMEA-211,print_err,Buffer overflow in print_err(),Incorrect system behaviour or safety-function failure originating in print_err (function),8,4,5,160,high,src/cmd/cli.cpp,79
 FMEA-1267,parse_controllability,Buffer overflow in parse_controllability(),Incorrect system behaviour or safety-function failure originating in parse_controllability (function),8,4,5,160,high,src/hara/hara.hpp,22
-FMEA-1208,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/coupling/coupling.cpp,109
+FMEA-1208,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/coupling/coupling.cpp,112
 FMEA-728,header,Race condition in header(),Incorrect system behaviour or safety-function failure originating in header (function),7,3,6,126,medium,src/template/template_gen.cpp,81
-FMEA-1200,analyse,Race condition in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),7,3,6,126,medium,src/coupling/coupling.cpp,105
+FMEA-1200,analyse,Race condition in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),7,3,6,126,medium,src/coupling/coupling.cpp,108
 FMEA-1612,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/impact/impact.hpp,39
 FMEA-740,gen_one,Race condition in gen_one(),Incorrect system behaviour or safety-function failure originating in gen_one (function),7,3,6,126,medium,src/template/template_gen.cpp,151
 FMEA-1300,parse_sil,Race condition in parse_sil(),Incorrect system behaviour or safety-function failure originating in parse_sil (function),7,3,6,126,medium,src/iec61508/iec61508.hpp,12
 FMEA-732,header,Race condition in header(),Incorrect system behaviour or safety-function failure originating in header (function),7,3,6,126,medium,src/template/template_gen.cpp,89
-FMEA-1204,analyse_impl,Race condition in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),7,3,6,126,medium,src/coupling/coupling.cpp,106
+FMEA-1204,analyse_impl,Race condition in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),7,3,6,126,medium,src/coupling/coupling.cpp,109
 FMEA-736,write_file,Race condition in write_file(),Incorrect system behaviour or safety-function failure originating in write_file (function),7,3,6,126,medium,src/template/template_gen.cpp,98
-FMEA-1192,analyse,Race condition in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),7,3,6,126,medium,src/coupling/coupling.cpp,100
+FMEA-1192,analyse,Race condition in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),7,3,6,126,medium,src/coupling/coupling.cpp,103
 FMEA-772,parse_spdx_version,Race condition in parse_spdx_version(),Incorrect system behaviour or safety-function failure originating in parse_spdx_version (function),7,3,6,126,medium,src/release/release.cpp,226
 FMEA-1176,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/coupling/coupling.hpp,42
 FMEA-1556,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/coverage/coverage.cpp,179
@@ -443,7 +443,7 @@ FMEA-1316,render_text,Race condition in render_text(),Incorrect system behaviour
 FMEA-776,write_sbom,Race condition in write_sbom(),Incorrect system behaviour or safety-function failure originating in write_sbom (function),7,3,6,126,medium,src/release/release.cpp,233
 FMEA-1184,is_excluded,Race condition in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),7,3,6,126,medium,src/coupling/coupling.cpp,26
 FMEA-1592,apply_mcdc,Race condition in apply_mcdc(),Incorrect system behaviour or safety-function failure originating in apply_mcdc (function),7,3,6,126,medium,src/coverage/coverage.hpp,84
-FMEA-1188,analyse_impl,Race condition in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),7,3,6,126,medium,src/coupling/coupling.cpp,33
+FMEA-1188,analyse_impl,Race condition in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),7,3,6,126,medium,src/coupling/coupling.cpp,36
 FMEA-768,r2_final_hex,Race condition in r2_final_hex(),Incorrect system behaviour or safety-function failure originating in r2_final_hex (function),7,3,6,126,medium,src/release/release.cpp,170
 FMEA-1312,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/iec61508/iec61508.hpp,42
 FMEA-764,r2_final_hex,Race condition in r2_final_hex(),Incorrect system behaviour or safety-function failure originating in r2_final_hex (function),7,3,6,126,medium,src/release/release.cpp,137
@@ -451,7 +451,7 @@ FMEA-1584,write_json,Race condition in write_json(),Incorrect system behaviour o
 FMEA-704,set,Race condition in set(),Incorrect system behaviour or safety-function failure originating in set (function),7,3,6,126,medium,src/runtime/safe_state.hpp,47
 FMEA-756,compare,Race condition in compare(),Incorrect system behaviour or safety-function failure originating in compare (function),7,3,6,126,medium,src/diff/diff.cpp,51
 FMEA-1588,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/coverage/coverage.hpp,80
-FMEA-1196,analyse_impl,Race condition in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),7,3,6,126,medium,src/coupling/coupling.cpp,101
+FMEA-1196,analyse_impl,Race condition in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),7,3,6,126,medium,src/coupling/coupling.cpp,104
 FMEA-752,compare,Race condition in compare(),Incorrect system behaviour or safety-function failure originating in compare (function),7,3,6,126,medium,src/diff/diff.hpp,34
 FMEA-1668,assess,Race condition in assess(),Incorrect system behaviour or safety-function failure originating in assess (function),7,3,6,126,medium,src/iso26262/iso26262.cpp,127
 FMEA-1232,content_json,Race condition in content_json(),Incorrect system behaviour or safety-function failure originating in content_json (function),7,3,6,126,medium,src/hara/hara.cpp,119
@@ -468,22 +468,22 @@ FMEA-644,write_json,Race condition in write_json(),Incorrect system behaviour or
 FMEA-1240,init,Race condition in init(),Incorrect system behaviour or safety-function failure originating in init (function),7,3,6,126,medium,src/hara/hara.cpp,168
 FMEA-668,beat,Race condition in beat(),Incorrect system behaviour or safety-function failure originating in beat (function),7,3,6,126,medium,src/runtime/heartbeat.hpp,36
 FMEA-1672,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/iso26262/iso26262.cpp,152
-FMEA-632,write_dot,Race condition in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),7,3,6,126,medium,src/boundary/boundary.cpp,144
+FMEA-632,write_dot,Race condition in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),7,3,6,126,medium,src/boundary/boundary.cpp,147
 FMEA-1244,save,Race condition in save(),Incorrect system behaviour or safety-function failure originating in save (function),7,3,6,126,medium,src/hara/hara.cpp,180
-FMEA-628,write_mermaid,Race condition in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),7,3,6,126,medium,src/boundary/boundary.cpp,127
+FMEA-628,write_mermaid,Race condition in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),7,3,6,126,medium,src/boundary/boundary.cpp,130
 FMEA-1676,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/iso26262/iso26262.cpp,172
 FMEA-1260,parse_severity,Race condition in parse_severity(),Incorrect system behaviour or safety-function failure originating in parse_severity (function),7,3,6,126,medium,src/hara/hara.hpp,20
-FMEA-624,scan_impl,Race condition in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),7,3,6,126,medium,src/boundary/boundary.cpp,124
+FMEA-624,scan_impl,Race condition in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),7,3,6,126,medium,src/boundary/boundary.cpp,127
 FMEA-1248,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/hara/hara.cpp,183
 FMEA-1680,from_findings,Race condition in from_findings(),Incorrect system behaviour or safety-function failure originating in from_findings (function),7,3,6,126,medium,src/badge/badge.cpp,8
-FMEA-620,scan,Race condition in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),7,3,6,126,medium,src/boundary/boundary.cpp,123
-FMEA-616,scan_impl,Race condition in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),7,3,6,126,medium,src/boundary/boundary.cpp,119
+FMEA-620,scan,Race condition in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),7,3,6,126,medium,src/boundary/boundary.cpp,126
+FMEA-616,scan_impl,Race condition in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),7,3,6,126,medium,src/boundary/boundary.cpp,122
 FMEA-1252,compute_completeness,Race condition in compute_completeness(),Incorrect system behaviour or safety-function failure originating in compute_completeness (function),7,3,6,126,medium,src/hara/hara.cpp,215
 FMEA-696,commit,Race condition in commit(),Incorrect system behaviour or safety-function failure originating in commit (function),7,3,6,126,medium,src/runtime/safe_state.hpp,25
 FMEA-724,header,Race condition in header(),Incorrect system behaviour or safety-function failure originating in header (function),7,3,6,126,medium,src/template/template_gen.cpp,68
 FMEA-1616,render_json,Race condition in render_json(),Incorrect system behaviour or safety-function failure originating in render_json (function),7,3,6,126,medium,src/impact/impact.hpp,40
 FMEA-720,header,Race condition in header(),Incorrect system behaviour or safety-function failure originating in header (function),7,3,6,126,medium,src/template/template_gen.cpp,56
-FMEA-1212,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/coupling/coupling.cpp,125
+FMEA-1212,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/coupling/coupling.cpp,128
 FMEA-716,header,Race condition in header(),Incorrect system behaviour or safety-function failure originating in header (function),7,3,6,126,medium,src/template/template_gen.cpp,38
 FMEA-1620,is_safe_git_ref,Race condition in is_safe_git_ref(),Incorrect system behaviour or safety-function failure originating in is_safe_git_ref (function),7,3,6,126,medium,src/impact/impact.cpp,33
 FMEA-712,header,Race condition in header(),Incorrect system behaviour or safety-function failure originating in header (function),7,3,6,126,medium,src/template/template_gen.cpp,25
@@ -508,27 +508,27 @@ FMEA-948,parse_severity,Race condition in parse_severity(),Incorrect system beha
 FMEA-1440,register_rule,Race condition in register_rule(),Incorrect system behaviour or safety-function failure originating in register_rule (function),7,3,6,126,medium,src/engine/engine.hpp,32
 FMEA-1380,make_fusa002,Race condition in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),7,3,6,126,medium,src/engine/rules.hpp,11
 FMEA-1444,any_file,Race condition in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),7,3,6,126,medium,src/engine/rules.cpp,21
-FMEA-1448,source_contains,Race condition in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),7,3,6,126,medium,src/engine/rules.cpp,40
+FMEA-1448,source_contains,Race condition in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),7,3,6,126,medium,src/engine/rules.cpp,44
 FMEA-972,to_json,Race condition in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),7,3,6,126,medium,src/safety_case/safety_case.cpp,150
 FMEA-1376,make_fusa001,Race condition in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),7,3,6,126,medium,src/engine/rules.hpp,9
-FMEA-1452,any_file,Race condition in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),7,3,6,126,medium,src/engine/rules.cpp,43
+FMEA-1452,any_file,Race condition in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),7,3,6,126,medium,src/engine/rules.cpp,47
 FMEA-968,compute_completeness,Race condition in compute_completeness(),Incorrect system behaviour or safety-function failure originating in compute_completeness (function),7,3,6,126,medium,src/safety_case/safety_case.cpp,123
 FMEA-964,render,Race condition in render(),Incorrect system behaviour or safety-function failure originating in render (function),7,3,6,126,medium,src/pr/pr.hpp,38
 FMEA-1096,libclang_available,Race condition in libclang_available(),Incorrect system behaviour or safety-function failure originating in libclang_available (function),7,3,6,126,medium,src/ast/ast.cpp,18
-FMEA-1456,make_fusa001,Race condition in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),7,3,6,126,medium,src/engine/rules.cpp,58
+FMEA-1456,make_fusa001,Race condition in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),7,3,6,126,medium,src/engine/rules.cpp,62
 FMEA-960,add,Race condition in add(),Incorrect system behaviour or safety-function failure originating in add (function),7,3,6,126,medium,src/pr/pr.hpp,37
-FMEA-1460,make_fusa002,Race condition in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),7,3,6,126,medium,src/engine/rules.cpp,74
-FMEA-1080,to_json,Race condition in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),7,3,6,126,medium,src/fmea/fmea.cpp,249
-FMEA-1464,make_fusa003,Race condition in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),7,3,6,126,medium,src/engine/rules.cpp,92
+FMEA-1460,make_fusa002,Race condition in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),7,3,6,126,medium,src/engine/rules.cpp,78
+FMEA-1080,to_json,Race condition in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),7,3,6,126,medium,src/fmea/fmea.cpp,252
+FMEA-1464,make_fusa003,Race condition in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),7,3,6,126,medium,src/engine/rules.cpp,96
 FMEA-944,parse_status,Race condition in parse_status(),Incorrect system behaviour or safety-function failure originating in parse_status (function),7,3,6,126,medium,src/pr/pr.hpp,15
-FMEA-1468,make_fusa004,Race condition in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),7,3,6,126,medium,src/engine/rules.cpp,108
+FMEA-1468,make_fusa004,Race condition in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),7,3,6,126,medium,src/engine/rules.cpp,112
 FMEA-940,render,Race condition in render(),Incorrect system behaviour or safety-function failure originating in render (function),7,3,6,126,medium,src/pr/pr.cpp,97
 FMEA-1108,class_member_visitor,Race condition in class_member_visitor(),Incorrect system behaviour or safety-function failure originating in class_member_visitor (function),7,3,6,126,medium,src/ast/ast.cpp,52
 FMEA-936,add,Race condition in add(),Incorrect system behaviour or safety-function failure originating in add (function),7,3,6,126,medium,src/pr/pr.cpp,92
-FMEA-1472,make_fusa005,Race condition in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),7,3,6,126,medium,src/engine/rules.cpp,124
+FMEA-1472,make_fusa005,Race condition in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),7,3,6,126,medium,src/engine/rules.cpp,128
 FMEA-1256,to_report_json,Race condition in to_report_json(),Incorrect system behaviour or safety-function failure originating in to_report_json (function),7,3,6,126,medium,src/hara/hara.cpp,264
 FMEA-932,save,Race condition in save(),Incorrect system behaviour or safety-function failure originating in save (function),7,3,6,126,medium,src/pr/pr.cpp,68
-FMEA-1476,make_coup003,Race condition in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),7,3,6,126,medium,src/engine/rules.cpp,141
+FMEA-1476,make_coup003,Race condition in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),7,3,6,126,medium,src/engine/rules.cpp,145
 FMEA-928,load,Race condition in load(),Incorrect system behaviour or safety-function failure originating in load (function),7,3,6,126,medium,src/pr/pr.cpp,41
 FMEA-1356,to_json,Race condition in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),7,3,6,126,medium,src/tara/tara.cpp,228
 FMEA-1416,make_hara003,Race condition in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),7,3,6,126,medium,src/engine/rules.hpp,30
@@ -586,27 +586,27 @@ FMEA-1688,from_findings,Race condition in from_findings(),Incorrect system behav
 FMEA-808,hash_artifacts,Race condition in hash_artifacts(),Incorrect system behaviour or safety-function failure originating in hash_artifacts (function),7,3,6,126,medium,src/release/release.hpp,70
 FMEA-1552,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/coverage/coverage.cpp,118
 FMEA-896,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/slsa/slsa.cpp,131
-FMEA-1480,make_hara005,Race condition in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),7,3,6,126,medium,src/engine/rules.cpp,157
+FMEA-1480,make_hara005,Race condition in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),7,3,6,126,medium,src/engine/rules.cpp,161
 FMEA-920,parse_status,Race condition in parse_status(),Incorrect system behaviour or safety-function failure originating in parse_status (function),7,3,6,126,medium,src/pr/pr.cpp,29
 FMEA-1116,shadow_visitor,Race condition in shadow_visitor(),Incorrect system behaviour or safety-function failure originating in shadow_visitor (function),7,3,6,126,medium,src/ast/ast.cpp,74
-FMEA-1484,make_iso26262002,Race condition in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),7,3,6,126,medium,src/engine/rules.cpp,200
+FMEA-1484,make_iso26262002,Race condition in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),7,3,6,126,medium,src/engine/rules.cpp,204
 FMEA-916,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/slsa/slsa.hpp,43
 FMEA-912,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/slsa/slsa.hpp,42
 FMEA-1120,tu_visitor,Race condition in tu_visitor(),Incorrect system behaviour or safety-function failure originating in tu_visitor (function),7,3,6,126,medium,src/ast/ast.cpp,82
-FMEA-1488,make_iso26262003,Race condition in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),7,3,6,126,medium,src/engine/rules.cpp,230
-FMEA-1492,make_hara002,Race condition in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),7,3,6,126,medium,src/engine/rules.cpp,256
+FMEA-1488,make_iso26262003,Race condition in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),7,3,6,126,medium,src/engine/rules.cpp,234
+FMEA-1492,make_hara002,Race condition in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),7,3,6,126,medium,src/engine/rules.cpp,260
 FMEA-1348,impact_rank,Race condition in impact_rank(),Incorrect system behaviour or safety-function failure originating in impact_rank (function),7,3,6,126,medium,src/tara/tara.cpp,37
 FMEA-900,parse_level,Race condition in parse_level(),Incorrect system behaviour or safety-function failure originating in parse_level (function),7,3,6,126,medium,src/slsa/slsa.hpp,12
-FMEA-1496,make_hara003,Race condition in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),7,3,6,126,medium,src/engine/rules.cpp,288
+FMEA-1496,make_hara003,Race condition in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),7,3,6,126,medium,src/engine/rules.cpp,292
 FMEA-1320,parse_sil,Race condition in parse_sil(),Incorrect system behaviour or safety-function failure originating in parse_sil (function),7,3,6,126,medium,src/iec61508/iec61508.cpp,15
 FMEA-1128,fn_scope_visitor,Race condition in fn_scope_visitor(),Incorrect system behaviour or safety-function failure originating in fn_scope_visitor (function),7,3,6,126,medium,src/ast/ast.cpp,171
 FMEA-892,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/slsa/slsa.cpp,107
 FMEA-1344,feasibility_rank,Race condition in feasibility_rank(),Incorrect system behaviour or safety-function failure originating in feasibility_rank (function),7,3,6,126,medium,src/tara/tara.cpp,27
-FMEA-1500,make_hara004,Race condition in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),7,3,6,126,medium,src/engine/rules.cpp,317
+FMEA-1500,make_hara004,Race condition in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),7,3,6,126,medium,src/engine/rules.cpp,321
 FMEA-888,assess,Race condition in assess(),Incorrect system behaviour or safety-function failure originating in assess (function),7,3,6,126,medium,src/slsa/slsa.cpp,85
 FMEA-884,is_required,Race condition in is_required(),Incorrect system behaviour or safety-function failure originating in is_required (function),7,3,6,126,medium,src/slsa/slsa.cpp,73
 FMEA-1132,fn_body_visitor,Race condition in fn_body_visitor(),Incorrect system behaviour or safety-function failure originating in fn_body_visitor (function),7,3,6,126,medium,src/ast/ast.cpp,198
-FMEA-1504,make_verify002,Race condition in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),7,3,6,126,medium,src/engine/rules.cpp,346
+FMEA-1504,make_verify002,Race condition in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),7,3,6,126,medium,src/engine/rules.cpp,350
 FMEA-880,detect_status,Race condition in detect_status(),Incorrect system behaviour or safety-function failure originating in detect_status (function),7,3,6,126,medium,src/slsa/slsa.cpp,57
 FMEA-1508,make_default_engine,Race condition in make_default_engine(),Incorrect system behaviour or safety-function failure originating in make_default_engine (function),7,3,6,126,medium,src/engine/engine.cpp,38
 FMEA-876,parse_level,Race condition in parse_level(),Incorrect system behaviour or safety-function failure originating in parse_level (function),7,3,6,126,medium,src/slsa/slsa.cpp,16
@@ -631,7 +631,7 @@ FMEA-556,finding,Race condition in finding(),Incorrect system behaviour or safet
 FMEA-264,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/vuln/vuln.hpp,36
 FMEA-468,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/do178/do178.hpp,42
 FMEA-44,load,Race condition in load(),Incorrect system behaviour or safety-function failure originating in load (function),7,3,6,126,medium,src/disposition/disposition.cpp,66
-FMEA-336,run,Race condition in run(),Incorrect system behaviour or safety-function failure originating in run (function),7,3,6,126,medium,src/cyber/cyber.cpp,178
+FMEA-336,run,Race condition in run(),Incorrect system behaviour or safety-function failure originating in run (function),7,3,6,126,medium,src/cyber/cyber.cpp,181
 FMEA-412,assess_r155,Race condition in assess_r155(),Incorrect system behaviour or safety-function failure originating in assess_r155 (function),7,3,6,126,medium,src/unece/unece.cpp,144
 FMEA-212,print_err,Race condition in print_err(),Incorrect system behaviour or safety-function failure originating in print_err (function),7,3,6,126,medium,src/cmd/cli.cpp,79
 FMEA-520,write_canonical,Race condition in write_canonical(),Incorrect system behaviour or safety-function failure originating in write_canonical (function),7,3,6,126,medium,src/quality/quality.cpp,146
@@ -697,15 +697,15 @@ FMEA-220,run,Race condition in run(),Incorrect system behaviour or safety-functi
 FMEA-164,save,Race condition in save(),Incorrect system behaviour or safety-function failure originating in save (function),7,3,6,126,medium,src/metrics/metrics.cpp,108
 FMEA-172,render_json,Race condition in render_json(),Incorrect system behaviour or safety-function failure originating in render_json (function),7,3,6,126,medium,src/metrics/metrics.cpp,160
 FMEA-300,suppressed,Race condition in suppressed(),Incorrect system behaviour or safety-function failure originating in suppressed (function),7,3,6,126,medium,src/lint/lint.cpp,44
-FMEA-608,scan_impl,Race condition in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),7,3,6,126,medium,src/boundary/boundary.cpp,21
+FMEA-608,scan_impl,Race condition in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),7,3,6,126,medium,src/boundary/boundary.cpp,24
 FMEA-100,write_json,Race condition in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),7,3,6,126,medium,src/iec62443/iec62443.hpp,43
 FMEA-168,render_text,Race condition in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),7,3,6,126,medium,src/metrics/metrics.cpp,128
-FMEA-612,scan,Race condition in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),7,3,6,126,medium,src/boundary/boundary.cpp,118
+FMEA-612,scan,Race condition in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),7,3,6,126,medium,src/boundary/boundary.cpp,121
 FMEA-304,file_suppressed,Race condition in file_suppressed(),Incorrect system behaviour or safety-function failure originating in file_suppressed (function),7,3,6,126,medium,src/lint/lint.cpp,50
 FMEA-152,load,Race condition in load(),Incorrect system behaviour or safety-function failure originating in load (function),7,3,6,126,medium,src/metrics/metrics.cpp,26
 FMEA-516,contains_ci,Race condition in contains_ci(),Incorrect system behaviour or safety-function failure originating in contains_ci (function),7,3,6,126,medium,src/quality/quality.cpp,114
 FMEA-108,parse_cal,Race condition in parse_cal(),Incorrect system behaviour or safety-function failure originating in parse_cal (function),7,3,6,126,medium,src/iso21434/iso21434.hpp,12
-FMEA-372,save_requirements,Race condition in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),7,3,6,126,medium,src/trace/trace.cpp,790
+FMEA-372,save_requirements,Race condition in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),7,3,6,126,medium,src/trace/trace.cpp,794
 FMEA-420,assess_r156,Race condition in assess_r156(),Incorrect system behaviour or safety-function failure originating in assess_r156 (function),7,3,6,126,medium,src/unece/unece.cpp,149
 FMEA-276,run_case,Race condition in run_case(),Incorrect system behaviour or safety-function failure originating in run_case (function),7,3,6,126,medium,src/qualify/qualify.cpp,167
 FMEA-184,append,Race condition in append(),Incorrect system behaviour or safety-function failure originating in append (function),7,3,6,126,medium,src/metrics/metrics.hpp,29
@@ -816,7 +816,7 @@ FMEA-1225,load,Incorrect return value in load(),Incorrect system behaviour or sa
 FMEA-1226,load,Unhandled error in load(),Incorrect system behaviour or safety-function failure originating in load (function),5,3,4,60,medium,src/hara/hara.cpp,64
 FMEA-270,sha256_hex,Unhandled error in sha256_hex(),Incorrect system behaviour or safety-function failure originating in sha256_hex (function),5,3,4,60,medium,src/qualify/qualify.cpp,162
 FMEA-269,sha256_hex,Incorrect return value in sha256_hex(),Incorrect system behaviour or safety-function failure originating in sha256_hex (function),5,3,4,60,medium,src/qualify/qualify.cpp,162
-FMEA-1210,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/coupling/coupling.cpp,125
+FMEA-1210,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/coupling/coupling.cpp,128
 FMEA-1230,content_json,Unhandled error in content_json(),Incorrect system behaviour or safety-function failure originating in content_json (function),5,3,4,60,medium,src/hara/hara.cpp,119
 FMEA-268,SHA256Ctx,Exception propagation in SHA256Ctx(),Incorrect system behaviour or safety-function failure originating in SHA256Ctx (class),5,3,4,60,medium,src/qualify/qualify.cpp,32
 FMEA-267,SHA256Ctx,Memory leak in SHA256Ctx(),Incorrect system behaviour or safety-function failure originating in SHA256Ctx (class),5,3,4,60,medium,src/qualify/qualify.cpp,32
@@ -839,30 +839,30 @@ FMEA-301,file_suppressed,Incorrect return value in file_suppressed(),Incorrect s
 FMEA-1181,is_excluded,Incorrect return value in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),5,3,4,60,medium,src/coupling/coupling.cpp,26
 FMEA-1182,is_excluded,Unhandled error in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),5,3,4,60,medium,src/coupling/coupling.cpp,26
 FMEA-298,suppressed,Unhandled error in suppressed(),Incorrect system behaviour or safety-function failure originating in suppressed (function),5,3,4,60,medium,src/lint/lint.cpp,44
-FMEA-1185,analyse_impl,Incorrect return value in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,33
-FMEA-1186,analyse_impl,Unhandled error in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,33
+FMEA-1185,analyse_impl,Incorrect return value in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,36
+FMEA-1186,analyse_impl,Unhandled error in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,36
 FMEA-297,suppressed,Incorrect return value in suppressed(),Incorrect system behaviour or safety-function failure originating in suppressed (function),5,3,4,60,medium,src/lint/lint.cpp,44
-FMEA-1189,analyse,Incorrect return value in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,100
-FMEA-1190,analyse,Unhandled error in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,100
+FMEA-1189,analyse,Incorrect return value in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,103
+FMEA-1190,analyse,Unhandled error in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,103
 FMEA-294,for_each_source,Unhandled error in for_each_source(),Incorrect system behaviour or safety-function failure originating in for_each_source (function),5,3,4,60,medium,src/lint/lint.cpp,30
 FMEA-293,for_each_source,Incorrect return value in for_each_source(),Incorrect system behaviour or safety-function failure originating in for_each_source (function),5,3,4,60,medium,src/lint/lint.cpp,30
-FMEA-1193,analyse_impl,Incorrect return value in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,101
-FMEA-1194,analyse_impl,Unhandled error in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,101
+FMEA-1193,analyse_impl,Incorrect return value in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,104
+FMEA-1194,analyse_impl,Unhandled error in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,104
 FMEA-257,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/vuln/vuln.hpp,35
 FMEA-291,QualifyReport,Memory leak in QualifyReport(),Incorrect system behaviour or safety-function failure originating in QualifyReport (class),5,3,4,60,medium,src/qualify/qualify.hpp,34
-FMEA-1197,analyse,Incorrect return value in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,105
-FMEA-1198,analyse,Unhandled error in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,105
+FMEA-1197,analyse,Incorrect return value in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,108
+FMEA-1198,analyse,Unhandled error in analyse(),Incorrect system behaviour or safety-function failure originating in analyse (function),5,3,4,60,medium,src/coupling/coupling.cpp,108
 FMEA-289,QualifyReport,Incorrect initialisation in QualifyReport(),Incorrect system behaviour or safety-function failure originating in QualifyReport (class),5,3,4,60,medium,src/qualify/qualify.hpp,34
 FMEA-288,CaseResult,Exception propagation in CaseResult(),Incorrect system behaviour or safety-function failure originating in CaseResult (class),5,3,4,60,medium,src/qualify/qualify.hpp,27
-FMEA-1201,analyse_impl,Incorrect return value in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,106
-FMEA-1202,analyse_impl,Unhandled error in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,106
+FMEA-1201,analyse_impl,Incorrect return value in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,109
+FMEA-1202,analyse_impl,Unhandled error in analyse_impl(),Incorrect system behaviour or safety-function failure originating in analyse_impl (function),5,3,4,60,medium,src/coupling/coupling.cpp,109
 FMEA-287,CaseResult,Memory leak in CaseResult(),Incorrect system behaviour or safety-function failure originating in CaseResult (class),5,3,4,60,medium,src/qualify/qualify.hpp,27
 FMEA-285,CaseResult,Incorrect initialisation in CaseResult(),Incorrect system behaviour or safety-function failure originating in CaseResult (class),5,3,4,60,medium,src/qualify/qualify.hpp,27
-FMEA-1205,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/coupling/coupling.cpp,109
-FMEA-1206,write_json,Unhandled error in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/coupling/coupling.cpp,109
+FMEA-1205,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/coupling/coupling.cpp,112
+FMEA-1206,write_json,Unhandled error in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/coupling/coupling.cpp,112
 FMEA-284,Case,Exception propagation in Case(),Incorrect system behaviour or safety-function failure originating in Case (class),5,3,4,60,medium,src/qualify/qualify.hpp,18
 FMEA-283,Case,Memory leak in Case(),Incorrect system behaviour or safety-function failure originating in Case (class),5,3,4,60,medium,src/qualify/qualify.hpp,18
-FMEA-1209,render_text,Incorrect return value in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/coupling/coupling.cpp,125
+FMEA-1209,render_text,Incorrect return value in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/coupling/coupling.cpp,128
 FMEA-1298,parse_sil,Unhandled error in parse_sil(),Incorrect system behaviour or safety-function failure originating in parse_sil (function),5,3,4,60,medium,src/iec61508/iec61508.hpp,12
 FMEA-1281,OperationalSituation,Incorrect initialisation in OperationalSituation(),Incorrect system behaviour or safety-function failure originating in OperationalSituation (class),5,3,4,60,medium,src/hara/hara.hpp,53
 FMEA-237,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/vuln/vuln.cpp,106
@@ -1051,37 +1051,37 @@ FMEA-25,find_by_rule,Incorrect return value in find_by_rule(),Incorrect system b
 FMEA-1653,parse_asil,Incorrect return value in parse_asil(),Incorrect system behaviour or safety-function failure originating in parse_asil (function),5,3,4,60,medium,src/iso26262/iso26262.cpp,15
 FMEA-1654,parse_asil,Unhandled error in parse_asil(),Incorrect system behaviour or safety-function failure originating in parse_asil (function),5,3,4,60,medium,src/iso26262/iso26262.cpp,15
 FMEA-22,render_entries,Unhandled error in render_entries(),Incorrect system behaviour or safety-function failure originating in render_entries (function),5,3,4,60,medium,src/disposition/disposition.hpp,46
-FMEA-1461,make_fusa003,Incorrect return value in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),5,3,4,60,medium,src/engine/rules.cpp,92
+FMEA-1461,make_fusa003,Incorrect return value in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),5,3,4,60,medium,src/engine/rules.cpp,96
 FMEA-1442,any_file,Unhandled error in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),5,3,4,60,medium,src/engine/rules.cpp,21
 FMEA-146,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,205
-FMEA-1445,source_contains,Incorrect return value in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),5,3,4,60,medium,src/engine/rules.cpp,40
-FMEA-1446,source_contains,Unhandled error in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),5,3,4,60,medium,src/engine/rules.cpp,40
+FMEA-1445,source_contains,Incorrect return value in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),5,3,4,60,medium,src/engine/rules.cpp,44
+FMEA-1446,source_contains,Unhandled error in source_contains(),Incorrect system behaviour or safety-function failure originating in source_contains (function),5,3,4,60,medium,src/engine/rules.cpp,44
 FMEA-145,render_text,Incorrect return value in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,205
-FMEA-1449,any_file,Incorrect return value in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),5,3,4,60,medium,src/engine/rules.cpp,43
-FMEA-1450,any_file,Unhandled error in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),5,3,4,60,medium,src/engine/rules.cpp,43
+FMEA-1449,any_file,Incorrect return value in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),5,3,4,60,medium,src/engine/rules.cpp,47
+FMEA-1450,any_file,Unhandled error in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),5,3,4,60,medium,src/engine/rules.cpp,47
 FMEA-142,write_json,Unhandled error in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,175
 FMEA-141,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,175
-FMEA-1453,make_fusa001,Incorrect return value in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),5,3,4,60,medium,src/engine/rules.cpp,58
-FMEA-1454,make_fusa001,Unhandled error in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),5,3,4,60,medium,src/engine/rules.cpp,58
+FMEA-1453,make_fusa001,Incorrect return value in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),5,3,4,60,medium,src/engine/rules.cpp,62
+FMEA-1454,make_fusa001,Unhandled error in make_fusa001(),Incorrect system behaviour or safety-function failure originating in make_fusa001 (function),5,3,4,60,medium,src/engine/rules.cpp,62
 FMEA-138,assess,Unhandled error in assess(),Incorrect system behaviour or safety-function failure originating in assess (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,155
-FMEA-1457,make_fusa002,Incorrect return value in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),5,3,4,60,medium,src/engine/rules.cpp,74
-FMEA-1458,make_fusa002,Unhandled error in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),5,3,4,60,medium,src/engine/rules.cpp,74
+FMEA-1457,make_fusa002,Incorrect return value in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),5,3,4,60,medium,src/engine/rules.cpp,78
+FMEA-1458,make_fusa002,Unhandled error in make_fusa002(),Incorrect system behaviour or safety-function failure originating in make_fusa002 (function),5,3,4,60,medium,src/engine/rules.cpp,78
 FMEA-137,assess,Incorrect return value in assess(),Incorrect system behaviour or safety-function failure originating in assess (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,155
 FMEA-1441,any_file,Incorrect return value in any_file(),Incorrect system behaviour or safety-function failure originating in any_file (function),5,3,4,60,medium,src/engine/rules.cpp,21
-FMEA-1462,make_fusa003,Unhandled error in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),5,3,4,60,medium,src/engine/rules.cpp,92
+FMEA-1462,make_fusa003,Unhandled error in make_fusa003(),Incorrect system behaviour or safety-function failure originating in make_fusa003 (function),5,3,4,60,medium,src/engine/rules.cpp,96
 FMEA-134,detect_status,Unhandled error in detect_status(),Incorrect system behaviour or safety-function failure originating in detect_status (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,125
 FMEA-133,detect_status,Incorrect return value in detect_status(),Incorrect system behaviour or safety-function failure originating in detect_status (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,125
-FMEA-1465,make_fusa004,Incorrect return value in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),5,3,4,60,medium,src/engine/rules.cpp,108
-FMEA-1466,make_fusa004,Unhandled error in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),5,3,4,60,medium,src/engine/rules.cpp,108
+FMEA-1465,make_fusa004,Incorrect return value in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),5,3,4,60,medium,src/engine/rules.cpp,112
+FMEA-1466,make_fusa004,Unhandled error in make_fusa004(),Incorrect system behaviour or safety-function failure originating in make_fusa004 (function),5,3,4,60,medium,src/engine/rules.cpp,112
 FMEA-130,is_required,Unhandled error in is_required(),Incorrect system behaviour or safety-function failure originating in is_required (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,116
-FMEA-1469,make_fusa005,Incorrect return value in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),5,3,4,60,medium,src/engine/rules.cpp,124
-FMEA-1470,make_fusa005,Unhandled error in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),5,3,4,60,medium,src/engine/rules.cpp,124
+FMEA-1469,make_fusa005,Incorrect return value in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),5,3,4,60,medium,src/engine/rules.cpp,128
+FMEA-1470,make_fusa005,Unhandled error in make_fusa005(),Incorrect system behaviour or safety-function failure originating in make_fusa005 (function),5,3,4,60,medium,src/engine/rules.cpp,128
 FMEA-129,is_required,Incorrect return value in is_required(),Incorrect system behaviour or safety-function failure originating in is_required (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,116
-FMEA-1473,make_coup003,Incorrect return value in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),5,3,4,60,medium,src/engine/rules.cpp,141
-FMEA-1474,make_coup003,Unhandled error in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),5,3,4,60,medium,src/engine/rules.cpp,141
+FMEA-1473,make_coup003,Incorrect return value in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),5,3,4,60,medium,src/engine/rules.cpp,145
+FMEA-1474,make_coup003,Unhandled error in make_coup003(),Incorrect system behaviour or safety-function failure originating in make_coup003 (function),5,3,4,60,medium,src/engine/rules.cpp,145
 FMEA-126,parse_cal,Unhandled error in parse_cal(),Incorrect system behaviour or safety-function failure originating in parse_cal (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,17
 FMEA-125,parse_cal,Incorrect return value in parse_cal(),Incorrect system behaviour or safety-function failure originating in parse_cal (function),5,3,4,60,medium,src/iso21434/iso21434.cpp,17
-FMEA-1477,make_hara005,Incorrect return value in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),5,3,4,60,medium,src/engine/rules.cpp,157
+FMEA-1477,make_hara005,Incorrect return value in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),5,3,4,60,medium,src/engine/rules.cpp,161
 FMEA-1425,RuleInfo,Incorrect initialisation in RuleInfo(),Incorrect system behaviour or safety-function failure originating in RuleInfo (class),5,3,4,60,medium,src/engine/engine.hpp,14
 FMEA-1406,make_iso26262003,Unhandled error in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),5,3,4,60,medium,src/engine/rules.hpp,26
 FMEA-166,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/metrics/metrics.cpp,128
@@ -1098,7 +1098,7 @@ FMEA-158,append,Unhandled error in append(),Incorrect system behaviour or safety
 FMEA-1421,make_verify002,Incorrect return value in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),5,3,4,60,medium,src/engine/rules.hpp,34
 FMEA-1422,make_verify002,Unhandled error in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),5,3,4,60,medium,src/engine/rules.hpp,34
 FMEA-157,append,Incorrect return value in append(),Incorrect system behaviour or safety-function failure originating in append (function),5,3,4,60,medium,src/metrics/metrics.cpp,103
-FMEA-1478,make_hara005,Unhandled error in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),5,3,4,60,medium,src/engine/rules.cpp,157
+FMEA-1478,make_hara005,Unhandled error in make_hara005(),Incorrect system behaviour or safety-function failure originating in make_hara005 (function),5,3,4,60,medium,src/engine/rules.cpp,161
 FMEA-154,collect,Unhandled error in collect(),Incorrect system behaviour or safety-function failure originating in collect (function),5,3,4,60,medium,src/metrics/metrics.cpp,52
 FMEA-1427,RuleInfo,Memory leak in RuleInfo(),Incorrect system behaviour or safety-function failure originating in RuleInfo (class),5,3,4,60,medium,src/engine/engine.hpp,14
 FMEA-1428,RuleInfo,Exception propagation in RuleInfo(),Incorrect system behaviour or safety-function failure originating in RuleInfo (class),5,3,4,60,medium,src/engine/engine.hpp,14
@@ -1146,27 +1146,27 @@ FMEA-1545,build_from_lcov,Incorrect return value in build_from_lcov(),Incorrect 
 FMEA-1546,build_from_lcov,Unhandled error in build_from_lcov(),Incorrect system behaviour or safety-function failure originating in build_from_lcov (function),5,3,4,60,medium,src/coverage/coverage.cpp,59
 FMEA-112,Objective,Exception propagation in Objective(),Incorrect system behaviour or safety-function failure originating in Objective (class),5,3,4,60,medium,src/iso21434/iso21434.hpp,17
 FMEA-122,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/iso21434/iso21434.hpp,45
-FMEA-1481,make_iso26262002,Incorrect return value in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),5,3,4,60,medium,src/engine/rules.cpp,200
-FMEA-1482,make_iso26262002,Unhandled error in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),5,3,4,60,medium,src/engine/rules.cpp,200
+FMEA-1481,make_iso26262002,Incorrect return value in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),5,3,4,60,medium,src/engine/rules.cpp,204
+FMEA-1482,make_iso26262002,Unhandled error in make_iso26262002(),Incorrect system behaviour or safety-function failure originating in make_iso26262002 (function),5,3,4,60,medium,src/engine/rules.cpp,204
 FMEA-121,render_text,Incorrect return value in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/iso21434/iso21434.hpp,45
-FMEA-1485,make_iso26262003,Incorrect return value in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),5,3,4,60,medium,src/engine/rules.cpp,230
-FMEA-1486,make_iso26262003,Unhandled error in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),5,3,4,60,medium,src/engine/rules.cpp,230
+FMEA-1485,make_iso26262003,Incorrect return value in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),5,3,4,60,medium,src/engine/rules.cpp,234
+FMEA-1486,make_iso26262003,Unhandled error in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),5,3,4,60,medium,src/engine/rules.cpp,234
 FMEA-118,write_json,Unhandled error in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/iso21434/iso21434.hpp,44
 FMEA-117,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/iso21434/iso21434.hpp,44
-FMEA-1489,make_hara002,Incorrect return value in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),5,3,4,60,medium,src/engine/rules.cpp,256
-FMEA-1490,make_hara002,Unhandled error in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),5,3,4,60,medium,src/engine/rules.cpp,256
+FMEA-1489,make_hara002,Incorrect return value in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),5,3,4,60,medium,src/engine/rules.cpp,260
+FMEA-1490,make_hara002,Unhandled error in make_hara002(),Incorrect system behaviour or safety-function failure originating in make_hara002 (function),5,3,4,60,medium,src/engine/rules.cpp,260
 FMEA-116,Report,Exception propagation in Report(),Incorrect system behaviour or safety-function failure originating in Report (class),5,3,4,60,medium,src/iso21434/iso21434.hpp,31
 FMEA-115,Report,Memory leak in Report(),Incorrect system behaviour or safety-function failure originating in Report (class),5,3,4,60,medium,src/iso21434/iso21434.hpp,31
-FMEA-1493,make_hara003,Incorrect return value in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),5,3,4,60,medium,src/engine/rules.cpp,288
-FMEA-1494,make_hara003,Unhandled error in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),5,3,4,60,medium,src/engine/rules.cpp,288
+FMEA-1493,make_hara003,Incorrect return value in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),5,3,4,60,medium,src/engine/rules.cpp,292
+FMEA-1494,make_hara003,Unhandled error in make_hara003(),Incorrect system behaviour or safety-function failure originating in make_hara003 (function),5,3,4,60,medium,src/engine/rules.cpp,292
 FMEA-113,Report,Incorrect initialisation in Report(),Incorrect system behaviour or safety-function failure originating in Report (class),5,3,4,60,medium,src/iso21434/iso21434.hpp,31
 FMEA-1405,make_iso26262003,Incorrect return value in make_iso26262003(),Incorrect system behaviour or safety-function failure originating in make_iso26262003 (function),5,3,4,60,medium,src/engine/rules.hpp,26
-FMEA-1497,make_hara004,Incorrect return value in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),5,3,4,60,medium,src/engine/rules.cpp,317
-FMEA-1498,make_hara004,Unhandled error in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),5,3,4,60,medium,src/engine/rules.cpp,317
+FMEA-1497,make_hara004,Incorrect return value in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),5,3,4,60,medium,src/engine/rules.cpp,321
+FMEA-1498,make_hara004,Unhandled error in make_hara004(),Incorrect system behaviour or safety-function failure originating in make_hara004 (function),5,3,4,60,medium,src/engine/rules.cpp,321
 FMEA-111,Objective,Memory leak in Objective(),Incorrect system behaviour or safety-function failure originating in Objective (class),5,3,4,60,medium,src/iso21434/iso21434.hpp,17
 FMEA-109,Objective,Incorrect initialisation in Objective(),Incorrect system behaviour or safety-function failure originating in Objective (class),5,3,4,60,medium,src/iso21434/iso21434.hpp,17
-FMEA-1501,make_verify002,Incorrect return value in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),5,3,4,60,medium,src/engine/rules.cpp,346
-FMEA-1502,make_verify002,Unhandled error in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),5,3,4,60,medium,src/engine/rules.cpp,346
+FMEA-1501,make_verify002,Incorrect return value in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),5,3,4,60,medium,src/engine/rules.cpp,350
+FMEA-1502,make_verify002,Unhandled error in make_verify002(),Incorrect system behaviour or safety-function failure originating in make_verify002 (function),5,3,4,60,medium,src/engine/rules.cpp,350
 FMEA-106,parse_cal,Unhandled error in parse_cal(),Incorrect system behaviour or safety-function failure originating in parse_cal (function),5,3,4,60,medium,src/iso21434/iso21434.hpp,12
 FMEA-1505,make_default_engine,Incorrect return value in make_default_engine(),Incorrect system behaviour or safety-function failure originating in make_default_engine (function),5,3,4,60,medium,src/engine/engine.cpp,38
 FMEA-1506,make_default_engine,Unhandled error in make_default_engine(),Incorrect system behaviour or safety-function failure originating in make_default_engine (function),5,3,4,60,medium,src/engine/engine.cpp,38
@@ -1278,10 +1278,10 @@ FMEA-493,Sha256Ctx,Incorrect initialisation in Sha256Ctx(),Incorrect system beha
 FMEA-829,SHA256Ctx3,Incorrect initialisation in SHA256Ctx3(),Incorrect system behaviour or safety-function failure originating in SHA256Ctx3 (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,103
 FMEA-831,SHA256Ctx3,Memory leak in SHA256Ctx3(),Incorrect system behaviour or safety-function failure originating in SHA256Ctx3 (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,103
 FMEA-832,SHA256Ctx3,Exception propagation in SHA256Ctx3(),Incorrect system behaviour or safety-function failure originating in SHA256Ctx3 (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,103
-FMEA-833,FileInfo,Incorrect initialisation in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,172
+FMEA-833,FileInfo,Incorrect initialisation in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,184
 FMEA-490,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/do178/do178.cpp,187
-FMEA-835,FileInfo,Memory leak in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,172
-FMEA-836,FileInfo,Exception propagation in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,172
+FMEA-835,FileInfo,Memory leak in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,184
+FMEA-836,FileInfo,Exception propagation in FileInfo(),Incorrect system behaviour or safety-function failure originating in FileInfo (class),5,3,4,60,medium,src/auditpack/auditpack.cpp,184
 FMEA-837,count_complexity,Incorrect return value in count_complexity(),Incorrect system behaviour or safety-function failure originating in count_complexity (function),5,3,4,60,medium,src/comp/comp.cpp,20
 FMEA-838,count_complexity,Unhandled error in count_complexity(),Incorrect system behaviour or safety-function failure originating in count_complexity (function),5,3,4,60,medium,src/comp/comp.cpp,20
 FMEA-489,render_text,Incorrect return value in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/do178/do178.cpp,187
@@ -1336,20 +1336,20 @@ FMEA-576,EvidenceBundle,Exception propagation in EvidenceBundle(),Incorrect syst
 FMEA-575,EvidenceBundle,Memory leak in EvidenceBundle(),Incorrect system behaviour or safety-function failure originating in EvidenceBundle (class),5,3,4,60,medium,src/verify/verify.hpp,24
 FMEA-681,monitor,Incorrect return value in monitor(),Incorrect system behaviour or safety-function failure originating in monitor (function),5,3,4,60,medium,src/runtime/watchdog.hpp,61
 FMEA-633,ConfigItem,Incorrect initialisation in ConfigItem(),Incorrect system behaviour or safety-function failure originating in ConfigItem (class),5,3,4,60,medium,src/sci/sci.hpp,17
-FMEA-614,scan_impl,Unhandled error in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,119
-FMEA-610,scan,Unhandled error in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,118
-FMEA-617,scan,Incorrect return value in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,123
-FMEA-618,scan,Unhandled error in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,123
-FMEA-609,scan,Incorrect return value in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,118
-FMEA-621,scan_impl,Incorrect return value in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,124
-FMEA-622,scan_impl,Unhandled error in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,124
-FMEA-606,scan_impl,Unhandled error in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,21
-FMEA-605,scan_impl,Incorrect return value in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,21
-FMEA-625,write_mermaid,Incorrect return value in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),5,3,4,60,medium,src/boundary/boundary.cpp,127
-FMEA-626,write_mermaid,Unhandled error in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),5,3,4,60,medium,src/boundary/boundary.cpp,127
+FMEA-614,scan_impl,Unhandled error in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,122
+FMEA-610,scan,Unhandled error in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,121
+FMEA-617,scan,Incorrect return value in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,126
+FMEA-618,scan,Unhandled error in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,126
+FMEA-609,scan,Incorrect return value in scan(),Incorrect system behaviour or safety-function failure originating in scan (function),5,3,4,60,medium,src/boundary/boundary.cpp,121
+FMEA-621,scan_impl,Incorrect return value in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,127
+FMEA-622,scan_impl,Unhandled error in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,127
+FMEA-606,scan_impl,Unhandled error in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,24
+FMEA-605,scan_impl,Incorrect return value in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,24
+FMEA-625,write_mermaid,Incorrect return value in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),5,3,4,60,medium,src/boundary/boundary.cpp,130
+FMEA-626,write_mermaid,Unhandled error in write_mermaid(),Incorrect system behaviour or safety-function failure originating in write_mermaid (function),5,3,4,60,medium,src/boundary/boundary.cpp,130
 FMEA-602,is_excluded,Unhandled error in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),5,3,4,60,medium,src/boundary/boundary.cpp,14
-FMEA-629,write_dot,Incorrect return value in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),5,3,4,60,medium,src/boundary/boundary.cpp,144
-FMEA-630,write_dot,Unhandled error in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),5,3,4,60,medium,src/boundary/boundary.cpp,144
+FMEA-629,write_dot,Incorrect return value in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),5,3,4,60,medium,src/boundary/boundary.cpp,147
+FMEA-630,write_dot,Unhandled error in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),5,3,4,60,medium,src/boundary/boundary.cpp,147
 FMEA-601,is_excluded,Incorrect return value in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),5,3,4,60,medium,src/boundary/boundary.cpp,14
 FMEA-682,monitor,Unhandled error in monitor(),Incorrect system behaviour or safety-function failure originating in monitor (function),5,3,4,60,medium,src/runtime/watchdog.hpp,61
 FMEA-598,write_dot,Unhandled error in write_dot(),Incorrect system behaviour or safety-function failure originating in write_dot (function),5,3,4,60,medium,src/boundary/boundary.hpp,39
@@ -1433,10 +1433,10 @@ FMEA-713,header,Incorrect return value in header(),Incorrect system behaviour or
 FMEA-714,header,Unhandled error in header(),Incorrect system behaviour or safety-function failure originating in header (function),5,3,4,60,medium,src/template/template_gen.cpp,38
 FMEA-1089,FMEAReport,Incorrect initialisation in FMEAReport(),Incorrect system behaviour or safety-function failure originating in FMEAReport (class),5,3,4,60,medium,src/fmea/fmea.hpp,55
 FMEA-353,func_has_tag_above,Incorrect return value in func_has_tag_above(),Incorrect system behaviour or safety-function failure originating in func_has_tag_above (function),5,3,4,60,medium,src/trace/trace.cpp,195
-FMEA-1075,Declaration,Memory leak in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),5,3,4,60,medium,src/fmea/fmea.cpp,58
-FMEA-1076,Declaration,Exception propagation in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),5,3,4,60,medium,src/fmea/fmea.cpp,58
-FMEA-1077,to_json,Incorrect return value in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),5,3,4,60,medium,src/fmea/fmea.cpp,249
-FMEA-1078,to_json,Unhandled error in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),5,3,4,60,medium,src/fmea/fmea.cpp,249
+FMEA-1075,Declaration,Memory leak in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),5,3,4,60,medium,src/fmea/fmea.cpp,61
+FMEA-1076,Declaration,Exception propagation in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),5,3,4,60,medium,src/fmea/fmea.cpp,61
+FMEA-1077,to_json,Incorrect return value in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),5,3,4,60,medium,src/fmea/fmea.cpp,252
+FMEA-1078,to_json,Unhandled error in to_json(),Incorrect system behaviour or safety-function failure originating in to_json (function),5,3,4,60,medium,src/fmea/fmea.cpp,252
 FMEA-352,Block,Exception propagation in Block(),Incorrect system behaviour or safety-function failure originating in Block (class),5,3,4,60,medium,src/trace/trace.cpp,111
 FMEA-351,Block,Memory leak in Block(),Incorrect system behaviour or safety-function failure originating in Block (class),5,3,4,60,medium,src/trace/trace.cpp,111
 FMEA-1081,FmeaEntry,Incorrect initialisation in FmeaEntry(),Incorrect system behaviour or safety-function failure originating in FmeaEntry (class),5,3,4,60,medium,src/fmea/fmea.hpp,25
@@ -1447,7 +1447,7 @@ FMEA-1085,Summary,Incorrect initialisation in Summary(),Incorrect system behavio
 FMEA-348,DeclaredFunc,Exception propagation in DeclaredFunc(),Incorrect system behaviour or safety-function failure originating in DeclaredFunc (class),5,3,4,60,medium,src/trace/trace.cpp,77
 FMEA-1087,Summary,Memory leak in Summary(),Incorrect system behaviour or safety-function failure originating in Summary (class),5,3,4,60,medium,src/fmea/fmea.hpp,44
 FMEA-1088,Summary,Exception propagation in Summary(),Incorrect system behaviour or safety-function failure originating in Summary (class),5,3,4,60,medium,src/fmea/fmea.hpp,44
-FMEA-1073,Declaration,Incorrect initialisation in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),5,3,4,60,medium,src/fmea/fmea.cpp,58
+FMEA-1073,Declaration,Incorrect initialisation in Declaration(),Incorrect system behaviour or safety-function failure originating in Declaration (class),5,3,4,60,medium,src/fmea/fmea.cpp,61
 FMEA-347,DeclaredFunc,Memory leak in DeclaredFunc(),Incorrect system behaviour or safety-function failure originating in DeclaredFunc (class),5,3,4,60,medium,src/trace/trace.cpp,77
 FMEA-1091,FMEAReport,Memory leak in FMEAReport(),Incorrect system behaviour or safety-function failure originating in FMEAReport (class),5,3,4,60,medium,src/fmea/fmea.hpp,55
 FMEA-1092,FMEAReport,Exception propagation in FMEAReport(),Incorrect system behaviour or safety-function failure originating in FMEAReport (class),5,3,4,60,medium,src/fmea/fmea.hpp,55
@@ -1470,10 +1470,10 @@ FMEA-375,Requirement,Memory leak in Requirement(),Incorrect system behaviour or 
 FMEA-373,Requirement,Incorrect initialisation in Requirement(),Incorrect system behaviour or safety-function failure originating in Requirement (class),5,3,4,60,medium,src/trace/trace.hpp,12
 FMEA-1041,build_report,Incorrect return value in build_report(),Incorrect system behaviour or safety-function failure originating in build_report (function),5,3,4,60,medium,src/misra/misra.cpp,71
 FMEA-1042,build_report,Unhandled error in build_report(),Incorrect system behaviour or safety-function failure originating in build_report (function),5,3,4,60,medium,src/misra/misra.cpp,71
-FMEA-370,save_requirements,Unhandled error in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),5,3,4,60,medium,src/trace/trace.cpp,790
+FMEA-370,save_requirements,Unhandled error in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),5,3,4,60,medium,src/trace/trace.cpp,794
 FMEA-1045,write_json,Incorrect return value in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/misra/misra.cpp,92
 FMEA-1046,write_json,Unhandled error in write_json(),Incorrect system behaviour or safety-function failure originating in write_json (function),5,3,4,60,medium,src/misra/misra.cpp,92
-FMEA-369,save_requirements,Incorrect return value in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),5,3,4,60,medium,src/trace/trace.cpp,790
+FMEA-369,save_requirements,Incorrect return value in save_requirements(),Incorrect system behaviour or safety-function failure originating in save_requirements (function),5,3,4,60,medium,src/trace/trace.cpp,794
 FMEA-1049,render_text,Incorrect return value in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/misra/misra.cpp,111
 FMEA-1050,render_text,Unhandled error in render_text(),Incorrect system behaviour or safety-function failure originating in render_text (function),5,3,4,60,medium,src/misra/misra.cpp,111
 FMEA-366,scan_annotations_impl,Unhandled error in scan_annotations_impl(),Incorrect system behaviour or safety-function failure originating in scan_annotations_impl (function),5,3,4,60,medium,src/trace/trace.cpp,347
@@ -1503,7 +1503,7 @@ FMEA-318,run,Unhandled error in run(),Incorrect system behaviour or safety-funct
 FMEA-317,run,Incorrect return value in run(),Incorrect system behaviour or safety-function failure originating in run (function),5,3,4,60,medium,src/cyber/cyber.hpp,56
 FMEA-1149,add_report_envelope,Incorrect return value in add_report_envelope(),Incorrect system behaviour or safety-function failure originating in add_report_envelope (function),5,3,4,60,medium,src/report/report.cpp,63
 FMEA-1150,add_report_envelope,Unhandled error in add_report_envelope(),Incorrect system behaviour or safety-function failure originating in add_report_envelope (function),5,3,4,60,medium,src/report/report.cpp,63
-FMEA-613,scan_impl,Incorrect return value in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,119
+FMEA-613,scan_impl,Incorrect return value in scan_impl(),Incorrect system behaviour or safety-function failure originating in scan_impl (function),5,3,4,60,medium,src/boundary/boundary.cpp,122
 FMEA-315,CyberReport,Memory leak in CyberReport(),Incorrect system behaviour or safety-function failure originating in CyberReport (class),5,3,4,60,medium,src/cyber/cyber.hpp,47
 FMEA-1153,exit_code,Incorrect return value in exit_code(),Incorrect system behaviour or safety-function failure originating in exit_code (function),5,3,4,60,medium,src/report/report.cpp,287
 FMEA-1154,exit_code,Unhandled error in exit_code(),Incorrect system behaviour or safety-function failure originating in exit_code (function),5,3,4,60,medium,src/report/report.cpp,287
@@ -1535,10 +1535,10 @@ FMEA-1111,ShadowCtx,Memory leak in ShadowCtx(),Incorrect system behaviour or saf
 FMEA-1112,ShadowCtx,Exception propagation in ShadowCtx(),Incorrect system behaviour or safety-function failure originating in ShadowCtx (class),5,3,4,60,medium,src/ast/ast.cpp,68
 FMEA-1113,shadow_visitor,Incorrect return value in shadow_visitor(),Incorrect system behaviour or safety-function failure originating in shadow_visitor (function),5,3,4,60,medium,src/ast/ast.cpp,74
 FMEA-1114,shadow_visitor,Unhandled error in shadow_visitor(),Incorrect system behaviour or safety-function failure originating in shadow_visitor (function),5,3,4,60,medium,src/ast/ast.cpp,74
-FMEA-334,run,Unhandled error in run(),Incorrect system behaviour or safety-function failure originating in run (function),5,3,4,60,medium,src/cyber/cyber.cpp,178
+FMEA-334,run,Unhandled error in run(),Incorrect system behaviour or safety-function failure originating in run (function),5,3,4,60,medium,src/cyber/cyber.cpp,181
 FMEA-1117,tu_visitor,Incorrect return value in tu_visitor(),Incorrect system behaviour or safety-function failure originating in tu_visitor (function),5,3,4,60,medium,src/ast/ast.cpp,82
 FMEA-1118,tu_visitor,Unhandled error in tu_visitor(),Incorrect system behaviour or safety-function failure originating in tu_visitor (function),5,3,4,60,medium,src/ast/ast.cpp,82
-FMEA-333,run,Incorrect return value in run(),Incorrect system behaviour or safety-function failure originating in run (function),5,3,4,60,medium,src/cyber/cyber.cpp,178
+FMEA-333,run,Incorrect return value in run(),Incorrect system behaviour or safety-function failure originating in run (function),5,3,4,60,medium,src/cyber/cyber.cpp,181
 FMEA-1121,FnScopeCtx,Incorrect initialisation in FnScopeCtx(),Incorrect system behaviour or safety-function failure originating in FnScopeCtx (class),5,3,4,60,medium,src/ast/ast.cpp,165
 FMEA-330,is_excluded,Unhandled error in is_excluded(),Incorrect system behaviour or safety-function failure originating in is_excluded (function),5,3,4,60,medium,src/cyber/cyber.cpp,41
 FMEA-1123,FnScopeCtx,Memory leak in FnScopeCtx(),Incorrect system behaviour or safety-function failure originating in FnScopeCtx (class),5,3,4,60,medium,src/ast/ast.cpp,165

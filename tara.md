@@ -1,7 +1,7 @@
 # TARA — cpp-FuSa
 
 Standard: iso21434  
-Generated: 2026-07-28T21:42:50Z  
+Generated: 2026-07-29T04:17:17Z  
 Coverage: 8/8 assets (100.0%)
 
 | ID | Asset | Threat | Feasibility | Risk | Treatment |

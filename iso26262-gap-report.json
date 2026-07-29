@@ -1,165 +1,173 @@
 {
   "asil": "ASIL-B",
-  "generatedAt": "2026-06-10T19:14:34Z",
+  "generatedAt": "2026-07-29T04:17:17Z",
   "objectives": [
     {
       "clause": "§5.1",
-      "description": "Software development planning",
       "evidence": "",
       "id": "6-5.1",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "Software development planning"
     },
     {
       "clause": "§5.2",
-      "description": "Software design criteria specification",
       "evidence": "",
       "id": "6-5.2",
       "part": "Part 6",
-      "status": "gap"
+      "status": "gap",
+      "title": "Software design criteria specification"
     },
     {
       "clause": "§6.1",
-      "description": "Software architectural design",
       "evidence": "",
       "id": "6-6.1",
       "part": "Part 6",
-      "status": "gap"
+      "status": "gap",
+      "title": "Software architectural design"
     },
     {
       "clause": "§6.2",
-      "description": "Software unit design",
       "evidence": "",
       "id": "6-6.2",
       "part": "Part 6",
-      "status": "gap"
+      "status": "gap",
+      "title": "Software unit design"
     },
     {
       "clause": "§6.3",
-      "description": "Software unit implementation",
       "evidence": "",
       "id": "6-6.3",
       "part": "Part 6",
-      "status": "gap"
+      "status": "gap",
+      "title": "Software unit implementation"
     },
     {
       "clause": "§7.1",
-      "description": "Software unit verification",
       "evidence": "",
       "id": "6-7.1",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "Software unit verification"
     },
     {
       "clause": "§7.2",
-      "description": "Software unit testing",
       "evidence": "",
       "id": "6-7.2",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "Software unit testing"
     },
     {
       "clause": "§8.1",
-      "description": "Software integration and testing",
       "evidence": "",
       "id": "6-8.1",
       "part": "Part 6",
-      "status": "gap"
+      "status": "gap",
+      "title": "Software integration and testing"
     },
     {
       "clause": "§9.1",
-      "description": "Verification of software safety requirements",
       "evidence": "",
       "id": "6-9.1",
       "part": "Part 6",
-      "status": "gap"
+      "status": "gap",
+      "title": "Verification of software safety requirements"
     },
     {
       "clause": "§4.3",
-      "description": "MISRA C++ coding guidelines",
       "evidence": "",
       "id": "6-4.3",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "MISRA C++ coding guidelines"
     },
     {
       "clause": "§4.4",
-      "description": "Static analysis",
       "evidence": "",
       "id": "6-4.4",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "Static analysis"
     },
     {
       "clause": "§4.6",
-      "description": "Requirements traceability",
       "evidence": "",
       "id": "6-4.6",
       "part": "Part 6",
-      "status": "addressed"
+      "status": "satisfied",
+      "title": "Requirements traceability"
     },
     {
       "clause": "§4.7",
-      "description": "Configuration management",
       "evidence": "",
       "id": "6-4.7",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "Configuration management"
     },
     {
       "clause": "§4.8",
-      "description": "Change management",
       "evidence": "",
       "id": "6-4.8",
       "part": "Part 6",
-      "status": "partial"
+      "status": "partial",
+      "title": "Change management"
     },
     {
       "clause": "§4.9",
-      "description": "Software tool qualification",
       "evidence": "",
       "id": "6-4.9",
       "part": "Part 6",
-      "status": "addressed"
+      "status": "satisfied",
+      "title": "Software tool qualification"
     },
     {
       "clause": "§6.1",
-      "description": "ASIL decomposition",
       "evidence": "",
       "id": "8-6.1",
       "part": "Part 8",
-      "status": "gap"
+      "status": "gap",
+      "title": "ASIL decomposition"
     },
     {
       "clause": "§6.2",
-      "description": "Safety manual",
       "evidence": "",
       "id": "8-6.2",
       "part": "Part 8",
-      "status": "gap"
+      "status": "gap",
+      "title": "Safety manual"
     },
     {
       "clause": "§1.1",
-      "description": "ASIL-B verification independence",
       "evidence": "",
       "id": "9-1.1",
       "part": "Part 9",
-      "status": "gap"
+      "status": "gap",
+      "title": "ASIL-B verification independence"
     },
     {
       "clause": "§2.1",
-      "description": "Safety case",
       "evidence": "",
       "id": "9-2.1",
       "part": "Part 9",
-      "status": "partial"
+      "status": "partial",
+      "title": "Safety case"
+    },
+    {
+      "clause": "§10.4",
+      "evidence": "",
+      "id": "10.4",
+      "part": "Part 6",
+      "status": "satisfied",
+      "title": "Software configuration index (SCI)"
     }
   ],
-  "project": "cpp-FuSa",
+  "project": ".",
   "summary": {
-    "addressed": 2,
-    "gap": 9,
+    "gaps": 9,
     "partial": 8,
-    "total": 19
+    "satisfied": 3,
+    "total": 20
   }
 }
