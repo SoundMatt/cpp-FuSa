@@ -197,3 +197,78 @@ TEST_CASE("release: parse_spdx_version parses 2.2, 2.3 and defaults", "[release]
     REQUIRE(release::parse_spdx_version("3.0.1") == release::SpdxVersion::V3_0_1);
     REQUIRE(release::parse_spdx_version("unknown") == release::SpdxVersion::V3_0_1);
 }
+
+// ─── §7 components[].hash MUST be "<algo>:<value>", never "" ────────────────
+
+TEST_CASE("release: FetchContent component with no fetched source tree has no hash field",
+          "[release][release003]") {
+    TempDir tmp;
+    tmp.write("CMakeLists.txt",
+              "FetchContent_Declare(\n"
+              "    nlohmann_json\n"
+              "    GIT_REPOSITORY https://github.com/nlohmann/json.git\n"
+              "    GIT_TAG        v3.11.3\n"
+              ")\n");
+    config::ProjectConfig cfg;
+    cfg.project = "TestProj";
+    auto sbom_r = release::build_sbom(tmp.path(), cfg);
+    REQUIRE(is_ok(sbom_r));
+    auto& sbom = value_of(sbom_r);
+    REQUIRE_FALSE(sbom.components.empty());
+    // No _deps/<name>-src tree exists anywhere under tmp — no real hash is
+    // computable, so Component.hash MUST be left empty (never fabricated).
+    for (auto& c : sbom.components) REQUIRE(c.hash.empty());
+
+    auto prov = value_of(release::build_provenance(tmp.path(), cfg));
+    auto manifest = release::hash_artifacts(tmp.path());
+    release::write_all(tmp.path(), sbom, prov, manifest);
+    std::ifstream f(tmp.path() / release::SBOMFile);
+    json j;
+    REQUIRE_NOTHROW(f >> j);
+    for (auto& cj : j["components"]) {
+        // §7: "A bare hash with no algo: prefix is non-conformant" — and an
+        // empty string is not a valid algo:value pair either, so the key
+        // must be omitted entirely rather than emitted as "".
+        REQUIRE_FALSE(cj.contains("hash"));
+    }
+}
+
+TEST_CASE("release: FetchContent component with a fetched source tree gets a real sha256: hash",
+          "[release][release003]") {
+    TempDir tmp;
+    tmp.write("CMakeLists.txt",
+              "FetchContent_Declare(\n"
+              "    nlohmann_json\n"
+              "    GIT_REPOSITORY https://github.com/nlohmann/json.git\n"
+              "    GIT_TAG        v3.11.3\n"
+              ")\n");
+    // Simulate a prior CMake configure having fetched the dependency source
+    // under build/_deps/nlohmann_json-src (CMake lowercases the dep name).
+    tmp.write("build/_deps/nlohmann_json-src/include/json.hpp", "// fake header content\n");
+    tmp.write("build/_deps/nlohmann_json-src/README.md", "# nlohmann/json\n");
+
+    config::ProjectConfig cfg;
+    cfg.project = "TestProj";
+    auto sbom_r = release::build_sbom(tmp.path(), cfg);
+    REQUIRE(is_ok(sbom_r));
+    auto& sbom = value_of(sbom_r);
+    REQUIRE_FALSE(sbom.components.empty());
+    REQUIRE_FALSE(sbom.components[0].hash.empty());
+    REQUIRE(sbom.components[0].hash.size() == 64); // bare hex internally
+
+    // Deterministic: re-running build_sbom against the same tree must
+    // produce the identical hash.
+    auto sbom_r2 = release::build_sbom(tmp.path(), cfg);
+    REQUIRE(value_of(sbom_r2).components[0].hash == sbom.components[0].hash);
+
+    auto prov = value_of(release::build_provenance(tmp.path(), cfg));
+    auto manifest = release::hash_artifacts(tmp.path());
+    release::write_all(tmp.path(), sbom, prov, manifest);
+    std::ifstream f(tmp.path() / release::SBOMFile);
+    json j;
+    REQUIRE_NOTHROW(f >> j);
+    REQUIRE_FALSE(j["components"].empty());
+    std::string h = j["components"][0]["hash"].get<std::string>();
+    REQUIRE(h.rfind("sha256:", 0) == 0);
+    REQUIRE(h.size() == 7 + 64);
+}

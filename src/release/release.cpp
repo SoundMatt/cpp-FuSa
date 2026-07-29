@@ -14,6 +14,8 @@
 #  define pclose _pclose
 #endif
 #include <array>
+#include <algorithm>
+#include <cctype>
 
 namespace fs = std::filesystem;
 using json   = nlohmann::json;
@@ -86,18 +88,18 @@ static void r2_transform(uint32_t s[8], const uint8_t b[64]) {
     for(int i=0;i<64;++i){t1=h+R2S1(e)+R2CH(e,f,g)+K256[i]+w[i];t2=R2S0(a)+R2MAJ(a,bb,c);h=g;g=f;f=e;e=d+t1;d=c;c=bb;bb=a;a=t1+t2;}
     s[0]+=a;s[1]+=bb;s[2]+=c;s[3]+=d;s[4]+=e;s[5]+=f;s[6]+=g;s[7]+=h;
 }
-static std::string sha256_file(const fs::path& p) {
-    SHA256Ctx2 ctx;
+static void r2_init(SHA256Ctx2& ctx) {
     ctx.state[0]=0x6a09e667;ctx.state[1]=0xbb67ae85;ctx.state[2]=0x3c6ef372;ctx.state[3]=0xa54ff53a;
     ctx.state[4]=0x510e527f;ctx.state[5]=0x9b05688c;ctx.state[6]=0x1f83d9ab;ctx.state[7]=0x5be0cd19;
     ctx.count=0;ctx.buflen=0;
-    std::ifstream f(p, std::ios::binary);
-    uint8_t tmp[4096];
-    while (f) {
-        f.read(reinterpret_cast<char*>(tmp), sizeof(tmp)); // fusa:unsafe SHA-256 FIPS 180-4 binary read
-        auto n = static_cast<size_t>(f.gcount());
-        for (size_t i=0;i<n;++i){ctx.buf[ctx.buflen++]=tmp[i];if(ctx.buflen==64){r2_transform(ctx.state,ctx.buf);ctx.count+=512;ctx.buflen=0;}}
-    }
+}
+static void r2_update(SHA256Ctx2& ctx, const uint8_t* data, size_t n) {
+    for (size_t i=0;i<n;++i){ctx.buf[ctx.buflen++]=data[i];if(ctx.buflen==64){r2_transform(ctx.state,ctx.buf);ctx.count+=512;ctx.buflen=0;}}
+}
+static void r2_update_str(SHA256Ctx2& ctx, const std::string& s) {
+    r2_update(ctx, reinterpret_cast<const uint8_t*>(s.data()), s.size()); // fusa:unsafe SHA-256 std::string→uint8_t* for FIPS 180-4 input
+}
+static std::string r2_final_hex(SHA256Ctx2& ctx) {
     ctx.count+=ctx.buflen*8;ctx.buf[ctx.buflen++]=0x80;
     if(ctx.buflen>56){while(ctx.buflen<64)ctx.buf[ctx.buflen++]=0;r2_transform(ctx.state,ctx.buf);ctx.buflen=0;}
     while(ctx.buflen<56)ctx.buf[ctx.buflen++]=0;
@@ -109,6 +111,74 @@ static std::string sha256_file(const fs::path& p) {
     std::string out(64,'0');
     for(int i=0;i<32;++i){out[i*2]=HEX[(dig[i]>>4)&0xf];out[i*2+1]=HEX[dig[i]&0xf];}
     return out;
+}
+
+static std::string sha256_file(const fs::path& p) {
+    SHA256Ctx2 ctx;
+    r2_init(ctx);
+    std::ifstream f(p, std::ios::binary);
+    uint8_t tmp[4096];
+    while (f) {
+        f.read(reinterpret_cast<char*>(tmp), sizeof(tmp)); // fusa:unsafe SHA-256 FIPS 180-4 binary read
+        auto n = static_cast<size_t>(f.gcount());
+        r2_update(ctx, tmp, n);
+    }
+    return r2_final_hex(ctx);
+}
+
+// hash_directory_tree computes a single deterministic SHA-256 over every
+// regular file under `root` (path sorted, so filesystem enumeration order
+// never affects the result): for each file, its root-relative path then its
+// raw bytes are folded into the running hash.
+std::string hash_directory_tree(const fs::path& root) {
+    std::error_code ec;
+    if (!fs::exists(root, ec) || !fs::is_directory(root, ec)) return "";
+    std::vector<fs::path> files;
+    for (auto it = fs::recursive_directory_iterator(
+             root, fs::directory_options::skip_permission_denied, ec);
+         !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
+        if (it->is_regular_file()) files.push_back(it->path());
+    }
+    if (files.empty()) return "";
+    std::sort(files.begin(), files.end());
+
+    SHA256Ctx2 ctx;
+    r2_init(ctx);
+    for (const auto& f : files) {
+        auto rel = fs::relative(f, root).generic_string();
+        r2_update_str(ctx, rel);
+        r2_update(ctx, reinterpret_cast<const uint8_t*>("\x1f"), 1); // fusa:unsafe SHA-256 delimiter byte
+        std::ifstream in(f, std::ios::binary);
+        uint8_t tmp[4096];
+        while (in) {
+            in.read(reinterpret_cast<char*>(tmp), sizeof(tmp)); // fusa:unsafe SHA-256 FIPS 180-4 binary read
+            auto n = static_cast<size_t>(in.gcount());
+            r2_update(ctx, tmp, n);
+        }
+    }
+    return r2_final_hex(ctx);
+}
+
+// hash_fetched_source_tree looks for an already-fetched CMake FetchContent
+// source tree for dependency `name` (CMake places it at
+// `<binary-dir>/_deps/<lowercase-name>-src`) under any top-level directory of
+// `project_root`, and hashes it via hash_directory_tree. Returns "" when no
+// fetched tree can be found (e.g. a clean checkout that hasn't been
+// configured/built yet) — callers MUST treat that as "no hash available",
+// never fabricate one.
+std::string hash_fetched_source_tree(const fs::path& project_root, const std::string& name) {
+    std::string lower = name;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::error_code ec;
+    for (auto it = fs::directory_iterator(project_root, ec); !ec && it != fs::directory_iterator();
+         it.increment(ec)) {
+        if (!it->is_directory()) continue;
+        auto candidate = it->path() / "_deps" / (lower + "-src");
+        auto h = hash_directory_tree(candidate);
+        if (!h.empty()) return h;
+    }
+    return "";
 }
 
 std::string run_cmd_str(const std::string& cmd) {
@@ -187,7 +257,9 @@ void write_sbom(const fs::path& out, const SBOM& sbom, SpdxVersion ver) {
             json cj;
             cj["name"]    = c.name;
             cj["version"] = c.version;
-            cj["hash"]    = c.hash.empty() ? "" : ("sha256:" + c.hash);
+            // §7/§2.7: hash MUST be "algo:value" when present; a component
+            // with no computable hash omits the key rather than emitting "".
+            if (!c.hash.empty()) cj["hash"] = "sha256:" + c.hash;
             cs.push_back(cj);
         }
         j["components"] = cs;
@@ -212,6 +284,15 @@ Result<SBOM> build_sbom(const fs::path& project_root, const config::ProjectConfi
     // Also try CMakeLists.txt
     if (sbom.components.empty()) {
         sbom.components = parse_cmake_deps(project_root / "CMakeLists.txt");
+    }
+
+    // §7: components[].hash, when present, MUST be "sha256:<hex>" of real
+    // content — never a fabricated or empty placeholder. If this dependency
+    // has already been fetched by a prior CMake configure (build/_deps/...),
+    // hash that real source tree; otherwise leave Component.hash empty so
+    // the "hash" key is omitted entirely rather than emitted as "".
+    for (auto& c : sbom.components) {
+        c.hash = hash_fetched_source_tree(project_root, c.name);
     }
 
     return sbom;
@@ -284,8 +365,10 @@ Result<std::monostate> write_all(const fs::path& dir,
                 json cj;
                 cj["name"]    = c.name;
                 cj["version"] = c.version;
-                // §7: hash MUST be "algo:value"; §2.7: named hash field uses algo:value prefix
-                cj["hash"] = c.hash.empty() ? "" : ("sha256:" + c.hash);
+                // §7: hash MUST be "algo:value"; §2.7: named hash field uses
+                // algo:value prefix. Omit the key entirely when no real hash
+                // is available rather than emit a schema-violating "".
+                if (!c.hash.empty()) cj["hash"] = "sha256:" + c.hash;
                 cs.push_back(cj);
             }
             j["components"] = cs;
