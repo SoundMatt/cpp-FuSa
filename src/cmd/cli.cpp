@@ -489,9 +489,17 @@ int run(int argc, char* argv[]) {
     std::string qualify_out;
     qualify_cmd->add_option("--output", qualify_out,
                             "Output file path (default: <dir>/qualify-report.json)");
+    std::string qualify_fmt = "text";
+    qualify_cmd->add_option("--format", qualify_fmt,
+                            "text|json (default: text). §2.2: JSON is always also "
+                            "written to the qualify-report.json default/--output path.");
     qualify_cmd->callback([&]() -> void {
         fs::path dir{dir_str};
-        std::cout << "Running qualification suite for cpfusa v" << Version << "...\n";
+        const bool as_json = (qualify_fmt == "json");
+        // §2.2: progress/diagnostic lines are fine on stdout in text mode;
+        // in JSON mode keep stdout reserved for the machine-readable payload.
+        if (!as_json)
+            std::cout << "Running qualification suite for cpfusa v" << Version << "...\n";
         auto cases  = qualify::builtin_cases();
         auto r = qualify::run(cases);
         if (!is_ok(r)) { print_err(error_of(r)); std::exit(1); }
@@ -506,35 +514,49 @@ int run(int argc, char* argv[]) {
         rpt.independent_test_executor = ind_test_executor;
         rpt.achievable_asil          = achievable_asil;
 
+        // §6: "Writes qualify-report.json by default" — the evidence file is
+        // always produced regardless of --format (other commands, e.g.
+        // audit-pack/safety-case, depend on it existing on disk).
         fs::path out_path = qualify_out.empty() ? dir / std::string(qualify::ReportFile)
                                                 : fs::path(qualify_out);
         auto wr = qualify::save(out_path, rpt);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
-        std::cout << "Cases: " << rpt.total
-                  << "  Passed: " << rpt.passed
-                  << "  Failed: " << rpt.failed << "\n"
-                  << "Hash: " << rpt.hash << "\n";
 
-        // Show badge and independence status
-        std::string status = rpt.independence_status();
-        std::string badge;
-        if (rpt.qualification_method == "independent" || status == "independent")
-            badge = "independently-qualified";
-        else if (rpt.qualification_method == "self" || status == "self")
-            badge = "self-qualified";
-        else
-            badge = "unqualified";
-        std::cout << "Badge: [" << badge << "]\n";
-        if (!rpt.achievable_asil.empty())
-            std::cout << "Achievable ASIL: " << rpt.achievable_asil << "\n";
+        if (as_json) {
+            // §2.2: "--output redirects the report (MUST) ... MUST NOT also
+            // write it to stdout" — when --output was given the JSON already
+            // landed there via qualify::save() above.
+            if (qualify_out.empty())
+                std::cout << qualify::to_json(rpt).dump(2) << "\n";
+        } else {
+            std::cout << "Cases: " << rpt.total
+                      << "  Passed: " << rpt.passed
+                      << "  Failed: " << rpt.failed << "\n"
+                      << "Hash: sha256:" << rpt.hash << "\n";
+
+            // Show badge and independence status
+            std::string status = rpt.independence_status();
+            std::string badge;
+            if (rpt.qualification_method == "independent" || status == "independent")
+                badge = "independently-qualified";
+            else if (rpt.qualification_method == "self" || status == "self")
+                badge = "self-qualified";
+            else
+                badge = "unqualified";
+            std::cout << "Badge: [" << badge << "]\n";
+            if (!rpt.achievable_asil.empty())
+                std::cout << "Achievable ASIL: " << rpt.achievable_asil << "\n";
+        }
 
         if (rpt.failed > 0) {
-            for (const auto& cr : rpt.results)
-                if (!cr.passed)
-                    std::cerr << "  FAIL " << cr.test_case.name << ": " << cr.error << "\n";
+            if (!as_json) {
+                for (const auto& cr : rpt.results)
+                    if (!cr.passed)
+                        std::cerr << "  FAIL " << cr.test_case.name << ": " << cr.error << "\n";
+            }
             std::exit(1);
         }
-        print_ok(out_path.filename().string() + " written");
+        if (!as_json) print_ok(out_path.filename().string() + " written");
     });
 
     // ── release ───────────────────────────────────────────────────────────────
@@ -1321,6 +1343,7 @@ int run(int argc, char* argv[]) {
         fmts["trace"]   = {"text","json"};
         fmts["diff"]    = {"text","json"};
         fmts["version"] = {"text","json"};
+        fmts["qualify"] = {"text","json"};
         j["formats"]    = fmts;
         j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c",
                                                    "iec62443","unece-r155","unece-r156","slsa"});

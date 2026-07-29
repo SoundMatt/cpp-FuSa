@@ -6,6 +6,7 @@
 // SHA-256 integrity hash — suitable as tool qualification evidence per
 // ISO 26262 Part 8 / IEC 61508 Part 6 tool confidence requirements.
 #include "cpfusa/fusa.hpp"
+#include <nlohmann/json.hpp>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -70,6 +71,20 @@ std::vector<Case> builtin_cases();
 //
 //fusa:req REQ-QUALIFY003
 Result<QualifyReport> run(const std::vector<Case>& cases);
+
+// result_enum returns the §6 closed-enum value (PASS|FAIL|SKIP|ERROR) for a
+// case result. cpp-FuSa's qualification cases only ever pass or fail today
+// (no skip/error execution path), so this returns PASS or FAIL — kept as a
+// helper so a future SKIP/ERROR path has one place to extend.
+//
+//fusa:req REQ-QUALIFY002
+std::string result_enum(const CaseResult& cr);
+
+// to_json renders the §3 envelope + §6 qualify payload, including
+// results[].name / results[].result (PASS|FAIL|SKIP|ERROR) per spec.
+//
+//fusa:req REQ-QUALIFY002
+nlohmann::json to_json(const QualifyReport& report);
 
 // save writes the report as indented JSON to path.
 Result<std::monostate> save(const std::filesystem::path& path,
