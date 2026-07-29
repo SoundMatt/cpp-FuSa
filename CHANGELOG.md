@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Bump `SpecVersion` to `1.15.2` — 1.15.1 and 1.15.2 are pure documentation
+  clarifications (schemaVersion/specVersion format, §1.6.1 Rule A false-positive
+  note) with no required behavior or wire-format change for this tool.
+
 ## [0.17.0] — 2026-07-28
 
 2026-07-28 audit round: seven concrete x-FuSa spec conformance defects found
