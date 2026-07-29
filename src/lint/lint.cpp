@@ -433,6 +433,15 @@ std::vector<Finding> check_empty_catch(const fs::path& dir) {
 }
 
 // LINT015 – throw in destructor (MISRA C++:2023 M15-5-1) //fusa:req REQ-LINT015
+//
+// Scope tracking: `depth` counts braces from the destructor's own opening
+// brace. It resets to 0 (closing the destructor's scope) purely from
+// brace-matching arithmetic, on whichever line that happens to occur on —
+// including the destructor's own line for a single-line body such as
+// `~Foo() { ...; }`. Using `depth <= 0` (rather than requiring depth==0 on a
+// *later* line, which a single-line body never reaches — see issue #59)
+// closes the scope as soon as it is genuinely balanced, so a later, unrelated
+// member function's own throw is never misattributed back to the destructor.
 std::vector<Finding> check_throw_in_destructor(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex dtor_re(R"(~\w+\s*\([^)]*\))");
@@ -440,14 +449,13 @@ std::vector<Finding> check_throw_in_destructor(const fs::path& dir) {
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         if (file_suppressed(lines, "LINT015")) return;
         bool in_dtor = false;
-        int dtor_line = 0, depth = 0;
-        for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
-            const auto& [n, line] = lines[i];
-            if (std::regex_search(line, dtor_re)) { in_dtor = true; dtor_line = n; depth = 0; }
+        int depth = 0;
+        for (const auto& [n, line] : lines) {
+            if (std::regex_search(line, dtor_re)) { in_dtor = true; depth = 0; }
             if (in_dtor) {
                 for (char c : line) {
                     if (c == '{') ++depth;
-                    if (c == '}') { --depth; if (depth == 0 && i > dtor_line) in_dtor = false; }
+                    if (c == '}') { --depth; if (depth <= 0) in_dtor = false; }
                 }
                 if (!suppressed(line, "LINT015") && std::regex_search(line, throw_re))
                     out.push_back({"LINT015", Severity::ERROR,
