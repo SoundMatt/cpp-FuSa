@@ -56,8 +56,9 @@ Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cf
                              "undeveloped", ""},
         {"St1", "strategy", "Argument by direct inspection of generated evidence artifacts", ""},
         {"St2", "strategy", "Argument over independent verification and qualification records", ""},
-        {"Sn1", "solution", "SAFETY_PLAN.md — documented development and evidence-generation plan",
-                             "", "SAFETY_PLAN.md"},
+        {"Sn1", "solution", "docs/tool-safety-manual.md — documented development process, scope, "
+                             "and evidence-generation plan",
+                             "", "docs/tool-safety-manual.md"},
         {"Sn2", "solution", ".fusa.json — declares the standard/ASIL this project is held to",
                              "", ".fusa.json"},
         {"Sn3", "solution", ".fusa-reqs.json — requirement registry with req/test traceability",
@@ -80,12 +81,12 @@ Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cf
 
     sc.edges = {
         {"G1",  "St1", "supportedBy"},
-        {"St1", "G3",  "inContextOf"},
-        {"St1", "G5",  "inContextOf"},
+        {"St1", "G3",  "supportedBy"},
+        {"St1", "G5",  "supportedBy"},
         {"G1",  "St2", "supportedBy"},
-        {"St2", "G2",  "inContextOf"},
-        {"St2", "G4",  "inContextOf"},
-        {"St2", "G6",  "inContextOf"},
+        {"St2", "G2",  "supportedBy"},
+        {"St2", "G4",  "supportedBy"},
+        {"St2", "G6",  "supportedBy"},
         {"G2",  "Sn1", "supportedBy"},
         {"G2",  "Sn2", "supportedBy"},
         {"G4",  "Sn3", "supportedBy"},
@@ -111,7 +112,7 @@ Result<SafetyCase> generate(const fs::path& dir, const config::ProjectConfig& cf
         if (n.id == "G4" && has(".fusa-evidence.json")) n.status = "supported";
         if (n.id == "G5" && has("check-report.json"))   n.status = "supported";
         if (n.id == "G6" && has("qualify-report.json")) n.status = "supported";
-        if (n.id == "G2" && has("SAFETY_PLAN.md"))      n.status = "supported";
+        if (n.id == "G2" && has("docs/tool-safety-manual.md")) n.status = "supported";
         if (n.id == "G3" && has("fmea.json"))           n.status = "supported";
     }
 
@@ -124,7 +125,11 @@ Completeness compute_completeness(const SafetyCase& sc) {
     for (const auto& n : sc.nodes) {
         if (n.type != "goal") continue;
         ++c.total_goals;
-        if (!n.evidence.empty()) ++c.goals_with_evidence;
+        // §9.2: `evidence` only ever appears on `solution` nodes, so a goal
+        // is "with evidence" when its status has been derived as supported
+        // (via a traced supportedBy chain to a solution, see generate()),
+        // not by checking a field goal nodes never carry.
+        if (n.status == "supported") ++c.goals_with_evidence;
         if (n.status == "undeveloped") ++c.undeveloped;
     }
     return c;

@@ -171,6 +171,45 @@ TEST_CASE("safety_case: solution nodes name a real evidence filename",
         if (n.type == "solution") REQUIRE_FALSE(n.evidence.empty());
 }
 
+// §9.2: "Every solution node SHOULD set evidence to a real, existing
+// artifact filename ... a claim of evidence that names a file the project
+// doesn't actually contain is worse than an honestly-missing solution."
+// This project's own default graph must not cite a file it doesn't ship.
+TEST_CASE("safety_case: solution node evidence does not cite the nonexistent SAFETY_PLAN.md",
+          "[safety_case][safetycase006]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = safety_case::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    for (auto& n : value_of(r).nodes)
+        if (n.type == "solution") REQUIRE(n.evidence != "SAFETY_PLAN.md");
+}
+
+// §9.2: a strategy decomposing into sub-goals ("goal→strategy→solution
+// argument steps") MUST use `supportedBy`, not `inContextOf` (which is
+// reserved for context/assumption/justification attachment).
+TEST_CASE("safety_case: strategy-to-sub-goal decomposition edges are supportedBy, "
+          "not inContextOf", "[safety_case][safetycase006]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = safety_case::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+
+    std::set<std::string> strategy_ids, goal_ids;
+    for (auto& n : value_of(r).nodes) {
+        if (n.type == "strategy") strategy_ids.insert(n.id);
+        if (n.type == "goal")     goal_ids.insert(n.id);
+    }
+    bool checked_any = false;
+    for (auto& e : value_of(r).edges) {
+        if (strategy_ids.count(e.from) && goal_ids.count(e.to)) {
+            checked_any = true;
+            REQUIRE(e.type == "supportedBy");
+        }
+    }
+    REQUIRE(checked_any);
+}
+
 // ─── completeness ─────────────────────────────────────────────────────────────
 
 TEST_CASE("safety_case: compute_completeness counts goals and undeveloped ones",
@@ -182,6 +221,47 @@ TEST_CASE("safety_case: compute_completeness counts goals and undeveloped ones",
     auto c = safety_case::compute_completeness(value_of(r));
     REQUIRE(c.total_goals > 0);
     REQUIRE(c.undeveloped <= c.total_goals);
+}
+
+// §9.2: `evidence` only ever appears on `solution` nodes, so counting
+// goalsWithEvidence via `!n.evidence.empty()` is structurally always 0 for
+// every goal node — regression test for that bug.
+TEST_CASE("safety_case: compute_completeness counts goalsWithEvidence from supported status, "
+          "not the (goal-only-ever-empty) evidence field",
+          "[safety_case][safetycase007]") {
+    TempDir tmp;
+    // Create every evidence artifact that generate() checks for so several
+    // goal nodes end up "supported".
+    std::ofstream(tmp.path() / ".fusa-evidence.json") << R"({})";
+    std::ofstream(tmp.path() / "check-report.json") << R"({})";
+    std::ofstream(tmp.path() / "qualify-report.json") << R"({})";
+    std::ofstream(tmp.path() / "fmea.json") << R"({})";
+    std::filesystem::create_directories(tmp.path() / "docs");
+    std::ofstream(tmp.path() / "docs" / "tool-safety-manual.md") << "# manual\n";
+
+    config::ProjectConfig cfg;
+    auto r = safety_case::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+
+    std::size_t supported = 0;
+    for (auto& n : value_of(r).nodes)
+        if (n.type == "goal" && n.status == "supported") ++supported;
+    REQUIRE(supported > 0);
+
+    auto c = safety_case::compute_completeness(value_of(r));
+    REQUIRE(c.goals_with_evidence == static_cast<int>(supported));
+    REQUIRE(c.goals_with_evidence > 0);
+}
+
+TEST_CASE("safety_case: with no evidence artifacts present, goalsWithEvidence is 0",
+          "[safety_case][safetycase007]") {
+    TempDir tmp;
+    config::ProjectConfig cfg;
+    auto r = safety_case::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    auto c = safety_case::compute_completeness(value_of(r));
+    REQUIRE(c.goals_with_evidence == 0);
+    REQUIRE(c.total_goals == c.undeveloped);
 }
 
 // ─── §1.6.1 quality scan wiring ───────────────────────────────────────────────
