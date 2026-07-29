@@ -10,7 +10,7 @@ constexpr std::string_view Version      = "0.17.0";
 constexpr std::string_view VersionMajor = "0";
 constexpr std::string_view VersionMinor = "17";
 constexpr std::string_view VersionPatch = "0";
-constexpr std::string_view SpecVersion  = "1.15.0";
+constexpr std::string_view SpecVersion  = "1.15.2";
 
 enum class Severity { INFO, WARNING, ERROR };
 
