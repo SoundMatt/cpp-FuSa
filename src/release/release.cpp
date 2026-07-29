@@ -23,12 +23,23 @@ using json   = nlohmann::json;
 namespace cpfusa::release {
 
 // Files collected by hash_artifacts and packed by auditpack.
+// §1.2 input files + §1.3 generated evidence (fixed filenames only — the
+// open-ended `<standard>-gap-report.json` family is matched separately by
+// list_present_evidence_files below, since the standard-id set is unbounded).
 const std::vector<std::string> EvidenceFiles = {
+    // §1.2 input / config files
     ".fusa.json",
     ".fusa-reqs.json",
+    ".fusa-hara.json",
     ".fusa-evidence.json",
+    ".fusa-dispositions.json",
+    ".fusa-problems.json",
+    ".fusa-model-trace.json",
+    // §1.3 generated evidence
     "check-report.json",
     "cyber-report.json",
+    "comp-report.json",
+    "coupling-report.json",
     "fmea.json",
     "fmea.csv",
     "boundary.mermaid",
@@ -327,14 +338,37 @@ Result<Provenance> build_provenance(const fs::path& project_root,
     return prov;
 }
 
+//fusa:req REQ-RELEASE006 REQ-AUDIT001
+std::vector<std::string> list_present_evidence_files(const fs::path& dir) {
+    std::vector<std::string> found;
+    for (const auto& name : EvidenceFiles)
+        if (fs::exists(dir / name)) found.push_back(name);
+
+    // §1.3: `<standard>-gap-report.json` — the standard-id set is
+    // open-ended (iso26262, iec61508, iso21434, do178, misra-cpp,
+    // unece-r155, iec62443, slsa, ...), so scan for it rather than
+    // hardcoding every known standard id.
+    static const std::regex gap_report_re(R"(^[a-z0-9][a-z0-9\-]*-gap-report\.json$)");
+    std::error_code ec;
+    for (auto it = fs::directory_iterator(dir, fs::directory_options::skip_permission_denied, ec);
+         !ec && it != fs::directory_iterator(); it.increment(ec)) {
+        if (!it->is_regular_file()) continue;
+        auto fname = it->path().filename().string();
+        if (std::regex_match(fname, gap_report_re)) found.push_back(fname);
+    }
+
+    std::sort(found.begin(), found.end());
+    found.erase(std::unique(found.begin(), found.end()), found.end());
+    return found;
+}
+
 //fusa:req REQ-RELEASE006
 Manifest hash_artifacts(const fs::path& dir) {
     Manifest m;
     m.format       = "cpp-FuSa Artifact Manifest v1";
     m.generated_at = now_iso8601();
-    for (const auto& name : EvidenceFiles) {
+    for (const auto& name : list_present_evidence_files(dir)) {
         auto p = dir / name;
-        if (!fs::exists(p)) continue;
         Artifact a;
         a.path   = name;
         a.sha256 = sha256_file(p);

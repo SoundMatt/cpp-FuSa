@@ -11,6 +11,7 @@
 #include "release/release.hpp"
 #include "testutil/testutil.hpp"
 #include <nlohmann/json.hpp>
+#include <algorithm>
 #include <fstream>
 
 using namespace cpfusa;
@@ -196,6 +197,64 @@ TEST_CASE("release: parse_spdx_version parses 2.2, 2.3 and defaults", "[release]
     REQUIRE(release::parse_spdx_version("2.3") == release::SpdxVersion::V2_3);
     REQUIRE(release::parse_spdx_version("3.0.1") == release::SpdxVersion::V3_0_1);
     REQUIRE(release::parse_spdx_version("unknown") == release::SpdxVersion::V3_0_1);
+}
+
+// ─── list_present_evidence_files (§8 MUST, feeds hash_artifacts + audit-pack) ─
+
+TEST_CASE("release: list_present_evidence_files finds .fusa-hara.json/.fusa-dispositions.json/"
+          ".fusa-problems.json when present",
+          "[release][release006]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json", "{}");
+    tmp.write(".fusa-dispositions.json", "{}");
+    tmp.write(".fusa-problems.json", "{}");
+    auto found = release::list_present_evidence_files(tmp.path());
+    auto has = [&](const std::string& n) {
+        return std::find(found.begin(), found.end(), n) != found.end();
+    };
+    REQUIRE(has(".fusa-hara.json"));
+    REQUIRE(has(".fusa-dispositions.json"));
+    REQUIRE(has(".fusa-problems.json"));
+}
+
+TEST_CASE("release: list_present_evidence_files matches the open-ended "
+          "<standard>-gap-report.json family", "[release][release006]") {
+    TempDir tmp;
+    tmp.write("iso26262-gap-report.json", "{}");
+    tmp.write("iec61508-gap-report.json", "{}");
+    tmp.write("misra-cpp-gap-report.json", "{}");
+    tmp.write("not-a-gap-report.txt", "irrelevant"); // wrong extension, must not match
+    auto found = release::list_present_evidence_files(tmp.path());
+    auto has = [&](const std::string& n) {
+        return std::find(found.begin(), found.end(), n) != found.end();
+    };
+    REQUIRE(has("iso26262-gap-report.json"));
+    REQUIRE(has("iec61508-gap-report.json"));
+    REQUIRE(has("misra-cpp-gap-report.json"));
+    REQUIRE_FALSE(has("not-a-gap-report.txt"));
+}
+
+TEST_CASE("release: list_present_evidence_files never includes audit-pack.zip",
+          "[release][release006]") {
+    TempDir tmp;
+    tmp.write("audit-pack.zip", "not really a zip");
+    auto found = release::list_present_evidence_files(tmp.path());
+    REQUIRE(std::find(found.begin(), found.end(), "audit-pack.zip") == found.end());
+}
+
+TEST_CASE("release: hash_artifacts picks up .fusa-hara.json and gap-report files too",
+          "[release][release006]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json", "{}");
+    tmp.write("iso26262-gap-report.json", "{}");
+    auto m = release::hash_artifacts(tmp.path());
+    bool found_hara = false, found_gap = false;
+    for (auto& a : m.artifacts) {
+        if (a.path == ".fusa-hara.json") found_hara = true;
+        if (a.path == "iso26262-gap-report.json") found_gap = true;
+    }
+    REQUIRE(found_hara);
+    REQUIRE(found_gap);
 }
 
 // ─── §7 components[].hash MUST be "<algo>:<value>", never "" ────────────────

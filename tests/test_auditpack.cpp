@@ -5,10 +5,32 @@
 #include <catch2/catch_all.hpp>
 #include "auditpack/auditpack.hpp"
 #include "testutil/testutil.hpp"
+#include <array>
+#include <cstdio>
 #include <cstdlib>
+#ifdef _WIN32
+#  define popen  _popen
+#  define pclose _pclose
+#endif
 
 using namespace cpfusa;
 using namespace cpfusa::testutil;
+
+namespace {
+// zip's own "-sf" (show files) option lists archive contents without a
+// separate `unzip` dependency — `zip` is already a hard prerequisite for
+// every pack() call in these tests.
+std::string zip_list(const std::filesystem::path& archive) {
+    std::string out;
+    std::array<char, 256> buf{};
+    std::string cmd = "zip -sf \"" + archive.string() + "\" 2>&1";
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe) return out;
+    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) out += buf.data();
+    pclose(pipe);
+    return out;
+}
+} // namespace
 
 // ─── pack ─────────────────────────────────────────────────────────────────────
 
@@ -112,6 +134,97 @@ TEST_CASE("auditpack: multiple evidence files all appear in manifest", "[auditpa
 
 TEST_CASE("auditpack: AuditPackFile constant is audit-pack.zip", "[auditpack][audit001]") {
     REQUIRE(std::string(auditpack::AuditPackFile) == "audit-pack.zip");
+}
+
+// Regression: pack() zips evidence files via `cd "<project_root>" && zip ...`
+// then separately adds manifest.json via `cd "<system temp dir>" && zip ...`
+// — two DIFFERENT `cd` targets. A still-relative `output_path` embedded
+// verbatim in both commands resolves against whichever directory the shell
+// most recently `cd`-ed into, so the manifest silently lands in a stray zip
+// under the temp dir instead of the real archive, while pack() still
+// reports success (the first zip, without the manifest, really did land at
+// the right path). This is exactly the shape of the CLI's own default
+// invocation (`cpfusa audit-pack --dir .` → a relative `./audit-pack.zip`).
+TEST_CASE("auditpack: pack with a relative output path still adds manifest.json "
+          "to the real archive (not a stray copy elsewhere)",
+          "[auditpack][audit001]") {
+    TempDir tmp;
+    tmp.write("qualify-report.json", R"({"passed":8})");
+
+    std::filesystem::path rel_out = "cpfusa-audit-pack-relative-test.zip";
+    std::filesystem::path expected_abs = std::filesystem::absolute(rel_out);
+    std::error_code ec;
+    std::filesystem::remove(expected_abs, ec); // clean slate
+    struct Cleanup {
+        std::filesystem::path p;
+        ~Cleanup() { std::error_code e; std::filesystem::remove(p, e); }
+    } cleanup{expected_abs};
+
+    auto r = auditpack::pack(tmp.path(), rel_out);
+    REQUIRE(is_ok(r));
+    REQUIRE(std::filesystem::exists(expected_abs));
+
+    auto listing = zip_list(expected_abs);
+    REQUIRE(listing.find("manifest.json") != std::string::npos);
+    REQUIRE(listing.find("qualify-report.json") != std::string::npos);
+}
+
+// ─── §8 MUST: full §1.2/§1.3 evidence set, not a hardcoded subset ───────────
+
+TEST_CASE("auditpack: manifest includes .fusa-hara.json, .fusa-dispositions.json, "
+          ".fusa-problems.json when present",
+          "[auditpack][audit002]") {
+    TempDir tmp;
+    tmp.write(".fusa-hara.json",          R"({"hazards":[]})");
+    tmp.write(".fusa-dispositions.json",  R"({"dispositions":[]})");
+    tmp.write(".fusa-problems.json",      R"({"problems":[]})");
+    auto out = tmp.path() / "audit-pack.zip";
+    auto r = auditpack::pack(tmp.path(), out);
+    REQUIRE(is_ok(r));
+    auto& m = value_of(r);
+    bool found_hara = false, found_disp = false, found_prob = false;
+    for (auto& e : m.files) {
+        if (e.path == ".fusa-hara.json")         found_hara = true;
+        if (e.path == ".fusa-dispositions.json") found_disp = true;
+        if (e.path == ".fusa-problems.json")     found_prob = true;
+    }
+    REQUIRE(found_hara);
+    REQUIRE(found_disp);
+    REQUIRE(found_prob);
+}
+
+TEST_CASE("auditpack: manifest includes every <standard>-gap-report.json present",
+          "[auditpack][audit002]") {
+    TempDir tmp;
+    tmp.write("iso26262-gap-report.json",  R"({"gaps":[]})");
+    tmp.write("iec61508-gap-report.json",  R"({"gaps":[]})");
+    tmp.write("do178-gap-report.json",     R"({"gaps":[]})");
+    auto out = tmp.path() / "audit-pack.zip";
+    auto r = auditpack::pack(tmp.path(), out);
+    REQUIRE(is_ok(r));
+    auto& m = value_of(r);
+    bool found_iso26262 = false, found_iec61508 = false, found_do178 = false;
+    for (auto& e : m.files) {
+        if (e.path == "iso26262-gap-report.json") found_iso26262 = true;
+        if (e.path == "iec61508-gap-report.json") found_iec61508 = true;
+        if (e.path == "do178-gap-report.json")    found_do178 = true;
+    }
+    REQUIRE(found_iso26262);
+    REQUIRE(found_iec61508);
+    REQUIRE(found_do178);
+}
+
+TEST_CASE("auditpack: does not pack audit-pack.zip itself even though it matches no "
+          "evidence pattern", "[auditpack][audit002]") {
+    TempDir tmp;
+    tmp.write("qualify-report.json", R"({"passed":8})");
+    auto out = tmp.path() / "audit-pack.zip";
+    // A stale audit-pack.zip already exists before this run.
+    tmp.write("audit-pack.zip", "stale");
+    auto r = auditpack::pack(tmp.path(), out);
+    REQUIRE(is_ok(r));
+    for (auto& e : value_of(r).files)
+        REQUIRE(e.path != "audit-pack.zip");
 }
 
 #ifndef _WIN32
