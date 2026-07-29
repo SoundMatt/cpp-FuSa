@@ -111,6 +111,55 @@ TEST_CASE("verify: write_evidence overwrite is idempotent", "[verify][verify005]
     REQUIRE(j["summary"]["total"].get<int>() == 7);
 }
 
+// ─── parse_ctest_output ────────────────────────────────────────────────────────
+
+TEST_CASE("verify: parse_ctest_output matches single-word test names", "[verify][verify001]") {
+    // fusa:test REQ-VERIFY001
+    std::string output =
+        "  1/1 Test  #1: Version::to_string ................ Passed  0.01 sec\n";
+    auto results = verify::parse_ctest_output(output);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0].name == "Version::to_string");
+    REQUIRE(results[0].status == "passed");
+}
+
+TEST_CASE("verify: parse_ctest_output matches multi-word test names", "[verify][verify001]") {
+    // fusa:test REQ-VERIFY001
+    // Regression for issue #58: a name containing internal spaces (Catch2's
+    // usual TEST_CASE convention) must not be truncated at the first space.
+    std::string output =
+        "  1/1 Test  #1: validate_frame: valid frame ID 0x00 ................ Passed  0.03 sec\n";
+    auto results = verify::parse_ctest_output(output);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0].name == "validate_frame: valid frame ID 0x00");
+    REQUIRE(results[0].status == "passed");
+}
+
+TEST_CASE("verify: parse_ctest_output captures every multi-word test, not just the first", "[verify][verify001]") {
+    // fusa:test REQ-VERIFY001
+    std::string output =
+        "  1/3 Test  #1: alpha one ................ Passed  0.01 sec\n"
+        "  2/3 Test  #2: beta two three ............ Failed  0.02 sec\n"
+        "  3/3 Test  #3: gamma ...................... Skipped  0.00 sec\n";
+    auto results = verify::parse_ctest_output(output);
+    REQUIRE(results.size() == 3);
+    REQUIRE(results[0].name == "alpha one");
+    REQUIRE(results[0].status == "passed");
+    REQUIRE(results[1].name == "beta two three");
+    REQUIRE(results[1].status == "failed");
+    REQUIRE(results[2].name == "gamma");
+    REQUIRE(results[2].status == "skipped");
+}
+
+TEST_CASE("verify: parse_ctest_output parses elapsed seconds for multi-word names", "[verify][verify001]") {
+    // fusa:test REQ-VERIFY001
+    std::string output =
+        "  1/1 Test  #1: a multi word test name ................ Passed  1.23 sec\n";
+    auto results = verify::parse_ctest_output(output);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0].elapsed_seconds == Catch::Approx(1.23));
+}
+
 // ─── run_ctest (integration) ──────────────────────────────────────────────────
 
 TEST_CASE("verify: run_ctest returns error or empty bundle on missing build", "[verify][verify001]") {
