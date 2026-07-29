@@ -58,7 +58,7 @@
       "cwe": "CWE-327",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Replace with SHA-256 (e.g. OpenSSL EVP_DigestInit with EVP_sha256())",
-      "line": 55,
+      "line": 58,
       "message": "Weak cryptographic hash (MD5/SHA-1) detected — use SHA-256 or stronger",
       "ruleId": "CYBER001",
       "severity": "error"
@@ -67,7 +67,7 @@
       "cwe": "CWE-327",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Replace with AES-256 in GCM mode",
-      "line": 61,
+      "line": 64,
       "message": "Weak symmetric cipher (DES/3DES/RC4) detected — use AES-256-GCM",
       "ruleId": "CYBER002",
       "severity": "error"
@@ -76,7 +76,7 @@
       "cwe": "CWE-78",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Use execv() family with explicit argument arrays instead",
-      "line": 79,
+      "line": 82,
       "message": "Command injection risk: system()/popen() call — CWE-78",
       "ruleId": "CYBER005",
       "severity": "error"
@@ -85,7 +85,7 @@
       "cwe": "CWE-121",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Use std::vector or fixed-size arrays with bounds enforcement",
-      "line": 139,
+      "line": 142,
       "message": "Stack alloca() usage — variable-length stack allocation — CWE-121",
       "ruleId": "CYBER015",
       "severity": "warning"
@@ -94,7 +94,7 @@
       "cwe": "CWE-134",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Always use a literal format string: printf(\"%s\", user_str)",
-      "line": 158,
+      "line": 161,
       "message": "Format string vulnerability — user-controlled format string — CWE-134",
       "ruleId": "CYBER018",
       "severity": "error"
@@ -103,7 +103,7 @@
       "cwe": "CWE-362",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Open the file directly and handle ENOENT/EACCES instead of access()",
-      "line": 163,
+      "line": 166,
       "message": "TOCTOU risk: access() followed by open() — CWE-362",
       "ruleId": "CYBER019",
       "severity": "warning"
@@ -112,7 +112,7 @@
       "cwe": "CWE-362",
       "file": "./src/cyber/cyber.cpp",
       "fix": "Open the file directly and handle ENOENT/EACCES instead of access()",
-      "line": 164,
+      "line": 167,
       "message": "TOCTOU risk: access() followed by open() — CWE-362",
       "ruleId": "CYBER019",
       "severity": "warning"
@@ -353,7 +353,7 @@
     }
   ],
   "format": "cpp-FuSa Cyber Report v1",
-  "generatedAt": "2026-07-29T03:26:42Z",
+  "generatedAt": "2026-07-29T04:17:16Z",
   "project": "cpp-FuSa",
   "totalFiles": 94,
   "totalFindings": 39,

@@ -2,6 +2,67 @@
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-07-28
+
+2026-07-28 audit round: seven concrete x-FuSa spec conformance defects found
+by building the tool and diffing its real output against the spec
+line-by-line (`SoundMatt/cpp-FuSa` issues #46–#53).
+
+### Fixed
+- **`safety-case`: `completeness.goalsWithEvidence` always `0`, wrong
+  `supportedBy`/`inContextOf` edge type, a solution citing a nonexistent
+  file (§9.2, issue #53).** `compute_completeness()` counted a goal as
+  evidenced via `!n.evidence.empty()`, but `evidence` only ever appears on
+  `solution` nodes per §9.2 — structurally always `0` for every goal
+  regardless of input. Counts via `status == "supported"` instead.
+  Strategy→sub-goal decomposition edges (`St1→G3`, `St1→G5`, `St2→G2`,
+  `St2→G4`, `St2→G6`) used `inContextOf`; corrected to the spec-required
+  `supportedBy`. `Sn1` cited `SAFETY_PLAN.md`, a file this repo doesn't
+  contain; repointed at the real `docs/tool-safety-manual.md`.
+- **`qualify` had no `--format` flag and `results[]` didn't match §6
+  (issue #52).** `qualify --format json` was a CLI11 usage error. Added
+  `--format text|json`; `results[]` entries now carry a top-level
+  `name`/`result` (`PASS`|`FAIL`) pair per spec instead of nested
+  `case.name`/boolean `passed`.
+- **`qualify-report.json`'s `hash` was bare hex, not `sha256:`-prefixed
+  (§2.7 MUST, issue #51).**
+- **`sbom.json` `components[].hash` was always `""` for `FetchContent`
+  dependencies (§7 MUST, issue #50).** Now computes a real hash from the
+  already-fetched CMake source tree when available (`build/_deps/...`), and
+  omits the key entirely otherwise — never a fabricated or empty value.
+- **`audit-pack`/`artifact-manifest.json` hardcoded evidence-file list
+  omitted `.fusa-hara.json`, `.fusa-dispositions.json`,
+  `.fusa-problems.json`, and every `<standard>-gap-report.json` (§8 MUST,
+  issue #49).** Replaced with a directory scan against the full §1.2/§1.3
+  set. Also fixed an independent bug found while verifying this: a relative
+  `--output` path (the CLI's own default invocation shape,
+  `cpfusa audit-pack --dir .`) caused the manifest-add step to silently
+  write into a stray zip under the system temp dir instead of the real
+  archive.
+- **`fmea`/`check`/`trace`/`cyber`/`boundary`/`coupling` ignored
+  `sourceDirs`, fabricating entries from files outside it (§1.2.1 +
+  §1.6.1 rule 4 MUST, issue #48).** `sourceDirs` was parsed into
+  `config::ProjectConfig` but never consulted by any scanner — only
+  `excludePatterns` was. A stray build directory that doesn't match
+  `excludePatterns` (e.g. `build-audit/`) got scanned as project source,
+  fabricating FMEA entries for CMake's own compiler-probe file. New
+  `config::under_source_dirs()` wired into every source-walking command.
+- **`.fusa-dispositions.json` used a non-conformant `entries`/`action`
+  schema instead of `dispositions`/`status`/`fingerprint` (§1.2.3 MUST,
+  issue #47).** `save()` now always writes the canonical shape; `load()`
+  still reads the legacy shape already on disk (migration, never
+  re-written).
+- **`check`/`report` findings never carried `fingerprint` except
+  `FUSA-STUB001`/`002` (§4 MUST since spec v1.9, issue #46).** Computed once
+  at the single point every `Finding` passes through into the JSON document,
+  so the guarantee is unconditional regardless of which rule produced the
+  finding.
+- **Windows-only: `excludePatterns` matching silently no-op'd for any
+  `/`-nested pattern.** `fs::path::string()` returns `\`-separated native
+  form on Windows; `excludePatterns` are `/`-style gitignore globs (§1.2.1)
+  regardless of platform. Switched every `is_excluded`/match-loop call site
+  (fmea/cyber/engine/trace/boundary/coupling) to `generic_string()`.
+
 ## [0.16.0] — 2026-07-28
 
 x-FuSa spec v1.15.0 conformance (`SoundMatt/cpp-FuSa` issue #44): attestation
