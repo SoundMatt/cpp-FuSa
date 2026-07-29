@@ -124,8 +124,12 @@ bool apply_quality_gate(const std::vector<Finding>& findings, const fs::path& di
         bool suppressed = false;
         if (f.rule_id == std::string(quality::kStub001RuleId)) {
             disposition::Entry e;
+            // §4.1: "accepted" and "deferred" are both waivers that suppress
+            // the gate; "rejected" is a denied waiver — the finding must
+            // still gate.
             if (disposition::find_by_rule(log, f.rule_id, e) &&
-                e.action == disposition::Action::Accept)
+                (e.status == disposition::Status::Accepted ||
+                 e.status == disposition::Status::Deferred))
                 suppressed = true;
         } else if (f.rule_id == std::string(quality::kStub002RuleId)) {
             if (attestation_valid) suppressed = true;
@@ -1128,11 +1132,11 @@ int run(int argc, char* argv[]) {
     auto* disp_add   = disp_cmd->add_subcommand("add",  "Add a disposition");
     auto* disp_list  = disp_cmd->add_subcommand("list", "List dispositions");
     auto* disp_show  = disp_cmd->add_subcommand("show", "Show disposition for a rule");
-    std::string disp_rule, disp_action = "accept", disp_reviewer, disp_rationale, disp_ref;
+    std::string disp_rule, disp_status = "accepted", disp_by, disp_note, disp_ref;
     disp_add->add_option("--rule",      disp_rule,      "Rule ID")->required();
-    disp_add->add_option("--action",    disp_action,    "accept|fix");
-    disp_add->add_option("--reviewer",  disp_reviewer,  "Reviewer name")->required();
-    disp_add->add_option("--rationale", disp_rationale, "Rationale")->required();
+    disp_add->add_option("--status",    disp_status,    "accepted|deferred|rejected (§1.2.3)");
+    disp_add->add_option("--by",        disp_by,        "Reviewer identity")->required();
+    disp_add->add_option("--note",      disp_note,      "Rationale / note")->required();
     disp_add->add_option("--ref",       disp_ref,       "Reference (ticket, issue)");
     disp_show->add_option("--rule",     disp_rule,      "Rule ID")->required();
     disp_add->callback([&]() -> void {
@@ -1140,17 +1144,27 @@ int run(int argc, char* argv[]) {
         auto log = disposition::load(dir);
         auto now = std::chrono::system_clock::now();
         auto t   = std::chrono::system_clock::to_time_t(now);
+        std::tm tm_buf{};
+#ifdef _WIN32
+        gmtime_s(&tm_buf, &t);
+#else
+        gmtime_r(&t, &tm_buf);
+#endif
         char buf[32];
-        std::strftime(buf, sizeof(buf), "%Y-%m-%d", std::gmtime(&t));
-        disposition::Entry e{disp_rule, disp_rationale, disp_reviewer,
-                             std::string(buf),
-                             disposition::parse_action(disp_action), disp_ref};
+        std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm_buf); // §1.2.3: `at` is RFC 3339
+        disposition::Entry e;
+        e.rule_id = disp_rule;
+        e.status  = disposition::parse_status(disp_status);
+        e.note    = disp_note;
+        e.by      = disp_by;
+        e.at      = std::string(buf);
+        e.reference = disp_ref;
         log = disposition::add(log, e);
         std::string err;
         if (!disposition::save(dir / disposition::DISPOSITIONS_FILE, log, err)) {
             print_err(err); std::exit(1);
         }
-        print_ok("Disposition added: rule=" + disp_rule + " action=" + disp_action);
+        print_ok("Disposition added: rule=" + disp_rule + " status=" + disp_status);
     });
     disp_list->callback([&]() -> void {
         disposition::render_entries(disposition::load(fs::path(dir_str)));
@@ -1162,10 +1176,10 @@ int run(int argc, char* argv[]) {
             print_err("No disposition for rule: " + disp_rule); std::exit(1);
         }
         std::cout << "Rule:      " << e.rule_id << "\n"
-                  << "Action:    " << disposition::action_str(e.action) << "\n"
-                  << "Reviewer:  " << e.reviewer << "\n"
-                  << "Date:      " << e.date << "\n"
-                  << "Rationale: " << e.rationale << "\n";
+                  << "Status:    " << disposition::status_str(e.status) << "\n"
+                  << "By:        " << e.by << "\n"
+                  << "At:        " << e.at << "\n"
+                  << "Note:      " << e.note << "\n";
         if (!e.reference.empty()) std::cout << "Reference: " << e.reference << "\n";
     });
 
