@@ -346,7 +346,11 @@ std::vector<Annotation> scan_annotations(const fs::path& dir) {
 std::vector<Annotation> scan_annotations(const fs::path& dir, const config::ProjectConfig& cfg) {
     return scan_annotations_impl(dir, [&](const fs::path& p) {
         if (!config::under_source_dirs(p, dir, cfg)) return false;
-        auto s = p.string();
+        // generic_string() (always "/"-separated) — excludePatterns are
+        // "/"-style gitignore globs (§1.2.1) regardless of platform;
+        // .string() would use "\"-separated native form on Windows and
+        // silently never match.
+        auto s = p.generic_string();
         for (const auto& pat : cfg.exclude_patterns)
             if (s.find(pat) != std::string::npos) return false;
         return true;

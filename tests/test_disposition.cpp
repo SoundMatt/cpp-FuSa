@@ -65,7 +65,7 @@ TEST_CASE("disposition: load parses saved entries", "[disposition][disp002]") {
 // §1.2.3 MUST: the canonical top-level key is "dispositions", and per-entry
 // keys are fingerprint/ruleId/file/line/status/note/by/at — not the legacy
 // entries/action/date/rationale/reviewer shape this tool used to emit.
-TEST_CASE("disposition: save writes the canonical §1.2.3 dispositions/status/fingerprint "
+TEST_CASE("disposition: save writes the canonical spec 1.2.3 dispositions/status/fingerprint "
           "shape, not the legacy entries/action shape",
           "[disposition][disp002]") {
     TempDir tmp;

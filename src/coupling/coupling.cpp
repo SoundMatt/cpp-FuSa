@@ -24,7 +24,10 @@ std::string now_iso() {
 }
 
 bool is_excluded(const fs::path& p, const std::vector<std::string>& exclude_patterns) {
-    auto s = p.string();
+    // generic_string() (always "/"-separated) — excludePatterns are "/"-style
+    // gitignore globs (§1.2.1) regardless of platform; p.string() would use
+    // "\"-separated native form on Windows and silently never match.
+    auto s = p.generic_string();
     for (const auto& pat : exclude_patterns)
         if (s.find(pat) != std::string::npos) return true;
     return false;

@@ -25,7 +25,11 @@ bool any_file(const fs::path& dir, const config::ProjectConfig& cfg,
              dir, fs::directory_options::skip_permission_denied)) {
         if (!entry.is_regular_file()) continue;
         if (!config::under_source_dirs(entry.path(), dir, cfg)) continue;
-        auto s = entry.path().string();
+        // generic_string() (always "/"-separated) — excludePatterns are
+        // "/"-style gitignore globs (§1.2.1) regardless of platform;
+        // .string() would use "\"-separated native form on Windows and
+        // silently never match.
+        auto s = entry.path().generic_string();
         bool excluded = false;
         for (const auto& pat : cfg.exclude_patterns) {
             if (s.find(pat) != std::string::npos) { excluded = true; break; }
