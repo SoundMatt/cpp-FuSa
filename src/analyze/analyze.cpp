@@ -10,18 +10,19 @@
 #include <string>
 #include <vector>
 #ifdef _WIN32
-// No <windows.h> include here: this file's Windows branches only ever use
-// _popen/_pclose (<cstdio>) and std::system (<cstdlib>) — no Win32 API. Pulling
-// in <windows.h> anyway (as an earlier version of this file did) is actively
-// harmful: it #defines a bare `ERROR` macro (via wingdi.h) and, unless
-// NOMINMAX is set first, function-like `min`/`max` macros, and those
-// substitutions apply to the *rest of the translation unit*, not just code
-// guarded by `#ifdef _WIN32` — every later *unconditional* `Severity::ERROR`
-// and `std::min`/`std::max` call in this file broke under MSVC (C2589
-// "illegal token on right side of '::'": `Severity::ERROR` expands to
-// `Severity::0`, `std::max(...)` expands mid-token). Not including the header
-// at all avoids the whole collision class rather than papering over it with
-// NOMINMAX/WIN32_LEAN_AND_MEAN/#undef guards.
+// No <windows.h> include here: this file's Windows branches only ever call
+// the C runtime's own pipe-based process helpers (declared in <cstdio> and
+// <cstdlib>) — no Win32 API is used at all. Pulling in <windows.h> anyway (as
+// an earlier version of this file did) is actively harmful: it #defines a
+// bare `ERROR` macro (via wingdi.h) and, unless NOMINMAX is set first,
+// function-like `min`/`max` macros, and those substitutions apply to the
+// *rest of the translation unit*, not just code guarded by `#ifdef _WIN32` —
+// every later *unconditional* `Severity::ERROR` and `std::min`/`std::max`
+// call in this file broke under MSVC (C2589 "illegal token on right side of
+// '::'": `Severity::ERROR` expands to `Severity::0`, the min/max call
+// expands mid-token). Not including the header at all avoids the whole
+// collision class rather than papering over it with NOMINMAX/
+// WIN32_LEAN_AND_MEAN/#undef guards.
 #else
 #  include <fcntl.h>
 #  include <sys/wait.h>
