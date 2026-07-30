@@ -8,10 +8,14 @@
 #include <iostream>
 #include <regex>
 #include <sstream>
+#include <vector>
 #include <nlohmann/json.hpp>
 #ifdef _WIN32
-#  define popen  _popen
-#  define pclose _pclose
+#  include <windows.h>
+#else
+#  include <fcntl.h>
+#  include <sys/wait.h>
+#  include <unistd.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -23,28 +27,77 @@ namespace {
 std::string now_iso() {
     auto now = std::chrono::system_clock::now();
     auto t = std::chrono::system_clock::to_time_t(now);
+    std::tm tmv{};
+    // Reentrant gmtime — std::gmtime is not thread-safe (CWE-676).
+#ifdef _WIN32
+    gmtime_s(&tmv, &t);
+#else
+    gmtime_r(&t, &tmv);
+#endif
     std::ostringstream ss;
-    ss << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%SZ");
+    ss << std::put_time(&tmv, "%Y-%m-%dT%H:%M:%SZ");
     return ss.str();
 }
 
-// Validate a git ref to prevent shell injection (CWE-78).
-// Accepts only alphanumerics, '.', '-', '_', '/', '^', '~', and '@'.
+// Validate a git ref to prevent argument/command injection (CWE-78/CWE-88).
+// Accepts only alphanumerics, '.', '-', '_', '/', '^', '~', and '@', and
+// rejects a leading '-' so a ref can never be parsed by git as an option.
 bool is_safe_git_ref(const std::string& ref) {
     static const std::regex safe_re(R"([A-Za-z0-9._\-/^~@]+)");
-    return !ref.empty() && std::regex_match(ref, safe_re);
+    return !ref.empty() && ref.front() != '-' && std::regex_match(ref, safe_re);
 }
 
-std::string run_cmd(const std::string& cmd) {
+// Run a command as an argv vector WITHOUT a shell, capturing stdout.
+// Using execvp (never system/popen) means directory paths and refs are passed
+// as literal arguments and can never be interpreted as shell syntax (CWE-78).
+std::string run_argv(const std::vector<std::string>& args) {
     std::string result;
-    std::array<char, 256> buf{};
-    // fusa:unsafe — popen with validated, allowlist-checked inputs only
-    FILE* pipe = popen(cmd.c_str(), "r"); // NOLINT(cert-env33-c)
+    if (args.empty()) return result;
+#ifdef _WIN32
+    // Fall back to a quoted command line on Windows (no fork/exec).
+    std::string cmd;
+    for (const auto& a : args) {
+        if (!cmd.empty()) cmd += ' ';
+        cmd += '"';
+        for (char ch : a) { if (ch == '"') cmd += '\\'; cmd += ch; }
+        cmd += '"';
+    }
+    FILE* pipe = _popen(cmd.c_str(), "r");
     if (!pipe) return result;
+    std::array<char, 256> buf{};
     while (fgets(buf.data(), static_cast<int>(buf.size()), pipe))
         result += buf.data();
-    pclose(pipe);
+    _pclose(pipe);
     return result;
+#else
+    int fds[2];
+    if (pipe(fds) != 0) return result;
+    pid_t pid = fork();
+    if (pid < 0) { close(fds[0]); close(fds[1]); return result; }
+    if (pid == 0) {
+        // Child: stdout → pipe, stderr → /dev/null, then exec (no shell).
+        dup2(fds[1], STDOUT_FILENO);
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) { dup2(devnull, STDERR_FILENO); close(devnull); }
+        close(fds[0]);
+        close(fds[1]);
+        std::vector<char*> argv;
+        argv.reserve(args.size() + 1);
+        for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
+        _exit(127);
+    }
+    close(fds[1]);
+    std::array<char, 256> buf{};
+    ssize_t n;
+    while ((n = read(fds[0], buf.data(), buf.size())) > 0)
+        result.append(buf.data(), static_cast<size_t>(n));
+    close(fds[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return result;
+#endif
 }
 
 std::vector<ChangedFile> parse_git_diff(const std::string& from_ref,
@@ -54,16 +107,21 @@ std::vector<ChangedFile> parse_git_diff(const std::string& from_ref,
     std::string safe_from = from_ref.empty() ? "HEAD" : from_ref;
     std::string safe_to   = to_ref.empty()   ? "HEAD" : to_ref;
 
-    // Reject refs containing shell-unsafe characters.
+    // Reject refs containing shell-unsafe characters or a leading dash.
     if (!is_safe_git_ref(safe_from) || !is_safe_git_ref(safe_to)) return files;
 
-    std::string cmd;
+    // Build an argv vector — no shell, so dir/refs are always literal args.
+    // The '--' separator guarantees refs are never treated as options.
+    std::vector<std::string> args = {"git", "-C", dir.string(),
+                                     "diff", "--numstat"};
     if (from_ref.empty() && to_ref.empty()) {
-        cmd = "git -C " + dir.string() + " diff --numstat HEAD 2>/dev/null";
+        args.push_back("HEAD");
     } else {
-        cmd = "git -C " + dir.string() + " diff --numstat " + safe_from + " " + safe_to + " 2>/dev/null";
+        args.push_back(safe_from);
+        args.push_back(safe_to);
     }
-    std::string out = run_cmd(cmd);
+    args.push_back("--");
+    std::string out = run_argv(args);
     std::istringstream ss(out);
     std::string line;
     while (std::getline(ss, line)) {

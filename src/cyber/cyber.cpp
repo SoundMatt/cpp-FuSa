@@ -1,4 +1,5 @@
 #include "cyber.hpp"
+#include "cpfusa/fusa.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
@@ -38,6 +39,18 @@ bool is_source(const fs::path& p) {
     return std::regex_search(p.string(), ext_re);
 }
 
+// A rule's own catalogue documentation/messages, and third-party fix/example
+// text, inevitably contain the very keyword patterns this scanner is looking
+// for — self-scanning cpp-FuSa's own source would otherwise misreport every
+// one of those as a genuine finding in its own code. Mirrors lint::suppressed's
+// identical, already-precedented mechanism (see .fusa-dispositions.json's
+// LINT001 entry for the same rationale) rather than inventing a second
+// convention.
+bool suppressed(const std::string& line, const std::string& rule_id) {
+    return line.find("// fusa:suppress " + rule_id) != std::string::npos
+        || line.find("// NOLINT") != std::string::npos;
+}
+
 bool is_excluded(const fs::path& p, const config::ProjectConfig& cfg) {
     // generic_string() (always "/"-separated) — excludePatterns are "/"-style
     // gitignore globs (§1.2.1) regardless of platform; p.string() would use
@@ -55,13 +68,13 @@ std::vector<Rule> build_rules() {
         {
             "CYBER001", "CWE-327", Severity::ERROR,
             std::regex(R"re(\bMD5_Init\b|\bSHA1_Init\b|\b[Mm][Dd]5\b|\bsha1\b|\bSHA1\b|\bMD5\b)re"),
-            "Weak cryptographic hash (MD5/SHA-1) detected — use SHA-256 or stronger",
+            "Weak cryptographic hash (MD5/SHA-1) detected — use SHA-256 or stronger", // fusa:suppress CYBER001
             "Replace with SHA-256 (e.g. OpenSSL EVP_DigestInit with EVP_sha256())"
         },
         {
             "CYBER002", "CWE-327", Severity::ERROR,
             std::regex(R"re(\bDES_\w+\b|\b3DES\b|\bRC4\b|\bRC2\b|\bBF_\w+\b)re"),
-            "Weak symmetric cipher (DES/3DES/RC4) detected — use AES-256-GCM",
+            "Weak symmetric cipher (DES/3DES/RC4) detected — use AES-256-GCM", // fusa:suppress CYBER002
             "Replace with AES-256 in GCM mode"
         },
         {
@@ -79,7 +92,7 @@ std::vector<Rule> build_rules() {
         {
             "CYBER005", "CWE-78", Severity::ERROR,
             std::regex(R"re(\bsystem\s*\(|\bpopen\s*\()re"),
-            "Command injection risk: system()/popen() call — CWE-78",
+            "Command injection risk: system()/popen() call — CWE-78", // fusa:suppress CYBER005
             "Use execv() family with explicit argument arrays instead"
         },
         {
@@ -157,8 +170,8 @@ std::vector<Rule> build_rules() {
         {
             "CYBER018", "CWE-134", Severity::ERROR,
             std::regex(R"re(\b(?:printf|fprintf|sprintf|vprintf)\s*\(\s*(?!")[^,)])re"),
-            "Format string vulnerability — user-controlled format string — CWE-134",
-            "Always use a literal format string: printf(\"%s\", user_str)"
+            "Format string vulnerability — user-controlled format string — CWE-134", // fusa:suppress CYBER018
+            "Always use a literal format string: printf(\"%s\", user_str)" // fusa:suppress CYBER018
         },
         {
             "CYBER019", "CWE-362", Severity::WARNING,
@@ -201,6 +214,7 @@ CyberReport run(const fs::path& dir, const config::ProjectConfig& cfg) {
         while (std::getline(f, line)) {
             ++lineno;
             for (const auto& rule : rules) {
+                if (suppressed(line, rule.id)) continue;
                 if (std::regex_search(line, rule.re)) {
                     rpt.findings.push_back({
                         rule.id, rule.cwe, rule.sev,
@@ -219,6 +233,13 @@ CyberReport run(const fs::path& dir, const config::ProjectConfig& cfg) {
 Result<std::monostate> write_report(const fs::path& dir, const CyberReport& rpt) {
     auto path = dir / "cyber-report.json";
     json j;
+    // §3.1 common header — required on every document.
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "cyber-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["standard"]      = "iso21434";
     j["format"]      = "cpp-FuSa Cyber Report v1";
     j["generatedAt"] = rpt.generated_at;
     j["project"]     = rpt.project;

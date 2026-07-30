@@ -9,9 +9,10 @@
 #include <iomanip>
 #include <ctime>
 #include <cstdio>
-#ifdef _WIN32
-#  define popen  _popen
-#  define pclose _pclose
+#ifndef _WIN32
+#  include <fcntl.h>
+#  include <sys/wait.h>
+#  include <unistd.h>
 #endif
 #include <array>
 #include <algorithm>
@@ -192,16 +193,66 @@ std::string hash_fetched_source_tree(const fs::path& project_root, const std::st
     return "";
 }
 
-std::string run_cmd_str(const std::string& cmd) {
-    std::string out;
-    std::array<char,256> buf{};
-    FILE* pipe = popen(cmd.c_str(), "r");
-    if (!pipe) return out;
-    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) out += buf.data();
-    pclose(pipe);
+// Runs a command as an argv vector WITHOUT a shell, capturing stdout. Using
+// execvp (never a shell-interpolated command string) means a caller-supplied
+// path (e.g. --dir → project_root, itself untrusted input) is always passed
+// as a single literal argument and can never be interpreted as shell syntax
+// — closes the same CWE-78 command-injection class as cpp-FuSa-V01
+// (impact.cpp) / cpp-FuSa-V03 (auditpack.cpp), which this function's prior
+// shell-based implementation reintroduced here via
+// `"git -C \"" + project_root.string() + "\" ..."` string interpolation.
+std::string run_argv(const std::vector<std::string>& args) {
+    std::string result;
+    if (args.empty()) return result;
+#ifdef _WIN32
+    // Fall back to a quoted command line on Windows (no fork/exec), still
+    // quoting each argument individually rather than interpolating raw text.
+    std::string cmd;
+    for (const auto& a : args) {
+        if (!cmd.empty()) cmd += ' ';
+        cmd += '"';
+        for (char ch : a) { if (ch == '"') cmd += '\\'; cmd += ch; }
+        cmd += '"';
+    }
+    FILE* pipe = _popen(cmd.c_str(), "r");
+    if (!pipe) return result;
+    std::array<char, 256> buf{};
+    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe))
+        result += buf.data();
+    _pclose(pipe);
+    while (!result.empty() && (result.back()=='\n'||result.back()=='\r')) result.pop_back();
+    return result;
+#else
+    int fds[2];
+    if (pipe(fds) != 0) return result;
+    pid_t pid = fork();
+    if (pid < 0) { close(fds[0]); close(fds[1]); return result; }
+    if (pid == 0) {
+        // Child: stdout → pipe, stderr → /dev/null, then exec (no shell).
+        dup2(fds[1], STDOUT_FILENO);
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) { dup2(devnull, STDERR_FILENO); close(devnull); }
+        close(fds[0]);
+        close(fds[1]);
+        std::vector<char*> argv;
+        argv.reserve(args.size() + 1);
+        for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
+        _exit(127);
+    }
+    close(fds[1]);
+    std::array<char, 256> buf{};
+    ssize_t n;
+    while ((n = read(fds[0], buf.data(), buf.size())) > 0)
+        result.append(buf.data(), static_cast<size_t>(n));
+    close(fds[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
     // trim trailing newline
-    while (!out.empty() && (out.back()=='\n'||out.back()=='\r')) out.pop_back();
-    return out;
+    while (!result.empty() && (result.back()=='\n'||result.back()=='\r')) result.pop_back();
+    return result;
+#endif
 }
 
 // Parse FetchContent_Declare blocks from cmake file.
@@ -287,8 +338,13 @@ Result<SBOM> build_sbom(const fs::path& project_root, const config::ProjectConfi
     sbom.project      = cfg.project;
     sbom.cpp_version  = cfg.language;
 
-    // Try to get CMake version
-    sbom.cmake_version = run_cmd_str("cmake --version 2>/dev/null | head -1");
+    // Try to get CMake version — first line of `cmake --version`'s output,
+    // taken in-process (run_argv, no shell) rather than piping through `head`.
+    {
+        auto out = run_argv({"cmake", "--version"});
+        auto nl  = out.find('\n');
+        sbom.cmake_version = (nl == std::string::npos) ? out : out.substr(0, nl);
+    }
 
     // Parse dependencies from cmake/FetchDeps.cmake
     sbom.components = parse_cmake_deps(project_root / "cmake" / "FetchDeps.cmake");
@@ -327,11 +383,14 @@ Result<Provenance> build_provenance(const fs::path& project_root,
     prov.platform = "linux";
 #endif
 
-    // VCS info
-    auto rev = run_cmd_str("git -C \"" + project_root.string() + "\" rev-parse HEAD 2>/dev/null");
+    // VCS info. project_root comes from --dir (untrusted input, exactly like
+    // cpp-FuSa-V01/V03) — run_argv passes it as a literal argv entry rather
+    // than interpolating it into a shell string, so it can never be used to
+    // inject additional commands (CWE-78).
+    auto rev = run_argv({"git", "-C", project_root.string(), "rev-parse", "HEAD"});
     if (!rev.empty()) {
         prov.vcs_revision = rev;
-        auto status = run_cmd_str("git -C \"" + project_root.string() + "\" status --porcelain 2>/dev/null");
+        auto status = run_argv({"git", "-C", project_root.string(), "status", "--porcelain"});
         prov.vcs_modified = !status.empty();
     }
 

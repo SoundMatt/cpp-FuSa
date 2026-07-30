@@ -1,3 +1,9 @@
+// This fixture file intentionally writes unsafe-string-fn (strcpy/gets/etc.)
+// example snippets to exercise cyber/lint detection; a self-scan of this
+// file for real would misreport every such fixture as a genuine finding in
+// cpp-FuSa's own source, so LINT022 is file-suppressed here (same rationale
+// as test_lint.cpp and the existing LINT001 disposition entry).
+// fusa:file-suppress LINT022
 //fusa:test REQ-CYBER001
 //fusa:test REQ-CYBER002
 //fusa:test REQ-CYBER003

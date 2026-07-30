@@ -1,6 +1,7 @@
 #include "qualify.hpp"
 #include "../config/config.hpp"
 #include "../engine/engine.hpp"
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
@@ -139,16 +140,26 @@ std::string result_enum(const CaseResult& cr) {
 namespace {
 
 // Compute hash of the report without the hash field.
+// MUST-145/146/148: the integrity hash must be reproducible, so it MUST NOT
+// include the volatile `generatedAt` timestamp and MUST hash the results in a
+// deterministic (name-sorted) order regardless of execution/scheduling order.
 std::string compute_hash(const QualifyReport& r) {
     json j;
-    j["generatedAt"] = r.generated_at;
     j["cppVersion"]  = r.cpp_version;
     j["module"]      = r.module;
     j["total"]       = r.total;
     j["passed"]      = r.passed;
     j["failed"]      = r.failed;
+    std::vector<const CaseResult*> sorted;
+    sorted.reserve(r.results.size());
+    for (const auto& cr : r.results) sorted.push_back(&cr);
+    std::sort(sorted.begin(), sorted.end(),
+              [](const CaseResult* a, const CaseResult* b) {
+                  return a->test_case.name < b->test_case.name;
+              });
     json ra = json::array();
-    for (const auto& cr : r.results) {
+    for (const auto* crp : sorted) {
+        const auto& cr = *crp;
         json rj;
         rj["name"]          = cr.test_case.name;
         rj["result"]        = result_enum(cr);

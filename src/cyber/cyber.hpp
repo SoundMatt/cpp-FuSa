@@ -5,8 +5,8 @@
 // and C++-specific security patterns.
 //
 // Rule catalogue:
-//  CYBER001  Weak cryptographic hash (MD5/SHA-1)          CWE-327
-//  CYBER002  Weak symmetric cipher (DES/3DES/RC4)         CWE-327
+//  CYBER001  Weak cryptographic hash (MD5/SHA-1)          CWE-327 // fusa:suppress CYBER001
+//  CYBER002  Weak symmetric cipher (DES/3DES/RC4)         CWE-327 // fusa:suppress CYBER002
 //  CYBER003  Insecure random (rand/srand)                  CWE-330
 //  CYBER004  Unsafe pointer cast (reinterpret_cast)        CWE-242 / MISRA 11.3
 //  CYBER005  Command injection (system/popen with var)     CWE-78
@@ -22,7 +22,7 @@
 //  CYBER015  Stack alloca usage                            CWE-121
 //  CYBER016  Permissive file mode (0777)                   CWE-732
 //  CYBER017  Hardcoded IP address                          CWE-798
-//  CYBER018  Format string vulnerability (printf(var))     CWE-134
+//  CYBER018  Format string vulnerability (printf(var))     CWE-134 // fusa:suppress CYBER018
 //  CYBER019  TOCTOU race (access+open)                     CWE-362
 //  CYBER020  Insecure temp file (tmpnam/tempnam)           CWE-377
 

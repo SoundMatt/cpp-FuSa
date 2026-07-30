@@ -17,8 +17,8 @@
 # .github/workflows/docker-publish.yml) so they always track fusa.hpp's
 # Version/SpecVersion constants instead of going stale in this file. The
 # defaults below are best-effort for plain local `docker build` runs.
-ARG VERSION=0.14.4
-ARG SPEC_VERSION=1.10.12
+ARG VERSION=0.18.0
+ARG SPEC_VERSION=1.15.2
 
 # ── Stage 1: build ────────────────────────────────────────────────────────────
 FROM alpine:3.20 AS builder
@@ -64,7 +64,7 @@ WORKDIR /project
 LABEL org.opencontainers.image.title="cpp-FuSa" \
       org.opencontainers.image.description="C++ functional safety toolkit" \
       org.opencontainers.image.source="https://github.com/SoundMatt/cpp-FuSa" \
-      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.licenses="MPL-2.0" \
       org.opencontainers.image.version="${VERSION}" \
       io.x-fusa.tool="cpp-FuSa" \
       io.x-fusa.language="cpp" \

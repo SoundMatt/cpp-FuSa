@@ -8,9 +8,14 @@
 #include <ctime>
 #include <cstdio>
 #include <array>
+#include <vector>
 #ifdef _WIN32
 #  define popen  _popen
 #  define pclose _pclose
+#else
+#  include <fcntl.h>
+#  include <sys/wait.h>
+#  include <unistd.h>
 #endif
 #include <regex>
 
@@ -24,22 +29,66 @@ namespace {
 std::string now_iso8601() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tmv{};
+    // Reentrant gmtime — std::gmtime is not thread-safe (CWE-676).
+#ifdef _WIN32
+    gmtime_s(&tmv, &t);
+#else
+    gmtime_r(&t, &tmv);
+#endif
     std::ostringstream ss;
-    ss << std::put_time(std::gmtime(&t), "%FT%TZ");
+    ss << std::put_time(&tmv, "%FT%TZ");
     return ss.str();
 }
 
-// Run a shell command and capture stdout+stderr.
-std::string run_cmd(const std::string& cmd) {
+// Run a command as an argv vector WITHOUT a shell, capturing stdout+stderr.
+// Passing the build directory as a literal argv entry (never a shell string)
+// makes command injection through a hostile --dir path impossible (CWE-78).
+std::string run_argv(const std::vector<std::string>& args) {
     std::string output;
-    std::array<char, 256> buf{};
-    FILE* pipe = popen(cmd.c_str(), "r");
-    if (!pipe) return output;
-    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) {
-        output += buf.data();
+    if (args.empty()) return output;
+#ifdef _WIN32
+    std::string cmd;
+    for (const auto& a : args) {
+        if (!cmd.empty()) cmd += ' ';
+        cmd += '"';
+        for (char ch : a) { if (ch == '"') cmd += '\\'; cmd += ch; }
+        cmd += '"';
     }
-    pclose(pipe);
+    cmd += " 2>&1";
+    FILE* pipe = _popen(cmd.c_str(), "r");
+    if (!pipe) return output;
+    std::array<char, 256> buf{};
+    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) output += buf.data();
+    _pclose(pipe);
     return output;
+#else
+    int fds[2];
+    if (pipe(fds) != 0) return output;
+    pid_t pid = fork();
+    if (pid < 0) { close(fds[0]); close(fds[1]); return output; }
+    if (pid == 0) {
+        dup2(fds[1], STDOUT_FILENO);
+        dup2(fds[1], STDERR_FILENO);
+        close(fds[0]);
+        close(fds[1]);
+        std::vector<char*> argv;
+        argv.reserve(args.size() + 1);
+        for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
+        _exit(127);
+    }
+    close(fds[1]);
+    std::array<char, 256> buf{};
+    ssize_t n;
+    while ((n = read(fds[0], buf.data(), buf.size())) > 0)
+        output.append(buf.data(), static_cast<size_t>(n));
+    close(fds[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return output;
+#endif
 }
 
 // Locate build dir: try build/, cmake-build-debug/, cmake-build-release/
@@ -97,9 +146,8 @@ Result<EvidenceBundle> run_ctest(const fs::path& project_dir,
         return std::string("verify: build directory not found — build first with cmake --build");
     }
 
-    std::string ctest_cmd = "ctest --test-dir \"" + build_dir.string()
-                          + "\" --output-on-failure -V 2>&1";
-    auto output = run_cmd(ctest_cmd);
+    auto output = run_argv({"ctest", "--test-dir", build_dir.string(),
+                            "--output-on-failure", "-V"});
 
     EvidenceBundle bundle;
     bundle.generated_at  = now_iso8601();

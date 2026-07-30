@@ -30,6 +30,59 @@ TEST_CASE("hara: S1 E1 C1 = QM", "[hara][hara001]") {
     REQUIRE(hara::determine_asil(hara::Severity::S1, hara::Exposure::E1, hara::Controllability::C1) == "QM");
 }
 
+// Exhaustive ISO 26262-3:2018 Table 4 truth table (3 S × 4 E × 3 C = 36 cells).
+// ASIL is the additive class mapping: sum(S,E,C) <=6 QM, 7 A, 8 B, 9 C, 10 D.
+TEST_CASE("hara: exhaustive Table 4 truth table", "[hara][hara001][hara002]") {
+    using hara::Severity; using hara::Exposure; using hara::Controllability;
+    struct Row { Severity s; Exposure e; Controllability c; const char* asil; };
+    const Row cases[] = {
+        // S1
+        {Severity::S1,Exposure::E1,Controllability::C1,"QM"},
+        {Severity::S1,Exposure::E1,Controllability::C2,"QM"},
+        {Severity::S1,Exposure::E1,Controllability::C3,"QM"},
+        {Severity::S1,Exposure::E2,Controllability::C1,"QM"},
+        {Severity::S1,Exposure::E2,Controllability::C2,"QM"},
+        {Severity::S1,Exposure::E2,Controllability::C3,"QM"},
+        {Severity::S1,Exposure::E3,Controllability::C1,"QM"},
+        {Severity::S1,Exposure::E3,Controllability::C2,"QM"},
+        {Severity::S1,Exposure::E3,Controllability::C3,"ASIL-A"},
+        {Severity::S1,Exposure::E4,Controllability::C1,"QM"},
+        {Severity::S1,Exposure::E4,Controllability::C2,"ASIL-A"},
+        {Severity::S1,Exposure::E4,Controllability::C3,"ASIL-B"},
+        // S2
+        {Severity::S2,Exposure::E1,Controllability::C1,"QM"},
+        {Severity::S2,Exposure::E1,Controllability::C2,"QM"},
+        {Severity::S2,Exposure::E1,Controllability::C3,"QM"},
+        {Severity::S2,Exposure::E2,Controllability::C1,"QM"},
+        {Severity::S2,Exposure::E2,Controllability::C2,"QM"},
+        {Severity::S2,Exposure::E2,Controllability::C3,"ASIL-A"},
+        {Severity::S2,Exposure::E3,Controllability::C1,"QM"},
+        {Severity::S2,Exposure::E3,Controllability::C2,"ASIL-A"},
+        {Severity::S2,Exposure::E3,Controllability::C3,"ASIL-B"},
+        {Severity::S2,Exposure::E4,Controllability::C1,"ASIL-A"},
+        {Severity::S2,Exposure::E4,Controllability::C2,"ASIL-B"},
+        {Severity::S2,Exposure::E4,Controllability::C3,"ASIL-C"},
+        // S3
+        {Severity::S3,Exposure::E1,Controllability::C1,"QM"},
+        {Severity::S3,Exposure::E1,Controllability::C2,"QM"},
+        {Severity::S3,Exposure::E1,Controllability::C3,"ASIL-A"},
+        {Severity::S3,Exposure::E2,Controllability::C1,"QM"},
+        {Severity::S3,Exposure::E2,Controllability::C2,"ASIL-A"},
+        {Severity::S3,Exposure::E2,Controllability::C3,"ASIL-B"},
+        {Severity::S3,Exposure::E3,Controllability::C1,"ASIL-A"},
+        {Severity::S3,Exposure::E3,Controllability::C2,"ASIL-B"},
+        {Severity::S3,Exposure::E3,Controllability::C3,"ASIL-C"},
+        {Severity::S3,Exposure::E4,Controllability::C1,"ASIL-B"},
+        {Severity::S3,Exposure::E4,Controllability::C2,"ASIL-C"},
+        {Severity::S3,Exposure::E4,Controllability::C3,"ASIL-D"},
+    };
+    for (const auto& row : cases) {
+        INFO("S" << static_cast<int>(row.s) << " E" << static_cast<int>(row.e)
+             << " C" << static_cast<int>(row.c));
+        REQUIRE(hara::determine_asil(row.s, row.e, row.c) == row.asil);
+    }
+}
+
 TEST_CASE("hara: parse_severity S2", "[hara][hara001]") {
     REQUIRE(hara::parse_severity("S2") == hara::Severity::S2);
 }

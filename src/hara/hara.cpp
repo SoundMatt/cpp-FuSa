@@ -24,20 +24,15 @@ std::string determine_asil(Severity s, Exposure e, Controllability c) {
     int ei = static_cast<int>(e);
     int ci = static_cast<int>(c);
 
-    // Table 4 lookup: rows = S1..S3, cols = C1..C3, E1..E4 subrows
-    // Encoded as (S,E,C) → ASIL
-    // QM=0, A=1, B=2, C=3, D=4
-    static const int table[3][4][3] = {
-        // S1
-        {{0,0,0}, {0,0,1}, {0,1,2}, {1,2,3}},
-        // S2
-        {{0,1,2}, {1,2,3}, {2,3,4}, {3,4,4}},
-        // S3
-        {{1,2,3}, {2,3,4}, {3,4,4}, {4,4,4}},
-    };
-    static const char* names[] = {"QM", "ASIL-A", "ASIL-B", "ASIL-C", "ASIL-D"};
-    int idx = table[si-1][ei-1][ci-1];
-    return names[idx];
+    // ISO 26262-3:2018 Table 4 is the additive class mapping: the ASIL is a
+    // function of the sum of the S, E and C class indices (S1..S3, E1..E4,
+    // C1..C3 each contribute their ordinal value). ASIL-D is required only at
+    // the highest S3+E4+C3 combination.
+    //   sum <= 6 -> QM, 7 -> A, 8 -> B, 9 -> C, 10 -> D
+    int points = si + ei + ci;
+    if (points <= 6) return "QM";
+    static const char* names[] = {"ASIL-A", "ASIL-B", "ASIL-C", "ASIL-D"};
+    return names[points - 7];
 }
 
 Severity parse_severity(const std::string& s) {

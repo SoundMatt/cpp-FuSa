@@ -73,7 +73,7 @@ cpfusa trace --req-coverage 80   # CI gate: fail if < 80% annotated
 # Hazard Analysis and Risk Assessment
 cpfusa hara init
 cpfusa hara show
-cpfusa hara asil -s S2 -e E3 -c C2   # → ASIL-C
+cpfusa hara asil -s S2 -e E3 -c C2   # → ASIL-A
 
 # Standards gap reports
 cpfusa iso26262 --asil ASIL-B --output iso26262-gap-report.json
@@ -211,8 +211,8 @@ cpfusa capabilities
 | ISO 21434 | Automotive cybersecurity | `cpfusa tara`, `cpfusa cyber`, `cpfusa iso21434` (CAL gap report) |
 | UNECE R155/R156 | Cybersecurity/software update management | `cpfusa unece` |
 | DO-178C | Aerospace software (DAL A–D) | `cpfusa do178`, `cpfusa coverage` |
-| MISRA C++:2023 | C++ coding standard | `cpfusa lint` (LINT001–010), `cpfusa misra` |
-| AUTOSAR C++14 | AUTOSAR coding guidelines | `cpfusa lint` (LINT005) |
+| AUTOSAR C++14 | AUTOSAR coding guidelines (AUTOSAR-authored, "A"-numbered rules) | `cpfusa lint` (LINT001, 002, 003, 004, 005, 006, 007, 008, 012, 016–023, 025, 028, 029), `cpfusa misra` |
+| MISRA C++:2008 | C++ coding standard, imported into the AUTOSAR C++14 guideline set ("M"-numbered rules) | `cpfusa lint` (LINT011, 013, 014, 015, 024, 026, 027, 030, 031), `cpfusa misra` |
 | JSF++ | Joint Strike Fighter C++ | `cpfusa lint` (LINT008) |
 
 ## Tool qualification
@@ -221,20 +221,46 @@ cpp-FuSa includes a built-in tool qualification suite per ISO 26262 Part 8 §11 
 Run `cpfusa qualify` to execute 8 built-in positive/negative test cases and generate
 `qualify-report.json` with an SHA-256 integrity hash.
 
-## Lint rules (MISRA/AUTOSAR/JSF++)
+## Lint rules (AUTOSAR C++14/MISRA C++:2008/JSF++)
+
+`A`-numbered rules are AUTOSAR-authored (canonical `standard`: `autosar-cpp14`); `M`-numbered
+rules are imported verbatim from MISRA C++:2008 into the AUTOSAR C++14 guideline set (canonical
+`standard`: `misra-cpp`). LINT009/LINT010 are cpp-FuSa-specific checks with no external rule
+mapping, so they carry no `standard` field.
 
 | Rule | Standard | Description |
 |---|---|---|
-| LINT001 | MISRA A18-5-2 | No raw `new`/`delete` — use smart pointers |
-| LINT002 | MISRA A6-6-1 | No `goto` statement |
-| LINT003 | MISRA A5-2-4 | `reinterpret_cast` requires `// fusa:unsafe` annotation |
-| LINT004 | MISRA A15-5-3 | `abort()`/`exit()` requires preceding `// fusa:safe-state` |
+| LINT001 | AUTOSAR A18-5-2 | No raw `new`/`delete` — use smart pointers |
+| LINT002 | AUTOSAR A6-6-1 | No `goto` statement |
+| LINT003 | AUTOSAR A5-2-4 | `reinterpret_cast` requires `// fusa:unsafe` annotation |
+| LINT004 | AUTOSAR A15-5-3 | `abort()`/`exit()` requires preceding `// fusa:safe-state` |
 | LINT005 | AUTOSAR A3-3-2 | Global mutable variable requires `// fusa:shared` annotation |
-| LINT006 | MISRA A2-13-1 | `#define` for constants — use `constexpr` |
-| LINT007 | MISRA A5-2-2 | C-style cast — use named casts |
-| LINT008 | JSF++ 119 | Recursive function — add `// fusa:recursive <max-depth>` |
+| LINT006 | AUTOSAR A2-13-1 | `#define` for constants — use `constexpr` |
+| LINT007 | AUTOSAR A5-2-2 | C-style cast — use named casts |
+| LINT008 | AUTOSAR A7-1-1 / JSF++ 119 | Recursive function — add `// fusa:recursive <max-depth>` |
 | LINT009 | — | `printf`/`scanf` family — prefer type-safe I/O |
 | LINT010 | — | Function with `throw` missing `noexcept` specification |
+| LINT011 | MISRA M4-10-2 | `NULL` used instead of `nullptr` |
+| LINT012 | AUTOSAR A10-3-2 | Virtual override missing `override`/`final` |
+| LINT013 | MISRA M6-4-6 | `switch` without a `default` case |
+| LINT014 | MISRA M15-3-4 | Empty `catch` block |
+| LINT015 | MISRA M15-5-1 | `throw` in a destructor |
+| LINT016 | AUTOSAR A16-0-1 | Function-like macro |
+| LINT017 | AUTOSAR A15-1-2 | `setjmp`/`longjmp` usage |
+| LINT018 | AUTOSAR A5-2-3 | `dynamic_cast` usage |
+| LINT019 | AUTOSAR A9-5-1 | `union` usage |
+| LINT020 | AUTOSAR A2-11-1 | `volatile` without justification |
+| LINT021 | AUTOSAR A8-4-1 | Variadic function `(...)` |
+| LINT022 | AUTOSAR A27-0-1 | Unsafe C string function |
+| LINT023 | AUTOSAR A27-0-2 | `atoi`/`atof` unsafe numeric conversion |
+| LINT024 | MISRA M6-3-1 | Missing braces on control-flow body |
+| LINT025 | AUTOSAR A19-3-1 | `errno` usage |
+| LINT026 | MISRA M17-0-5 | Deprecated C library header |
+| LINT027 | MISRA M16-0-3 | `#undef` usage |
+| LINT028 | AUTOSAR A7-4-1 | Inline assembly |
+| LINT029 | AUTOSAR A2-13-4 | Magic number literal |
+| LINT030 | MISRA M16-2-1 | Missing include guard/`#pragma once` |
+| LINT031 | MISRA Rule 6-2-2 | Float/double literal in `==`/`!=` comparison |
 
 ## Runtime safety patterns (header-only)
 

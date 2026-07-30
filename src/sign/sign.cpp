@@ -148,14 +148,21 @@ std::string hmac_file(const fs::path& target, const uint8_t key[32]) {
 
 //fusa:req REQ-SIGN001
 Result<std::monostate> keygen(const fs::path& key_path) {
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    std::uniform_int_distribution<uint64_t> dist;
     uint8_t key[32];
-    for (int i = 0; i < 4; ++i) {
-        uint64_t v = dist(gen);
-        std::memcpy(key + i*8, &v, 8);
-    }
+    // Signing keys authenticate safety artifacts and MUST come from a
+    // cryptographically-secure RNG — never a Mersenne-Twister (mt19937), which
+    // is fully predictable from a short run of outputs.
+#ifdef _WIN32
+    // Use the OS CSPRNG via std::random_device (Windows implementations wrap
+    // the platform crypto provider) and draw a fresh value for every word.
+    std::random_device rd;
+    for (int i = 0; i < 32; ++i) key[i] = static_cast<uint8_t>(rd() & 0xFF);
+#else
+    // Read directly from the kernel CSPRNG.
+    std::ifstream urandom("/dev/urandom", std::ios::binary);
+    if (!urandom || !urandom.read(reinterpret_cast<char*>(key), 32))
+        return std::string("sign: keygen: unable to read /dev/urandom");
+#endif
     std::string hex = to_hex(key, 32) + "\n";
     try {
         std::ofstream out(key_path);

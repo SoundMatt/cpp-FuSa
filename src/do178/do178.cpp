@@ -1,4 +1,5 @@
 #include "do178.hpp"
+#include "cpfusa/fusa.hpp"
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -40,8 +41,8 @@ std::vector<Objective> baseline_objectives() {
         // Table A-2: Software Development
         {"A-2.1", "A-2", "Software Requirements Standards",        true,  true,  true,  true},
         {"A-2.2", "A-2", "High-level requirements traceability",   true,  true,  true,  true},
-        {"A-2.3", "A-2", "Low-level requirements traceability",    true,  true,  false, false},
-        {"A-2.4", "A-2", "Source code traceability",               true,  true,  false, false},
+        {"A-2.3", "A-2", "Low-level requirements traceability",    true,  true,  true,  false},
+        {"A-2.4", "A-2", "Source code traceability",               true,  true,  true,  false},
         // Table A-3: Verification of Outputs
         {"A-3.1", "A-3", "Software requirements review",           true,  true,  true,  true},
         {"A-3.2", "A-3", "Software architecture review",           true,  true,  true,  true},
@@ -167,6 +168,13 @@ Report assess(const fs::path& dir, const std::string& project, DAL dal) {
 
 void write_json(const fs::path& out, const Report& r) {
     json j;
+    // §3.1 common header + §2.4.1/§9.3 canonical `standard` field.
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "do178c-gap-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["standard"]      = "do178c";
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["dal"]         = r.dal;

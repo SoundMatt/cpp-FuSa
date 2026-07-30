@@ -99,10 +99,16 @@ CoverageReport build_from_lcov(const fs::path& lcov_file, DAL dal) {
             r.hit_branches   += current.branches_hit;
             in_record = false;
         } else if (in_record) {
-            if (line.substr(0, 3) == "LF:") current.lines_total    = std::stoi(line.substr(3));
-            else if (line.substr(0, 3) == "LH:") current.lines_hit = std::stoi(line.substr(3));
-            else if (line.substr(0, 4) == "BRF:") current.branches_total = std::stoi(line.substr(4));
-            else if (line.substr(0, 4) == "BRH:") current.branches_hit   = std::stoi(line.substr(4));
+            // Guard std::stoi against malformed/empty LCOV values (e.g. "LF:"
+            // or "LF:abc") which would otherwise throw and abort the process.
+            auto parse_int = [](const std::string& s) -> int {
+                try { return std::stoi(s); }
+                catch (const std::exception&) { return 0; }
+            };
+            if (line.substr(0, 3) == "LF:") current.lines_total    = parse_int(line.substr(3));
+            else if (line.substr(0, 3) == "LH:") current.lines_hit = parse_int(line.substr(3));
+            else if (line.substr(0, 4) == "BRF:") current.branches_total = parse_int(line.substr(4));
+            else if (line.substr(0, 4) == "BRH:") current.branches_hit   = parse_int(line.substr(4));
         }
     }
 

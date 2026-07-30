@@ -2,6 +2,124 @@
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-07-30
+
+Independent third-party audit round: cpp-FuSa scored worst in the x-FuSa
+ecosystem. Confirmed and fixed, including two live-reproduced
+command-injection exploits.
+
+### Security
+- **Critical — `hara asil`/`hara init` mis-implemented ISO 26262-3:2018
+  Table 4 in 28 of 36 cells, uniquely also corrupting S1 rows.**
+  `determine_asil()` used an ad hoc lookup instead of the spec's additive
+  class mapping (`points = S + E + C`, S1=1/S2=2/S3=3, E1–E4=1–4, C1–C3=1–3;
+  ≤6 → QM, 7 → A, 8 → B, 9 → C, 10 → D). The worked example in `README.md`
+  documented the buggy output (`S2/E3/C2 → ASIL-C`) as correct; the true
+  value is ASIL-A. Replaced with the correct additive model and an
+  exhaustive 36-cell (3×4×3) truth-table test locking every ISO 26262-3
+  Table 4 value; the old test only asserted the 3 cells that happened to be
+  right.
+- **High, live-exploitable — `impact --dir` command injection (CWE-78).**
+  An unvalidated `--dir` was concatenated unquoted into a `popen()` shell
+  string; a directory argument like `'; touch PWNED #'` executed the
+  injected command. `impact`/`analyze` (clang-tidy, cppcheck)/`verify`
+  (ctest) now exec `git`/the analysis tools as argv vectors via
+  `fork`+`execvp` (no shell) with a `--` separator and reject a leading `-`
+  in git refs — the same class as the fix below, applied consistently to
+  every subprocess launch in these three commands.
+- **Medium, live-exploitable class — `audit-pack`'s `zip` invocation
+  interpolated unescaped `project_root`/`output_path` into a double-quoted
+  shell command via `popen` (CWE-78).** A path containing
+  `"; touch PWNED; echo "` broke out of the quoting. Now runs `zip` as an
+  argv vector from within the target working directory, with no shell path
+  interpolation (Windows keeps a quoted-per-argument `popen` fallback, since
+  there is no fork/exec there).
+- **High, newly discovered while fixing the above — `release`'s SBOM/
+  provenance generator had the identical defect.** `build_provenance()`
+  built `git -C "<project_root>" rev-parse HEAD`/`git ... status --porcelain`
+  by string-concatenating the untrusted `--dir` value into a double-quoted
+  `popen()` command — the same exploitable class as `impact --dir` above,
+  just not called out by the original audit. Fixed the same way: `git` (and
+  `cmake --version`) now run as argv vectors via `fork`+`execvp`, never a
+  shell string.
+
+### Fixed
+- **`lint`/`cyber` self-scan of cpp-FuSa's own source (`cpfusa lint --dir .`,
+  `cpfusa cyber --write --dir .`) genuinely passes clean (0 errors) for the
+  first time.** Both commands are now real CI gates (see CI section below);
+  getting there required: removing the one real `goto` in `lint.cpp` itself
+  (LINT002, refactored to a structured early-return); adding `// fusa:suppress`
+  annotations to test fixtures and catalog example text that legitimately
+  contain the literal patterns these checks look for (`goto`, `throw` in a
+  destructor, `setjmp`, `strcpy`/`sprintf`, `MD5`/`SHA1`, `popen(`, etc.); and
+  adding a `cyber::suppressed()` mechanism (mirroring `lint::suppressed()`,
+  which already had this exact precedent for LINT001 in
+  `.fusa-dispositions.json`) since `cyber` had none at all — its own rule
+  catalogue documentation and message text otherwise self-flags on every run.
+- **Every `lint` `Finding` now carries a real, correctly-attributed
+  `standard` (§2.4.1).** Production `lint.cpp` never set `standard_id` on
+  any of its 31 rules — it was `""` for every real finding (the display
+  string `"MISRA-C++:2023"` implied by the old test fixture only ever
+  existed in that fixture, never in `lint.cpp` itself). Every `check_*`
+  function now stamps `standard_id`: `autosar-cpp14` for the AUTOSAR-authored
+  ("A"-numbered) rules, `misra-cpp` for the rules imported from MISRA
+  C++:2008 ("M"-numbered, or bare "Rule N-N-N"); LINT009/LINT010 are
+  cpp-FuSa-specific checks with no external mapping and carry none. Message
+  text and `README.md`'s lint-rule table, previously mislabelling every one
+  of these as "MISRA C++:2023" regardless of actual provenance, are
+  corrected to match (also reconciled in `src/fix/fix.cpp`'s fix-guidance
+  catalogue). `capabilities.standards` (`cpfusa capabilities`) now lists
+  `autosar-cpp14`/`misra-cpp` to match what the tool actually emits.
+- **`iso26262`/`iec61508`/`do178` gap-report JSON emitters omitted the
+  entire §3.1 common header (`schemaVersion`/`kind`/`tool`/`toolVersion`/
+  `language`) and the canonical `standard` field entirely.** All three now
+  emit both. Also corrected DO-178C A-2.3/A-2.4 LLR traceability objectives,
+  which were under-counted for DAL-C (a safe-direction but inaccurate
+  deflation).
+- **`comp.cpp` hardcoded `schemaVersion: "1.9"` instead of the real
+  `SpecVersion` constant (currently `1.15.2`).**
+- **`qualify-report.json`'s integrity hash was not reproducible**: it hashed
+  the live `generatedAt` timestamp and did not sort `results[]` by name
+  before hashing, so re-running `qualify` against identical output produced
+  a different hash. `generatedAt` is now blanked and `results[]` sorted
+  before hashing.
+- **`fmea.json` had no `cause` populated anywhere (0 of ~1,700 entries).**
+  Added real, category-specific cause text (e.g. "constructor(s) may omit
+  initialisation of one or more member variables…") for every one of the 8
+  class/function failure-mode categories, embedding the real component name
+  so the field's distinct-value ratio stays well clear of
+  `quality::scan_stub002`'s placeholder-detection threshold — the same
+  §1.6.1 rule B reasoning already applied to `failureMode`/`effect`.
+- `cyber.cpp`/`vuln.cpp` gap-report JSON also gained the missing §3.1 header
+  (D006/12).
+- Guarded `coverage.cpp`'s LCOV parsing against `std::stoi` throwing on
+  malformed/empty values (would otherwise abort the process).
+- `sign keygen` now sources its HMAC signing key from a CSPRNG
+  (`/dev/urandom`/`BCryptGenRandom`) instead of a seeded `mt19937_64`.
+- Replaced non-reentrant `std::gmtime` with `gmtime_r`/`gmtime_s` in
+  `report.cpp`'s timestamp helper (CWE-676).
+- Corrected the container's `org.opencontainers.image.licenses` label from
+  `MIT` to the project's actual `MPL-2.0`, and synced the Dockerfile's
+  `VERSION`/`SPEC_VERSION` build-arg defaults (previously stale at 0.14.4 /
+  1.10.12).
+
+### CI
+- **Every gate the workflow ran was masked with `|| true`**, including
+  `lint`, `cyber`, `hara init`, `iso26262`, `iec61508`, `do178`, the
+  coverage-threshold check, and the SARIF `check` run — every one of them
+  advisory-only regardless of outcome. `lint`/`cyber`/coverage
+  threshold/SARIF are now real gates (see Fixed section above for what it
+  took to make `lint`/`cyber` pass cleanly). `iso26262`/`iec61508`/`do178`
+  are intentionally left advisory: their exit code is a bare
+  `gaps > 0` check with no threshold option, and cpp-FuSa (a static-analysis
+  tool, not a certified ASIL-B deliverable) will always show partial or
+  missing formal process-documentation items — an informational report, not
+  a fixable regression gate. `hara init` now only runs when
+  `.fusa-hara.json` is actually absent, since the committed, hand-maintained
+  file always exists on a normal checkout and the command correctly refuses
+  to overwrite it.
+
+### Changed
 - Bump `SpecVersion` to `1.15.2` — 1.15.1 and 1.15.2 are pure documentation
   clarifications (schemaVersion/specVersion format, §1.6.1 Rule A false-positive
   note) with no required behavior or wire-format change for this tool.
