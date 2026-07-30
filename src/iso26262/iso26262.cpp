@@ -1,5 +1,6 @@
 #include "iso26262.hpp"
 #include "../quality/quality.hpp"
+#include "cpfusa/fusa.hpp"
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -208,6 +209,14 @@ Report assess(const fs::path& dir, const std::string& project, ASIL asil) {
 
 void write_json(const fs::path& out, const Report& r) {
     json j;
+    // §3.1 common header + §2.4.1/§9.3 canonical `standard` field so
+    // downstream aggregators can route/group this gap report.
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "iso26262-gap-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
+    j["standard"]      = "iso26262";
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["asil"]        = r.asil;

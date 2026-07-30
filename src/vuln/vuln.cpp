@@ -1,4 +1,5 @@
 #include "vuln.hpp"
+#include "cpfusa/fusa.hpp"
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -105,6 +106,12 @@ VulnReport scan(const fs::path& dir) {
 
 void write_json(const fs::path& out, const VulnReport& r) {
     json j;
+    // §3.1 common header — required on every document.
+    j["schemaVersion"] = std::string(SpecVersion);
+    j["kind"]          = "vuln-report";
+    j["tool"]          = "cpp-FuSa";
+    j["toolVersion"]   = std::string(Version);
+    j["language"]      = "cpp";
     j["generatedAt"] = r.generated_at;
     j["project"]     = r.project;
     j["scanned"]     = r.scanned;

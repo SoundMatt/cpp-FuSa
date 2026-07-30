@@ -99,27 +99,42 @@ jobs:
         run: ./build/cpfusa check --dir .
 
       - name: cpfusa lint (self)
-        run: ./build/cpfusa lint --dir . || true
+        run: ./build/cpfusa lint --dir .
 
       - name: cpfusa trace (self)
         run: ./build/cpfusa trace --dir .
 
       - name: cpfusa cyber (self)
-        run: ./build/cpfusa cyber --write --dir . || true
+        run: ./build/cpfusa cyber --write --dir .
 
       - name: cpfusa qualify
         run: ./build/cpfusa qualify --dir .
 
       - name: cpfusa hara init
-        run: ./build/cpfusa hara init --project cpp-FuSa --dir . || true
+        # .fusa-hara.json is committed (real, hand-maintained hazard data), so
+        # a fresh checkout always already has it — `hara init` correctly
+        # refuses to overwrite an existing file. Only run it when the file is
+        # actually missing, so this step still exercises (and gates on) the
+        # real init path without permanently failing on every run.
+        run: test -f .fusa-hara.json || ./build/cpfusa hara init --project cpp-FuSa --dir .
 
       - name: cpfusa hara asil
         run: ./build/cpfusa hara asil -s S2 -e E3 -c C2
 
       - name: cpfusa iso26262
+        # Exit code is a bare `gaps > 0` check with no --strict/threshold
+        # option; cpp-FuSa (a static-analysis tool, not a certified ASIL-B
+        # deliverable) will always show partial/missing process-documentation
+        # items (formal SDP/SVP, ASIL decomposition record, etc.) that no
+        # source change here can close. Unlike lint/cyber (cpp-FuSa-08, now
+        # genuinely 0 findings — see .fusa-dispositions.json and the
+        # fusa:suppress annotations added for known self-scan artifacts),
+        # this is an informational gap report, not a pass/fail regression
+        # gate, so it is intentionally kept advisory-only.
         run: ./build/cpfusa iso26262 --asil ASIL-B --output iso26262-gap-report.json --dir . || true
 
       - name: cpfusa iec61508
+        # Same rationale as the iso26262 step above.
         run: ./build/cpfusa iec61508 --sil SIL-2 --output iec61508-gap-report.json --dir . || true
 
       - name: cpfusa boundary
@@ -135,6 +150,9 @@ jobs:
         run: ./build/cpfusa safety-case --dir .
 
       - name: cpfusa do178
+        # Same rationale as the iso26262 step above (bare gaps > 0 exit code;
+        # informational gap report against process artifacts this project
+        # does not maintain as separate deliverables).
         run: ./build/cpfusa do178 --dal DAL-B --dir . || true
 
       - name: cpfusa sas
@@ -230,7 +248,7 @@ jobs:
             --output-file coverage.info
 
       - name: Coverage threshold gate
-        run: ./build-cov/cpfusa coverage --profile coverage.info --dal DAL-D || true
+        run: ./build-cov/cpfusa coverage --profile coverage.info --dal DAL-D
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -256,7 +274,7 @@ jobs:
           cmake --build build --parallel
 
       - name: Generate SARIF report
-        run: ./build/cpfusa check --format sarif --output cpfusa.sarif --dir . || true
+        run: ./build/cpfusa check --format sarif --output cpfusa.sarif --dir .
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3

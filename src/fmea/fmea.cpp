@@ -58,6 +58,42 @@ std::vector<std::string> func_failure_modes() {
     return {"Incorrect return value", "Unhandled error", "Buffer overflow", "Race condition"};
 }
 
+// cpp-FuSa-09: real `cause` text per failure-mode category, naming the
+// concrete item so the distinct-value ratio stays high across the report
+// (mirrors the same rationale §1.6.1 rule B already applies to failureMode
+// and effect above — a single hardcoded string per category would itself
+// trip quality::scan_stub002 once >=10 entries share it).
+std::string class_failure_cause(const std::string& fm, const std::string& name) {
+    if (fm == "Incorrect initialisation")
+        return name + "'s constructor(s) may omit initialisation of one or more member "
+                       "variables, leaving the object in an indeterminate state.";
+    if (fm == "State corruption")
+        return name + "'s internal state may be mutated by concurrent or reentrant access "
+                       "without synchronisation or invariant checks.";
+    if (fm == "Memory leak")
+        return name + " may hold a dynamically allocated resource that is not released on "
+                       "every exit path, including exception-unwinding paths.";
+    if (fm == "Exception propagation")
+        return "An exception thrown during construction, destruction, or a member operation "
+               "of " + name + " may not be caught or translated at the intended boundary.";
+    return "Design or implementation defect in " + name + ".";
+}
+std::string func_failure_cause(const std::string& fm, const std::string& name) {
+    if (fm == "Incorrect return value")
+        return name + "() may not validate every input/branch combination, so it can return "
+                       "a value that violates its postcondition.";
+    if (fm == "Unhandled error")
+        return "An error or exception raised by an operation " + name + "() calls may not be "
+               "checked or propagated to the caller.";
+    if (fm == "Buffer overflow")
+        return name + "() may not validate input length or index against the destination "
+                       "buffer's bounds before a read/write.";
+    if (fm == "Race condition")
+        return name + "() may access shared state from multiple threads/ISRs without mutual "
+                       "exclusion or atomic operations.";
+    return "Design or implementation defect in " + name + "().";
+}
+
 struct Declaration {
     std::string kind;   // "class" or "function"
     std::string name;
@@ -138,6 +174,8 @@ Result<FMEAReport> generate(const fs::path& dir, const config::ProjectConfig& cf
             // text genuinely varies per entry rather than repeating one fixed
             // string for every item that shares a failure-mode category.
             e.failure_mode  = fm + " in " + d.name + "()";
+            e.cause = (d.kind == "class") ? class_failure_cause(fm, d.name)
+                                           : func_failure_cause(fm, d.name);
             // Assign default risk values based on failure mode severity.
             if (fm.find("overflow") != std::string::npos ||
                 fm.find("corruption") != std::string::npos) {

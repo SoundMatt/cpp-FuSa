@@ -14,6 +14,7 @@
 #include "testutil/testutil.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <set>
 
 using namespace cpfusa;
 using namespace cpfusa::testutil;
@@ -112,6 +113,41 @@ TEST_CASE("fmea: failureMode embeds the real component name (not one fixed strin
     }
     REQUIRE(alpha_named);
     REQUIRE(beta_named);
+}
+
+// cpp-FuSa-09: every entry must carry a real, non-empty `cause` that varies
+// with the item's identity — not a single hardcoded string reused for every
+// entry (which would itself trip scan_quality's rule B, see below).
+TEST_CASE("fmea: cause is populated and embeds the real component name", "[fmea][fmea009]") {
+    TempDir tmp;
+    tmp.write("src/multi.cpp",
+        "class Alpha { public:\n  void run();\n};\n"
+        "class Beta  { public:\n  void run();\n};\n");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    bool alpha_named = false, beta_named = false;
+    for (auto& e : value_of(r).entries) {
+        REQUIRE_FALSE(e.cause.empty());
+        if (e.cause.find("Alpha") != std::string::npos) alpha_named = true;
+        if (e.cause.find("Beta")  != std::string::npos) beta_named  = true;
+    }
+    REQUIRE(alpha_named);
+    REQUIRE(beta_named);
+}
+
+TEST_CASE("fmea: cause varies across failure-mode categories for the same component",
+          "[fmea][fmea009]") {
+    TempDir tmp;
+    tmp.write("src/x.cpp", "class Widget { public:\n  void draw();\n};\n");
+    config::ProjectConfig cfg;
+    auto r = fmea::generate(tmp.path(), cfg);
+    REQUIRE(is_ok(r));
+    std::set<std::string> distinct_causes;
+    for (const auto& e : value_of(r).entries) distinct_causes.insert(e.cause);
+    // Widget (class) contributes 4 distinct failure-mode categories, so it
+    // must contribute at least 4 distinct causes — not one repeated string.
+    REQUIRE(distinct_causes.size() >= 4);
 }
 
 // ─── §9.2 summary.coveragePct ─────────────────────────────────────────────────

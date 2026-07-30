@@ -1,3 +1,14 @@
+// This fixture file intentionally writes throw-in-destructor / setjmp-longjmp
+// / unsafe-string-fn example snippets (as temp-file *content*, and — for the
+// short single-line cases — as literal text on this file's own source lines)
+// to exercise the corresponding checks. Self-scanning this file for real
+// would misreport every such fixture as a genuine finding in cpp-FuSa's own
+// source, so these three rules are file-suppressed here exactly as LINT001's
+// existing disposition entry (.fusa-dispositions.json) already accepts for
+// the same reason.
+// fusa:file-suppress LINT015
+// fusa:file-suppress LINT017
+// fusa:file-suppress LINT022
 //fusa:test REQ-LINT001
 //fusa:test REQ-LINT002
 //fusa:test REQ-LINT003

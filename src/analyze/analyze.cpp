@@ -6,10 +6,27 @@
 #include <sstream>
 #include <array>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
+#include <vector>
 #ifdef _WIN32
-#  define popen  _popen
-#  define pclose _pclose
+// No <windows.h> include here: this file's Windows branches only ever call
+// the C runtime's own pipe-based process helpers (declared in <cstdio> and
+// <cstdlib>) — no Win32 API is used at all. Pulling in <windows.h> anyway (as
+// an earlier version of this file did) is actively harmful: it #defines a
+// bare `ERROR` macro (via wingdi.h) and, unless NOMINMAX is set first,
+// function-like `min`/`max` macros, and those substitutions apply to the
+// *rest of the translation unit*, not just code guarded by `#ifdef _WIN32` —
+// every later *unconditional* `Severity::ERROR` and `std::min`/`std::max`
+// call in this file broke under MSVC (C2589 "illegal token on right side of
+// '::'": `Severity::ERROR` expands to `Severity::0`, the min/max call
+// expands mid-token). Not including the header at all avoids the whole
+// collision class rather than papering over it with NOMINMAX/
+// WIN32_LEAN_AND_MEAN/#undef guards.
+#else
+#  include <fcntl.h>
+#  include <sys/wait.h>
+#  include <unistd.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -45,21 +62,88 @@ void for_each_source(const fs::path& dir,
     }
 }
 
-// Run a shell command and return its stdout (empty on failure).
-[[nodiscard]] std::string exec_capture(const std::string& cmd) {
-    std::array<char, 256> buf{};
+// Run an external tool as an argv vector WITHOUT a shell, capturing stdout
+// (and, when merge_stderr is set, stderr too). Passing arguments directly to
+// execvp means directory paths and binary names are always literal arguments
+// and can never be interpreted as shell syntax (CWE-78).
+[[nodiscard]] std::string exec_capture(const std::vector<std::string>& args,
+                                       bool merge_stderr = false) {
     std::string result;
-    // NOLINTNEXTLINE(cert-env33-c) — intentional external tool invocation
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) return {};
-    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe.get())) {
-        result += buf.data();
+    if (args.empty()) return result;
+#ifdef _WIN32
+    std::string cmd;
+    for (const auto& a : args) {
+        if (!cmd.empty()) cmd += ' ';
+        cmd += '"';
+        for (char ch : a) { if (ch == '"') cmd += '\\'; cmd += ch; }
+        cmd += '"';
     }
+    if (merge_stderr) cmd += " 2>&1";
+    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
+    if (!pipe) return {};
+    std::array<char, 256> buf{};
+    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe.get()))
+        result += buf.data();
     return result;
+#else
+    int fds[2];
+    if (pipe(fds) != 0) return result;
+    pid_t pid = fork();
+    if (pid < 0) { close(fds[0]); close(fds[1]); return result; }
+    if (pid == 0) {
+        dup2(fds[1], STDOUT_FILENO);
+        if (merge_stderr) {
+            dup2(fds[1], STDERR_FILENO);
+        } else {
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull >= 0) { dup2(devnull, STDERR_FILENO); close(devnull); }
+        }
+        close(fds[0]);
+        close(fds[1]);
+        std::vector<char*> argv;
+        argv.reserve(args.size() + 1);
+        for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
+        _exit(127);
+    }
+    close(fds[1]);
+    std::array<char, 256> buf{};
+    ssize_t n;
+    while ((n = read(fds[0], buf.data(), buf.size())) > 0)
+        result.append(buf.data(), static_cast<size_t>(n));
+    close(fds[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return result;
+#endif
 }
 
 [[nodiscard]] bool tool_available(const std::string& bin) {
-    return std::system(("command -v " + bin + " >/dev/null 2>&1").c_str()) == 0;
+#ifdef _WIN32
+    // Windows-only fallback (no fork/exec API). `bin` is never attacker- or
+    // --dir-controlled: every caller passes AnalyzeOptions::clang_tidy_bin /
+    // cppcheck_bin, which are fixed compile-time default strings
+    // ("clang-tidy"/"cppcheck") with no CLI flag or config key that
+    // overrides them — not the cpp-FuSa-V01/V03 class of defect.
+    std::string cmd = "where \"" + bin + "\" >NUL 2>&1";
+    return std::system(cmd.c_str()) == 0; // fusa:suppress CYBER005
+#else
+    pid_t pid = fork();
+    if (pid < 0) return false;
+    if (pid == 0) {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) { dup2(devnull, STDOUT_FILENO); dup2(devnull, STDERR_FILENO); }
+        execlp("command", "command", "-v", bin.c_str(), static_cast<char*>(nullptr));
+        // 'command' is a shell builtin and may not be an executable; fall back
+        // to trying the tool itself with a harmless probe.
+        execlp(bin.c_str(), bin.c_str(), "--version", static_cast<char*>(nullptr));
+        _exit(127);
+    }
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+#endif
 }
 
 // Lightweight function-body extractor shared by ANAL008/009/012.
@@ -132,12 +216,22 @@ std::vector<Finding> run_clang_tidy(const fs::path& dir, const std::string& bin)
         return out;
     }
 
-    // Run clang-tidy with JSON output on all source files.
-    std::string cmd = bin + " -p " + dir.string()
-                    + " --format-style=none"
-                    + " $(find " + dir.string() + " -name '*.cpp' | head -200)"
-                    + " 2>/dev/null";
-    auto raw = exec_capture(cmd);
+    // Run clang-tidy on all source files. Files are enumerated in-process
+    // (never via a $(find ...) sub-shell) and passed as literal argv entries.
+    std::vector<std::string> args = {bin, "-p", dir.string(), "--format-style=none"};
+    {
+        static const std::regex cpp_re(R"(\.cpp$)");
+        size_t added = 0;
+        for (const auto& entry : fs::recursive_directory_iterator(
+                 dir, fs::directory_options::skip_permission_denied)) {
+            if (added >= 200) break;
+            if (!entry.is_regular_file()) continue;
+            if (!std::regex_search(entry.path().string(), cpp_re)) continue;
+            args.push_back(entry.path().string());
+            ++added;
+        }
+    }
+    auto raw = exec_capture(args);
 
     // Parse diagnostic lines (clang-tidy text format).
     static const std::regex diag_re(R"((.+):(\d+):\d+:\s+(error|warning|note):\s+(.+)\s+\[(.+)\])");
@@ -171,10 +265,11 @@ std::vector<Finding> run_cppcheck(const fs::path& dir, const std::string& bin) {
         return out;
     }
 
-    std::string cmd = bin + " --enable=all --xml --xml-version=2 "
-                    + "--suppress=missingIncludeSystem "
-                    + dir.string() + " 2>&1";
-    auto raw = exec_capture(cmd);
+    std::vector<std::string> args = {bin, "--enable=all", "--xml",
+                                     "--xml-version=2",
+                                     "--suppress=missingIncludeSystem",
+                                     dir.string()};
+    auto raw = exec_capture(args, /*merge_stderr=*/true);
 
     // Parse <error> elements from cppcheck XML output.
     static const std::regex err_re(

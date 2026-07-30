@@ -37,7 +37,7 @@ Finding make_finding() {
     f.column      = 7;
     f.remediation = "Use std::make_unique instead";
     f.category    = "lint";
-    f.standard_id = "MISRA-C++:2023";
+    f.standard_id = "misra-cpp";
     f.clause      = "A18-5-2";
     return f;
 }
@@ -132,7 +132,7 @@ TEST_CASE("render_json: finding has category, standard, clause", "[report][rpt00
     auto j = json::parse(report::render_json({make_finding()}, make_cfg()));
     auto& f = j["findings"][0];
     REQUIRE(f["category"] == "lint");
-    REQUIRE(f["standard"] == "MISRA-C++:2023");
+    REQUIRE(f["standard"] == "misra-cpp");
     REQUIRE(f["clause"]   == "A18-5-2");
 }
 

@@ -14,9 +14,12 @@
 #  define pclose _pclose
 #else
 #  include <sys/wait.h>
+#  include <unistd.h>
+#  include <fcntl.h>
 #endif
 #include <cstring>
 #include <array>
+#include <vector>
 
 namespace fs = std::filesystem;
 using json   = nlohmann::json;
@@ -38,27 +41,13 @@ std::string trim_trailing(std::string s) {
 // temp_directory_path() (wrapping GetTempPathW) and some directory_iterator
 // results always carry a trailing separator on Windows, so every directory
 // path built into a quoted "cd \"...\"" fragment must go through this first.
+#ifdef _WIN32
 std::string strip_trailing_sep(std::string s) {
     while (!s.empty() && (s.back() == '\\' || s.back() == '/'))
         s.pop_back();
     return s;
 }
-
-// Builds a `cd "<dir>" && ` command prefix. On Windows, cmd.exe's `cd`
-// (unlike `pushd` or a real shell's `cd`) does NOT switch drives unless
-// given the `/d` flag -- without it, `cd "C:\...\Temp"` from a process
-// whose working directory is on a different drive (e.g. this repo checked
-// out under D:\) silently no-ops, leaving the subsequent `zip` command
-// running with the WRONG cwd and failing with "zip error: Nothing to do!"
-// because it can't find the file it was asked to add. POSIX shells have no
-// such distinction, so the flag is Windows-only.
-std::string cd_cmd(const std::string& dir) {
-#ifdef _WIN32
-    return "cd /d \"" + strip_trailing_sep(dir) + "\" && ";
-#else
-    return "cd \"" + strip_trailing_sep(dir) + "\" && ";
 #endif
-}
 
 std::string now_iso8601() {
     auto now = std::chrono::system_clock::now();
@@ -77,29 +66,77 @@ struct CmdResult {
     int         exit_code{-1};
 };
 
+#ifdef _WIN32
 CmdResult run_cmd(const std::string& cmd) {
     CmdResult result;
     std::array<char,256> buf{};
-    FILE* pipe = popen(cmd.c_str(), "r");
+    // Windows-only fallback (no fork/exec API): cmd is assembled by
+    // run_argv_cwd above, which quotes every argument individually — this is
+    // not the cpp-FuSa-V03 shell-interpolation defect (that path used
+    // unescaped string concatenation; this one never does).
+    FILE* pipe = popen(cmd.c_str(), "r"); // fusa:suppress CYBER005
     if (!pipe) return result; // exit_code stays -1 — popen itself failed
     while (fgets(buf.data(), static_cast<int>(buf.size()), pipe)) result.output += buf.data();
     int status = pclose(pipe);
     if (status < 0) {
         result.exit_code = -1;
-#ifndef _WIN32
-    } else if (WIFEXITED(status)) {
-        result.exit_code = WEXITSTATUS(status);
-    } else {
-        result.exit_code = -1; // killed/signalled
-#else
     } else {
         result.exit_code = status;
-#endif
     }
     return result;
 }
+#endif
 
-// SHA-256 for manifest entries — reuse a simple implementation.
+// Run `zip` as an argv vector from within working directory `cwd`, WITHOUT a
+// shell. Paths (project_root, --output, evidence names) are passed as literal
+// argv entries so they can never be interpreted as shell syntax (CWE-78).
+// Windows keeps the quoted-shell path (no fork/exec) but at least avoids the
+// `cd &&` metacharacter surface by quoting each argument.
+CmdResult run_argv_cwd(const std::string& cwd,
+                       const std::vector<std::string>& args) {
+    CmdResult result;
+    if (args.empty()) return result;
+#ifdef _WIN32
+    std::string cmd = "cd /d \"" + strip_trailing_sep(cwd) + "\" && ";
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (i) cmd += ' ';
+        cmd += '"';
+        for (char ch : args[i]) { if (ch == '"') cmd += '\\'; cmd += ch; }
+        cmd += '"';
+    }
+    cmd += " 2>&1";
+    return run_cmd(cmd);
+#else
+    int fds[2];
+    if (pipe(fds) != 0) return result;
+    pid_t pid = fork();
+    if (pid < 0) { close(fds[0]); close(fds[1]); return result; }
+    if (pid == 0) {
+        if (chdir(cwd.c_str()) != 0) _exit(127);
+        dup2(fds[1], STDOUT_FILENO);
+        dup2(fds[1], STDERR_FILENO);
+        close(fds[0]);
+        close(fds[1]);
+        std::vector<char*> argv;
+        argv.reserve(args.size() + 1);
+        for (const auto& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+        argv.push_back(nullptr);
+        execvp(argv[0], argv.data());
+        _exit(127);
+    }
+    close(fds[1]);
+    std::array<char, 256> buf{};
+    ssize_t n;
+    while ((n = read(fds[0], buf.data(), buf.size())) > 0)
+        result.output.append(buf.data(), static_cast<size_t>(n));
+    close(fds[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    if (WIFEXITED(status)) result.exit_code = WEXITSTATUS(status);
+    else result.exit_code = -1;
+    return result;
+#endif
+}
 struct SHA256Ctx3 {
     uint32_t state[8];
     uint64_t count;
@@ -215,9 +252,9 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     if (fs::exists(output_path)) fs::remove(output_path);
 
     // Collect files to zip from project_root + the manifest.
-    std::string file_list;
+    std::vector<std::string> present_names;
     for (const auto& info : present) {
-        file_list += " \"" + info.name + "\"";
+        present_names.push_back(info.name);
     }
 
     // When there are no evidence files present, skip this step entirely —
@@ -225,11 +262,9 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     // though that's not a failure; the archive still gets created below
     // when manifest.json is added.
     if (!present.empty()) {
-        std::string zip_cmd = cd_cmd(project_root.string()) + "zip -q \""
-                            + output_path.string() + "\" "
-                            + file_list
-                            + " 2>&1";
-        auto zip_res = run_cmd(zip_cmd);
+        std::vector<std::string> zip_args = {"zip", "-q", output_path.string()};
+        zip_args.insert(zip_args.end(), present_names.begin(), present_names.end());
+        auto zip_res = run_argv_cwd(project_root.string(), zip_args);
         if (zip_res.exit_code != 0) {
             // The system `zip` binary is missing (or failed) — do not fall
             // back to writing a non-ZIP artefact under the requested name
@@ -240,10 +275,9 @@ Result<AuditManifest> pack(const fs::path& project_root, const fs::path& output_
     }
 
     // Add manifest.json (from tmp) into the zip at the root.
-    std::string add_manifest = cd_cmd(fs::temp_directory_path().string()) + "zip -q \""
-                             + output_path.string()
-                             + "\" manifest.json 2>&1";
-    auto manifest_res = run_cmd(add_manifest);
+    auto manifest_res = run_argv_cwd(
+        fs::temp_directory_path().string(),
+        {"zip", "-q", output_path.string(), "manifest.json"});
     if (manifest_res.exit_code != 0) {
         return std::string("failed to add manifest.json to ZIP archive: ")
              + (manifest_res.output.empty() ? "zip command failed" : trim_trailing(manifest_res.output));

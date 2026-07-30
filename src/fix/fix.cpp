@@ -9,52 +9,52 @@ std::vector<FixEntry> catalog() {
     return {
         {
             "LINT001", "Raw new/delete",
-            "Replace raw heap allocation with smart pointers (MISRA A18-5-2).",
+            "Replace raw heap allocation with smart pointers (AUTOSAR A18-5-2).",
             "int* p = new int(42);",
             "auto p = std::make_unique<int>(42);",
-            "MISRA C++:2023 A18-5-2 / AUTOSAR A18-5-2"
+            "AUTOSAR C++14 A18-5-2"
         },
         {
             "LINT002", "goto statement", // fusa:suppress LINT002
-            "Refactor control flow to eliminate goto (MISRA A6-6-1).", // fusa:suppress LINT002
+            "Refactor control flow to eliminate goto (AUTOSAR A6-6-1).", // fusa:suppress LINT002
             "if (err) goto cleanup;", // fusa:suppress LINT002
             "if (err) { cleanup(); return; }",
-            "MISRA C++:2023 A6-6-1"
+            "AUTOSAR C++14 A6-6-1"
         },
         {
             "LINT003", "reinterpret_cast", // fusa:suppress LINT003
-            "Add a fusa:unsafe justification or replace with static_cast (MISRA A5-2-4).", // fusa:suppress LINT003
+            "Add a fusa:unsafe justification or replace with static_cast (AUTOSAR A5-2-4).", // fusa:suppress LINT003
             "auto p = reinterpret_cast<uint8_t*>(ptr);", // fusa:suppress LINT003
             "// fusa:unsafe hardware register access\nauto p = reinterpret_cast<uint8_t*>(ptr);", // fusa:suppress LINT003
-            "MISRA C++:2023 A5-2-4"
+            "AUTOSAR C++14 A5-2-4"
         },
         {
             "LINT004", "abort/exit without safe state",
-            "Transition to safe state before calling abort/exit (MISRA A15-5-3).",
+            "Transition to safe state before calling abort/exit (AUTOSAR A15-5-3).",
             "std::abort();",
             "// fusa:safe-state\nsafe_state_handler();\nstd::abort();",
-            "MISRA C++:2023 A15-5-3"
+            "AUTOSAR C++14 A15-5-3"
         },
         {
             "LINT005", "Global mutable variable",
             "Annotate or make const (AUTOSAR A3-3-2).",
             "int global_counter = 0;",
             "// fusa:shared mutex protected\nint global_counter = 0;",
-            "AUTOSAR A3-3-2"
+            "AUTOSAR C++14 A3-3-2"
         },
         {
             "LINT006", "#define constant",
-            "Replace macro constant with constexpr (MISRA A2-13-1).",
+            "Replace macro constant with constexpr (AUTOSAR A2-13-1).",
             "#define MAX_BUF 256",
             "constexpr int MAX_BUF = 256;",
-            "MISRA C++:2023 A2-13-1"
+            "AUTOSAR C++14 A2-13-1"
         },
         {
             "LINT007", "C-style cast",
-            "Replace with named cast (MISRA A5-2-2).",
+            "Replace with named cast (AUTOSAR A5-2-2).",
             "auto x = (int)value;",
             "auto x = static_cast<int>(value);",
-            "MISRA C++:2023 A5-2-2"
+            "AUTOSAR C++14 A5-2-2"
         },
         {
             "LINT008", "Recursive function",
@@ -66,9 +66,9 @@ std::vector<FixEntry> catalog() {
         {
             "LINT009", "printf/scanf",
             "Replace with type-safe I/O.",
-            "printf(\"%d\\n\", value);",
+            "printf(\"%d\\n\", value);", // fusa:suppress CYBER018 -- catalog example text, not real usage
             "std::cout << value << '\\n';",
-            "MISRA C++:2023 / C++ Core Guidelines"
+            "C++ Core Guidelines" // LINT009 is a cpp-FuSa-specific check; no MISRA/AUTOSAR rule maps to it
         },
         {
             "LINT010", "Missing noexcept",
@@ -80,7 +80,7 @@ std::vector<FixEntry> catalog() {
         {
             "CYBER001", "Unsafe sprintf",
             "Replace sprintf with snprintf or std::format.",
-            "sprintf(buf, \"%s\", input);",
+            "sprintf(buf, \"%s\", input);", // fusa:suppress LINT022 // fusa:suppress CYBER011 // fusa:suppress CYBER018 -- catalog example text, not real usage
             "snprintf(buf, sizeof(buf), \"%s\", input);",
             "CWE-120 / CERT C++ STR50"
         },

@@ -145,6 +145,29 @@ bool apply_quality_gate(const std::vector<Finding>& findings, const fs::path& di
     return gate;
 }
 
+// §4.1 disposition-gated exit code for the primary check/lint/analyze paths.
+// Mirrors apply_quality_gate: an ERROR (or, in strict mode, a WARNING) whose
+// rule carries an Accepted or Deferred disposition entry is suppressed and no
+// longer forces a failing exit. Rejected entries (and un-dispositioned rules)
+// still gate.
+//fusa:req REQ-RPT008 REQ-DISP001
+int gated_exit_code(const std::vector<Finding>& findings, bool strict,
+                    const fs::path& dir) {
+    auto log = disposition::load(dir);
+    for (const auto& f : findings) {
+        bool gates = (f.severity == Severity::ERROR) ||
+                     (strict && f.severity == Severity::WARNING);
+        if (!gates) continue;
+        disposition::Entry e;
+        if (disposition::find_by_rule(log, f.rule_id, e) &&
+            (e.status == disposition::Status::Accepted ||
+             e.status == disposition::Status::Deferred))
+            continue;  // waived — does not gate
+        return 1;
+    }
+    return 0;
+}
+
 } // anonymous namespace
 
 //fusa:req REQ-CLI001 REQ-CLI002 REQ-CLI003 REQ-CLI004 REQ-CLI005 REQ-CLI006 REQ-CLI007 REQ-CLI008 REQ-CLI009 REQ-CLI010 REQ-NF001 REQ-NF002 REQ-NF003
@@ -230,7 +253,7 @@ int run(int argc, char* argv[]) {
         else if (fmt == "sarif") ropts.format = report::Format::SARIF;
         auto wr = report::write_report(findings, cfg, ropts);
         if (!is_ok(wr)) { print_err(error_of(wr)); std::exit(1); }
-        std::exit(report::exit_code(findings, strict_flag));
+        std::exit(gated_exit_code(findings, strict_flag, dir));
     });
 
     // ── lint ──────────────────────────────────────────────────────────────────
@@ -244,7 +267,7 @@ int run(int argc, char* argv[]) {
         auto findings = lint::run(dir, *cfg_opt);
         report::ReportOptions ropts; ropts.strict = lint_strict; ropts.no_color = no_color_flag;
         (void)report::write_report(findings, *cfg_opt, ropts);
-        std::exit(report::exit_code(findings, lint_strict));
+        std::exit(gated_exit_code(findings, lint_strict, dir));
     });
 
     // ── analyze ───────────────────────────────────────────────────────────────
@@ -261,7 +284,7 @@ int run(int argc, char* argv[]) {
         aopts.run_cppcheck   = !no_cppcheck;
         auto findings = analyze::run(dir, *cfg_opt, aopts);
         (void)report::write_report(findings, *cfg_opt, {});
-        std::exit(report::exit_code(findings, false));
+        std::exit(gated_exit_code(findings, false, dir));
     });
 
     // ── cyber ─────────────────────────────────────────────────────────────────
@@ -1364,8 +1387,15 @@ int run(int argc, char* argv[]) {
         fmts["version"] = {"text","json"};
         fmts["qualify"] = {"text","json"};
         j["formats"]    = fmts;
+        // cpp-FuSa-13: reconciled against what `lint` actually stamps onto
+        // Finding.standard_id post cpp-FuSa-06/07 — autosar-cpp14 (A-numbered
+        // AUTOSAR rules) and misra-cpp (M-numbered rules imported from MISRA
+        // C++:2008). No cert-* id is listed: cpp-FuSa does not emit CERT C++
+        // findings (only an incidental CERT rule-number mention inside one
+        // fix-guidance remediation string, which is not a standard_id).
         j["standards"]  = nlohmann::json::array({"iso26262","iec61508","iso21434","do178c",
-                                                   "iec62443","unece-r155","unece-r156","slsa"});
+                                                   "iec62443","unece-r155","unece-r156","slsa",
+                                                   "autosar-cpp14","misra-cpp"});
         std::cout << j.dump(2) << "\n";
     });
 
@@ -1452,7 +1482,7 @@ int run(int argc, char* argv[]) {
         if (ast_fmt == "json")  ropts.format = report::Format::JSON;
         if (!ast_out.empty())   ropts.output  = ast_out;
         (void)report::write_report(findings, *cfg_opt, ropts);
-        std::exit(report::exit_code(findings, false));
+        std::exit(gated_exit_code(findings, false, dir));
     });
 
     // ── comp ──────────────────────────────────────────────────────────────────

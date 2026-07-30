@@ -17,8 +17,16 @@ namespace {
 
 std::string now_iso8601() {
     auto t = std::time(nullptr);
+    std::tm tmv{};
+    // Use the reentrant gmtime variant — std::gmtime shares a static buffer
+    // and is not thread-safe (CWE-676).
+#ifdef _WIN32
+    gmtime_s(&tmv, &t);
+#else
+    gmtime_r(&t, &tmv);
+#endif
     std::ostringstream ss;
-    ss << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%SZ");
+    ss << std::put_time(&tmv, "%Y-%m-%dT%H:%M:%SZ");
     return ss.str();
 }
 

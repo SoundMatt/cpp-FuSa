@@ -1,5 +1,6 @@
 //fusa:req REQ-COMP001
 #include "comp.hpp"
+#include "cpfusa/fusa.hpp"
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -141,7 +142,7 @@ CompReport analyse(const fs::path& dir, const std::string& project, int threshol
 
 void write_json(const fs::path& out, const CompReport& r) {
     json j;
-    j["schemaVersion"]  = "1.9";
+    j["schemaVersion"]  = std::string(SpecVersion);
     j["kind"]           = "comp-report";
     j["tool"]           = "cpp-FuSa";
     j["generatedAt"]    = r.generated_at;

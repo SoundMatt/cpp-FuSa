@@ -14,6 +14,10 @@ namespace {
 
 using Lines = std::vector<std::pair<int, std::string>>; // line_number, content
 
+// Canonical standard ids (§2.4.1 of the x-FuSa spec).
+constexpr const char* kAutosarCpp14 = "autosar-cpp14";
+constexpr const char* kMisraCpp     = "misra-cpp";
+
 // Read all lines from a file.
 [[nodiscard]] Lines read_lines(const fs::path& p) {
     Lines result;
@@ -62,9 +66,24 @@ bool has_safe_state_above(const Lines& lines, int idx) {
     return prev.find("fusa:safe-state") != std::string::npos;
 }
 
+// Builds a Finding and stamps it with its canonical standard id (§2.4.1).
+// Every check_* function funnels its Finding construction through this so
+// production lint output always carries a real `standard_id` — see
+// cpp-FuSa-06/07: AUTOSAR-C++14 rules are "A"-numbered, MISRA-C++:2008
+// rules (imported into the AUTOSAR C++14 guideline set, and also cited
+// bare as "Rule N-N-N") are "M"-numbered; neither family is MISRA C++:2023.
+Finding make_finding(std::string rule_id, Severity sev, std::string msg,
+                     std::string file, int line, std::string remediation,
+                     std::string standard_id) {
+    Finding f{std::move(rule_id), sev, std::move(msg), std::move(file), line,
+              std::move(remediation), "lint"};
+    f.standard_id = std::move(standard_id);
+    return f;
+}
+
 } // anonymous namespace
 
-// LINT001 – Raw new/delete usage (MISRA C++:2023 A18-5-2) //fusa:req REQ-LINT001
+// LINT001 – Raw new/delete usage (AUTOSAR C++14 A18-5-2) //fusa:req REQ-LINT001
 std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
     std::vector<Finding> out;
     // Matches `new` or `delete` as standalone keywords (not part of identifiers).
@@ -79,16 +98,16 @@ std::vector<Finding> check_raw_new_delete(const fs::path& dir) {
             // Skip comment lines.
             auto trimmed = line.find_first_not_of(" \t");
             if (trimmed != std::string::npos && line[trimmed] == '/') continue;
-            out.push_back({"LINT001", Severity::WARNING,
-                           "Raw new/delete usage — prefer std::make_unique / std::make_shared",
+            out.push_back(make_finding("LINT001", Severity::WARNING,
+                           "Raw new/delete usage — prefer std::make_unique / std::make_shared (AUTOSAR C++14 A18-5-2)",
                            fs::relative(p, dir).generic_string(), n,
-                           "Replace with smart pointer factory or container", "lint"});
+                           "Replace with smart pointer factory or container", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT002 – goto statement (MISRA C++:2023 A6-6-1) //fusa:req REQ-LINT002
+// LINT002 – goto statement (AUTOSAR C++14 A6-6-1) //fusa:req REQ-LINT002
 std::vector<Finding> check_goto(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bgoto\b)");
@@ -101,17 +120,17 @@ std::vector<Finding> check_goto(const fs::path& dir) {
             if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             if (std::regex_search(line, allow_str)) continue;
             if (std::regex_search(line, pat)) {
-                out.push_back({"LINT002", Severity::ERROR,
-                               "goto statement is prohibited (MISRA C++ A6-6-1)", // fusa:suppress LINT002
+                out.push_back(make_finding("LINT002", Severity::ERROR,
+                               "goto statement is prohibited (AUTOSAR C++14 A6-6-1)", // fusa:suppress LINT002
                                fs::relative(p, dir).generic_string(), n,
-                               "Refactor control flow using structured constructs", "lint"});
+                               "Refactor control flow using structured constructs", kAutosarCpp14));
             }
         }
     });
     return out;
 }
 
-// LINT003 – reinterpret_cast without justification (MISRA C++:2023 A5-2-4) //fusa:req REQ-LINT003
+// LINT003 – reinterpret_cast without justification (AUTOSAR C++14 A5-2-4) //fusa:req REQ-LINT003
 std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\breinterpret_cast\b)");
@@ -129,17 +148,17 @@ std::vector<Finding> check_reinterpret_cast(const fs::path& dir) {
             bool justified = line.find("fusa:unsafe") != std::string::npos
                           || (i > 0 && lines[i-1].second.find("fusa:unsafe") != std::string::npos);
             if (!justified) {
-                out.push_back({"LINT003", Severity::WARNING,
-                               "reinterpret_cast without justification (MISRA A5-2-4)", // fusa:suppress LINT003
+                out.push_back(make_finding("LINT003", Severity::WARNING,
+                               "reinterpret_cast without justification (AUTOSAR C++14 A5-2-4)", // fusa:suppress LINT003
                                fs::relative(p, dir).generic_string(), n,
-                               "Add // fusa:unsafe <justification> comment above or inline", "lint"});
+                               "Add // fusa:unsafe <justification> comment above or inline", kAutosarCpp14));
             }
         }
     });
     return out;
 }
 
-// LINT004 – abort()/exit() without safe-state transition (MISRA C++:2023 A15-5-3) //fusa:req REQ-LINT004
+// LINT004 – abort()/exit() without safe-state transition (AUTOSAR C++14 A15-5-3) //fusa:req REQ-LINT004
 std::vector<Finding> check_abort_exit(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(std::abort|::abort|abort|std::exit|::exit|exit|_Exit|quick_exit)\s*\()");
@@ -155,17 +174,17 @@ std::vector<Finding> check_abort_exit(const fs::path& dir) {
             if (trimmed != std::string::npos && line[trimmed] == '/') continue;
             if (!std::regex_search(line, pat)) continue;
             if (!has_safe_state_above(lines, i)) {
-                out.push_back({"LINT004", Severity::ERROR,
-                               "abort()/exit() without preceding safe-state transition",
+                out.push_back(make_finding("LINT004", Severity::ERROR,
+                               "abort()/exit() without preceding safe-state transition (AUTOSAR C++14 A15-5-3)",
                                fs::relative(p, dir).generic_string(), n,
-                               "Add // fusa:safe-state comment and call safe-state handler before abort", "lint"});
+                               "Add // fusa:safe-state comment and call safe-state handler before abort", kAutosarCpp14));
             }
         }
     });
     return out;
 }
 
-// LINT005 – Global mutable variable without sync annotation (AUTOSAR A3-3-2) //fusa:req REQ-LINT005
+// LINT005 – Global mutable variable without sync annotation (AUTOSAR C++14 A3-3-2) //fusa:req REQ-LINT005
 std::vector<Finding> check_global_mutable(const fs::path& dir) {
     std::vector<Finding> out;
     // Heuristic: non-const, non-static-local variable at file scope.
@@ -179,16 +198,16 @@ std::vector<Finding> check_global_mutable(const fs::path& dir) {
             if (!std::regex_search(line, pat)) continue;
             if (std::regex_search(line, const_pat)) continue;
             if (line.find("fusa:shared") != std::string::npos) continue;
-            out.push_back({"LINT005", Severity::WARNING,
-                           "Global mutable variable without synchronisation annotation (AUTOSAR A3-3-2)",
+            out.push_back(make_finding("LINT005", Severity::WARNING,
+                           "Global mutable variable without synchronisation annotation (AUTOSAR C++14 A3-3-2)",
                            fs::relative(p, dir).generic_string(), n,
-                           "Mark with // fusa:shared or make const/constexpr/thread_local", "lint"});
+                           "Mark with // fusa:shared or make const/constexpr/thread_local", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT006 – #define used for numeric/string constant (MISRA C++:2023 A2-13-1) //fusa:req REQ-LINT006
+// LINT006 – #define used for numeric/string constant (AUTOSAR C++14 A2-13-1) //fusa:req REQ-LINT006
 std::vector<Finding> check_define_constant(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(^\s*#\s*define\s+\w+\s+[\d"'.])");
@@ -196,17 +215,17 @@ std::vector<Finding> check_define_constant(const fs::path& dir) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT006")) continue;
             if (std::regex_search(line, pat)) {
-                out.push_back({"LINT006", Severity::WARNING,
-                               "#define used for constant — prefer constexpr (MISRA A2-13-1)",
+                out.push_back(make_finding("LINT006", Severity::WARNING,
+                               "#define used for constant — prefer constexpr (AUTOSAR C++14 A2-13-1)",
                                fs::relative(p, dir).generic_string(), n,
-                               "Replace #define with constexpr variable", "lint"});
+                               "Replace #define with constexpr variable", kAutosarCpp14));
             }
         }
     });
     return out;
 }
 
-// LINT007 – C-style cast (MISRA C++:2023 A5-2-2) //fusa:req REQ-LINT007
+// LINT007 – C-style cast (AUTOSAR C++14 A5-2-2) //fusa:req REQ-LINT007
 std::vector<Finding> check_c_style_cast(const fs::path& dir) {
     std::vector<Finding> out;
     // Matches (type)expr patterns — avoids false-positives on function calls.
@@ -218,17 +237,17 @@ std::vector<Finding> check_c_style_cast(const fs::path& dir) {
             if (suppressed(line, "LINT007")) continue;
             if (std::regex_search(line, in_str)) continue;
             if (std::regex_search(line, pat)) {
-                out.push_back({"LINT007", Severity::WARNING,
-                               "C-style cast detected — use static_cast/reinterpret_cast/const_cast (MISRA A5-2-2)", // fusa:suppress LINT003
+                out.push_back(make_finding("LINT007", Severity::WARNING,
+                               "C-style cast detected — use static_cast/reinterpret_cast/const_cast (AUTOSAR C++14 A5-2-2)", // fusa:suppress LINT003
                                fs::relative(p, dir).generic_string(), n,
-                               "Replace with appropriate named cast", "lint"});
+                               "Replace with appropriate named cast", kAutosarCpp14));
             }
         }
     });
     return out;
 }
 
-// LINT008 – Recursive function (MISRA C++:2023 A7-1-1 / JSF++ 119) //fusa:req REQ-LINT008
+// LINT008 – Recursive function (AUTOSAR C++14 A7-1-1 / JSF++ 119) //fusa:req REQ-LINT008
 std::vector<Finding> check_recursion(const fs::path& dir) {
     std::vector<Finding> out;
     // Heuristic: find function definitions then check if they call themselves.
@@ -268,10 +287,10 @@ std::vector<Finding> check_recursion(const fs::path& dir) {
                 auto pos = sc_match.position();
                 bool qualified = pos >= 1 && (line[pos-1] == '.' || line[pos-1] == ':');
                 if (!qualified) {
-                    out.push_back({"LINT008", Severity::WARNING,
-                                   "Recursive call to '" + current_fn + "' — add depth-bound guard (JSF++ 119)",
+                    out.push_back(make_finding("LINT008", Severity::WARNING,
+                                   "Recursive call to '" + current_fn + "' — add depth-bound guard (AUTOSAR C++14 A7-1-1 / JSF++ 119)",
                                    fs::relative(p, dir).generic_string(), n,
-                                   "Add // fusa:recursive <max-depth> annotation or refactor iteratively", "lint"});
+                                   "Add // fusa:recursive <max-depth> annotation or refactor iteratively", kAutosarCpp14));
                 }
             }
         }
@@ -279,7 +298,9 @@ std::vector<Finding> check_recursion(const fs::path& dir) {
     return out;
 }
 
-// LINT009 – printf/scanf family usage (type-unsafe I/O) //fusa:req REQ-LINT009
+// LINT009 – printf/scanf family usage (type-unsafe I/O) — cpp-FuSa custom
+// rule, not derived from a MISRA/AUTOSAR clause, so no standard_id is set.
+//fusa:req REQ-LINT009
 std::vector<Finding> check_printf(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(
@@ -303,7 +324,9 @@ std::vector<Finding> check_printf(const fs::path& dir) {
     return out;
 }
 
-// LINT010 – Function throwing exceptions without noexcept or documented spec //fusa:req REQ-LINT010
+// LINT010 – Function throwing exceptions without noexcept or documented spec
+// — cpp-FuSa custom rule, not derived from a MISRA/AUTOSAR clause, so no
+// standard_id is set. //fusa:req REQ-LINT010
 std::vector<Finding> check_exception_spec(const fs::path& dir) {
     std::vector<Finding> out;
     // Look for function definitions that might throw but have no noexcept.
@@ -334,9 +357,11 @@ std::vector<Finding> check_exception_spec(const fs::path& dir) {
     return out;
 }
 
-// ── MISRA C++:2023 extended rules — LINT011–030 ───────────────────────────────
+// ── AUTOSAR C++14-guideline extended rules — LINT011–030 ──────────────────────
+// (individually A-numbered = AUTOSAR-authored, or M-numbered = imported
+// verbatim from MISRA C++:2008 — see cpp-FuSa-07)
 
-// LINT011 – NULL used instead of nullptr (MISRA C++:2023 M4-10-2) //fusa:req REQ-LINT011
+// LINT011 – NULL used instead of nullptr (MISRA C++:2008 M4-10-2) //fusa:req REQ-LINT011
 std::vector<Finding> check_null_literal(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bNULL\b)");
@@ -349,16 +374,16 @@ std::vector<Finding> check_null_literal(const fs::path& dir) {
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, in_str)) continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT011", Severity::WARNING,
-                    "NULL used — prefer nullptr (MISRA C++:2023 M4-10-2)",
+                out.push_back(make_finding("LINT011", Severity::WARNING,
+                    "NULL used — prefer nullptr (MISRA C++:2008 M4-10-2)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace NULL with nullptr", "lint"});
+                    "Replace NULL with nullptr", kMisraCpp));
         }
     });
     return out;
 }
 
-// LINT012 – Virtual function override missing override/final specifier (MISRA C++:2023 A10-3-2) //fusa:req REQ-LINT012
+// LINT012 – Virtual function override missing override/final specifier (AUTOSAR C++14 A10-3-2) //fusa:req REQ-LINT012
 std::vector<Finding> check_missing_override(const fs::path& dir) {
     std::vector<Finding> out;
     // Heuristic: `virtual` function declaration without override, final, or = 0.
@@ -372,49 +397,54 @@ std::vector<Finding> check_missing_override(const fs::path& dir) {
             if (t != std::string::npos && line[t] == '/') continue;
             if (!std::regex_search(line, virt)) continue;
             if (std::regex_search(line, ok_re)) continue;
-            out.push_back({"LINT012", Severity::WARNING,
-                "Virtual function without override/final/= 0 (MISRA C++:2023 A10-3-2)",
+            out.push_back(make_finding("LINT012", Severity::WARNING,
+                "Virtual function without override/final/= 0 (AUTOSAR C++14 A10-3-2)",
                 fs::relative(p, dir).generic_string(), n,
-                "Add 'override' or 'final' to the overriding function declaration", "lint"});
+                "Add 'override' or 'final' to the overriding function declaration", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT013 – switch without default case (MISRA C++:2023 M6-4-6) //fusa:req REQ-LINT013
+// LINT013 – switch without default case (MISRA C++:2008 M6-4-6) //fusa:req REQ-LINT013
 std::vector<Finding> check_switch_default(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex sw_re(R"(\bswitch\s*\()");
     static const std::regex def_re(R"(\bdefault\s*:)");
+    // Scans forward from the switch statement's own line for a default: case
+    // before the switch's enclosing braces close. A structured early-return
+    // (not goto — LINT002 prohibits goto, including in this tool's own
+    // source) breaks out of the nested char/line loops the moment the
+    // closing brace count goes negative.
+    auto has_default_ahead = [](const Lines& lines, int i) {
+        int depth = 0;
+        for (int j = i; j < static_cast<int>(lines.size()) && j < i + 200; ++j) {
+            const auto& body = lines[j].second;
+            for (char c : body) {
+                if (c == '{') ++depth;
+                if (c == '}') { --depth; if (depth < 0) return false; }
+            }
+            if (std::regex_search(body, def_re)) return true;
+        }
+        return false;
+    };
     for_each_source(dir, [&](const fs::path& p, const Lines& lines) {
         if (file_suppressed(lines, "LINT013")) return;
         for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
             const auto& [n, line] = lines[i];
             if (suppressed(line, "LINT013")) continue;
             if (!std::regex_search(line, sw_re)) continue;
-            // Scan ahead for closing brace, check for default.
-            bool found_default = false;
-            int depth = 0;
-            for (int j = i; j < static_cast<int>(lines.size()) && j < i + 200; ++j) {
-                const auto& body = lines[j].second;
-                for (char c : body) {
-                    if (c == '{') ++depth;
-                    if (c == '}') { --depth; if (depth < 0) goto done; }
-                }
-                if (std::regex_search(body, def_re)) { found_default = true; break; }
-            }
-            done:
-            if (!found_default)
-                out.push_back({"LINT013", Severity::WARNING,
-                    "switch statement without default case (MISRA C++:2023 M6-4-6)",
+            if (!has_default_ahead(lines, i))
+                out.push_back(make_finding("LINT013", Severity::WARNING,
+                    "switch statement without default case (MISRA C++:2008 M6-4-6)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Add a default: case (even if just a comment or assertion)", "lint"});
+                    "Add a default: case (even if just a comment or assertion)", kMisraCpp));
         }
     });
     return out;
 }
 
-// LINT014 – Empty catch block (MISRA C++:2023 M15-3-4) //fusa:req REQ-LINT014
+// LINT014 – Empty catch block (MISRA C++:2008 M15-3-4) //fusa:req REQ-LINT014
 std::vector<Finding> check_empty_catch(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bcatch\s*\([^)]*\)\s*\{\s*\})");
@@ -423,16 +453,16 @@ std::vector<Finding> check_empty_catch(const fs::path& dir) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT014")) continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT014", Severity::WARNING,
-                    "Empty catch block silently swallows exceptions (MISRA C++:2023 M15-3-4)",
+                out.push_back(make_finding("LINT014", Severity::WARNING,
+                    "Empty catch block silently swallows exceptions (MISRA C++:2008 M15-3-4)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Log, re-throw, or document why the exception is intentionally suppressed", "lint"});
+                    "Log, re-throw, or document why the exception is intentionally suppressed", kMisraCpp));
         }
     });
     return out;
 }
 
-// LINT015 – throw in destructor (MISRA C++:2023 M15-5-1) //fusa:req REQ-LINT015
+// LINT015 – throw in destructor (MISRA C++:2008 M15-5-1) //fusa:req REQ-LINT015
 //
 // Scope tracking: `depth` counts braces from the destructor's own opening
 // brace. It resets to 0 (closing the destructor's scope) purely from
@@ -458,17 +488,17 @@ std::vector<Finding> check_throw_in_destructor(const fs::path& dir) {
                     if (c == '}') { --depth; if (depth <= 0) in_dtor = false; }
                 }
                 if (!suppressed(line, "LINT015") && std::regex_search(line, throw_re))
-                    out.push_back({"LINT015", Severity::ERROR,
-                        "throw in destructor may call std::terminate (MISRA C++:2023 M15-5-1)",
+                    out.push_back(make_finding("LINT015", Severity::ERROR,
+                        "throw in destructor may call std::terminate (MISRA C++:2008 M15-5-1)",
                         fs::relative(p, dir).generic_string(), n,
-                        "Destructors must be noexcept; catch internally or use error flags", "lint"});
+                        "Destructors must be noexcept; catch internally or use error flags", kMisraCpp));
             }
         }
     });
     return out;
 }
 
-// LINT016 – Function-like macro (MISRA C++:2023 A16-0-1) //fusa:req REQ-LINT016
+// LINT016 – Function-like macro (AUTOSAR C++14 A16-0-1) //fusa:req REQ-LINT016
 std::vector<Finding> check_function_like_macro(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(^\s*#\s*define\s+\w+\s*\()");
@@ -477,16 +507,16 @@ std::vector<Finding> check_function_like_macro(const fs::path& dir) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT016")) continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT016", Severity::WARNING,
-                    "Function-like macro — use inline function or constexpr (MISRA C++:2023 A16-0-1)",
+                out.push_back(make_finding("LINT016", Severity::WARNING,
+                    "Function-like macro — use inline function or constexpr (AUTOSAR C++14 A16-0-1)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace with a constexpr function or template", "lint"});
+                    "Replace with a constexpr function or template", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT017 – setjmp/longjmp usage (MISRA C++:2023 A15-1-2) //fusa:req REQ-LINT017
+// LINT017 – setjmp/longjmp usage (AUTOSAR C++14 A15-1-2) //fusa:req REQ-LINT017
 std::vector<Finding> check_setjmp(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(setjmp|longjmp|_setjmp|siglongjmp)\s*\()");
@@ -497,16 +527,16 @@ std::vector<Finding> check_setjmp(const fs::path& dir) {
             auto t = line.find_first_not_of(" \t");
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT017", Severity::ERROR,
-                    "setjmp/longjmp bypasses C++ destructors and exception handling (MISRA C++:2023 A15-1-2)",
+                out.push_back(make_finding("LINT017", Severity::ERROR,
+                    "setjmp/longjmp bypasses C++ destructors and exception handling (AUTOSAR C++14 A15-1-2)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace with C++ exception handling or RAII", "lint"});
+                    "Replace with C++ exception handling or RAII", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT018 – dynamic_cast usage (MISRA C++:2023 A5-2-3) //fusa:req REQ-LINT018
+// LINT018 – dynamic_cast usage (AUTOSAR C++14 A5-2-3) //fusa:req REQ-LINT018
 std::vector<Finding> check_dynamic_cast(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bdynamic_cast\s*<)");
@@ -517,16 +547,16 @@ std::vector<Finding> check_dynamic_cast(const fs::path& dir) {
             auto t = line.find_first_not_of(" \t");
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT018", Severity::WARNING,
-                    "dynamic_cast may return nullptr at runtime — prefer design without RTTI (MISRA C++:2023 A5-2-3)",
+                out.push_back(make_finding("LINT018", Severity::WARNING,
+                    "dynamic_cast may return nullptr at runtime — prefer design without RTTI (AUTOSAR C++14 A5-2-3)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Redesign with virtual functions or std::variant; annotate with // fusa:suppress LINT018 if intentional", "lint"});
+                    "Redesign with virtual functions or std::variant; annotate with // fusa:suppress LINT018 if intentional", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT019 – union usage (MISRA C++:2023 A9-5-1) //fusa:req REQ-LINT019
+// LINT019 – union usage (AUTOSAR C++14 A9-5-1) //fusa:req REQ-LINT019
 std::vector<Finding> check_union(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bunion\s+\w)");
@@ -539,16 +569,16 @@ std::vector<Finding> check_union(const fs::path& dir) {
             if (t != std::string::npos && line[t] == '/') continue;
             if (!std::regex_search(line, pat)) continue;
             if (std::regex_search(line, allow_re)) continue;
-            out.push_back({"LINT019", Severity::WARNING,
-                "union usage — prefer std::variant for type-safe discriminated union (MISRA C++:2023 A9-5-1)",
+            out.push_back(make_finding("LINT019", Severity::WARNING,
+                "union usage — prefer std::variant for type-safe discriminated union (AUTOSAR C++14 A9-5-1)",
                 fs::relative(p, dir).generic_string(), n,
-                "Replace with std::variant<...>", "lint"});
+                "Replace with std::variant<...>", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT020 – volatile without justification (MISRA C++:2023 A2-11-1) //fusa:req REQ-LINT020
+// LINT020 – volatile without justification (AUTOSAR C++14 A2-11-1) //fusa:req REQ-LINT020
 std::vector<Finding> check_volatile(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\bvolatile\b)");
@@ -561,16 +591,16 @@ std::vector<Finding> check_volatile(const fs::path& dir) {
             if (t != std::string::npos && line[t] == '/') continue;
             if (!std::regex_search(line, pat)) continue;
             if (std::regex_search(line, ok_re)) continue;
-            out.push_back({"LINT020", Severity::WARNING,
-                "volatile without justification — document hardware/ISR necessity (MISRA C++:2023 A2-11-1)",
+            out.push_back(make_finding("LINT020", Severity::WARNING,
+                "volatile without justification — document hardware/ISR necessity (AUTOSAR C++14 A2-11-1)",
                 fs::relative(p, dir).generic_string(), n,
-                "Add // fusa:volatile <reason> annotation, or replace with std::atomic", "lint"});
+                "Add // fusa:volatile <reason> annotation, or replace with std::atomic", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT021 – variadic function (...) (MISRA C++:2023 A8-4-1) //fusa:req REQ-LINT021
+// LINT021 – variadic function (...) (AUTOSAR C++14 A8-4-1) //fusa:req REQ-LINT021
 std::vector<Finding> check_variadic(const fs::path& dir) {
     std::vector<Finding> out;
     // Match function param lists containing `...` (but not in template packs or catch clauses).
@@ -584,16 +614,16 @@ std::vector<Finding> check_variadic(const fs::path& dir) {
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, catch_re)) continue;
             if (std::regex_search(line, fn_va))
-                out.push_back({"LINT021", Severity::WARNING,
-                    "Variadic function parameter (...) is not type-safe (MISRA C++:2023 A8-4-1)",
+                out.push_back(make_finding("LINT021", Severity::WARNING,
+                    "Variadic function parameter (...) is not type-safe (AUTOSAR C++14 A8-4-1)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace with variadic templates or std::initializer_list", "lint"});
+                    "Replace with variadic templates or std::initializer_list", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT022 – unsafe C string functions (MISRA C++:2023 A27-0-1) //fusa:req REQ-LINT022
+// LINT022 – unsafe C string functions (AUTOSAR C++14 A27-0-1) //fusa:req REQ-LINT022
 std::vector<Finding> check_unsafe_string_fn(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(strcpy|strcat|gets|sprintf|wcscpy|wcscat)\s*\()");
@@ -604,16 +634,16 @@ std::vector<Finding> check_unsafe_string_fn(const fs::path& dir) {
             auto t = line.find_first_not_of(" \t");
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT022", Severity::ERROR,
-                    "Unsafe C string function — buffer overflow risk (MISRA C++:2023 A27-0-1 / CWE-120)",
+                out.push_back(make_finding("LINT022", Severity::ERROR,
+                    "Unsafe C string function — buffer overflow risk (AUTOSAR C++14 A27-0-1 / CWE-120)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Use std::string, std::string_view, or bounded equivalents (strncpy_s, strlcpy)", "lint"});
+                    "Use std::string, std::string_view, or bounded equivalents (strncpy_s, strlcpy)", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT023 – atoi/atof unsafe numeric conversion (MISRA C++:2023 A27-0-2) //fusa:req REQ-LINT023
+// LINT023 – atoi/atof unsafe numeric conversion (AUTOSAR C++14 A27-0-2) //fusa:req REQ-LINT023
 std::vector<Finding> check_unsafe_numeric_conv(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(atoi|atof|atol|atoll)\s*\()");
@@ -624,16 +654,16 @@ std::vector<Finding> check_unsafe_numeric_conv(const fs::path& dir) {
             auto t = line.find_first_not_of(" \t");
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT023", Severity::WARNING,
-                    "atoi/atof provides no error detection on invalid input (MISRA C++:2023 A27-0-2)",
+                out.push_back(make_finding("LINT023", Severity::WARNING,
+                    "atoi/atof provides no error detection on invalid input (AUTOSAR C++14 A27-0-2)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Use std::stoi/std::stof with exception handling, or std::from_chars", "lint"});
+                    "Use std::stoi/std::stof with exception handling, or std::from_chars", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT024 – missing braces on single-statement control flow (MISRA C++:2023 M6-3-1) //fusa:req REQ-LINT024
+// LINT024 – missing braces on single-statement control flow (MISRA C++:2008 M6-3-1) //fusa:req REQ-LINT024
 std::vector<Finding> check_missing_braces(const fs::path& dir) {
     std::vector<Finding> out;
     // Match if/for/while/else followed by a non-brace, non-comment continuation.
@@ -650,10 +680,10 @@ std::vector<Finding> check_missing_braces(const fs::path& dir) {
                 auto t = next.find_first_not_of(" \t");
                 if (t == std::string::npos) continue;
                 if (next[t] != '{')
-                    out.push_back({"LINT024", Severity::WARNING,
-                        "Control-flow statement without braces (MISRA C++:2023 M6-3-1)",
+                    out.push_back(make_finding("LINT024", Severity::WARNING,
+                        "Control-flow statement without braces (MISRA C++:2008 M6-3-1)",
                         fs::relative(p, dir).generic_string(), n,
-                        "Add braces {} to the body to prevent dangling-else and accidental scope issues", "lint"});
+                        "Add braces {} to the body to prevent dangling-else and accidental scope issues", kMisraCpp));
                 break;
             }
         }
@@ -661,7 +691,7 @@ std::vector<Finding> check_missing_braces(const fs::path& dir) {
     return out;
 }
 
-// LINT025 – errno usage (MISRA C++:2023 A19-3-1) //fusa:req REQ-LINT025
+// LINT025 – errno usage (AUTOSAR C++14 A19-3-1) //fusa:req REQ-LINT025
 std::vector<Finding> check_errno(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\berrno\b)");
@@ -674,16 +704,16 @@ std::vector<Finding> check_errno(const fs::path& dir) {
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, in_str)) continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT025", Severity::WARNING,
-                    "errno usage — thread-unsafe and fragile error detection (MISRA C++:2023 A19-3-1)",
+                out.push_back(make_finding("LINT025", Severity::WARNING,
+                    "errno usage — thread-unsafe and fragile error detection (AUTOSAR C++14 A19-3-1)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Use POSIX error-return codes, std::error_code, or exceptions instead", "lint"});
+                    "Use POSIX error-return codes, std::error_code, or exceptions instead", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT026 – deprecated C library headers (MISRA C++:2023 M17-0-5) //fusa:req REQ-LINT026
+// LINT026 – deprecated C library headers (MISRA C++:2008 M17-0-5) //fusa:req REQ-LINT026
 std::vector<Finding> check_c_headers(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(
@@ -693,16 +723,16 @@ std::vector<Finding> check_c_headers(const fs::path& dir) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT026")) continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT026", Severity::WARNING,
-                    "Deprecated C library header included — use C++ equivalent (MISRA C++:2023 M17-0-5)",
+                out.push_back(make_finding("LINT026", Severity::WARNING,
+                    "Deprecated C library header included — use C++ equivalent (MISRA C++:2008 M17-0-5)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace <stdio.h> with <cstdio>, <string.h> with <cstring>, etc.", "lint"});
+                    "Replace <stdio.h> with <cstdio>, <string.h> with <cstring>, etc.", kMisraCpp));
         }
     });
     return out;
 }
 
-// LINT027 – #undef usage (MISRA C++:2023 M16-0-3) //fusa:req REQ-LINT027
+// LINT027 – #undef usage (MISRA C++:2008 M16-0-3) //fusa:req REQ-LINT027
 std::vector<Finding> check_undef(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(^\s*#\s*undef\b)");
@@ -711,16 +741,16 @@ std::vector<Finding> check_undef(const fs::path& dir) {
         for (const auto& [n, line] : lines) {
             if (suppressed(line, "LINT027")) continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT027", Severity::WARNING,
-                    "#undef alters the macro namespace unpredictably (MISRA C++:2023 M16-0-3)",
+                out.push_back(make_finding("LINT027", Severity::WARNING,
+                    "#undef alters the macro namespace unpredictably (MISRA C++:2008 M16-0-3)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Scope constants with namespaces or constexpr instead of macro redefinition", "lint"});
+                    "Scope constants with namespaces or constexpr instead of macro redefinition", kMisraCpp));
         }
     });
     return out;
 }
 
-// LINT028 – asm/inline assembly (MISRA C++:2023 A7-4-1) //fusa:req REQ-LINT028
+// LINT028 – asm/inline assembly (AUTOSAR C++14 A7-4-1) //fusa:req REQ-LINT028
 std::vector<Finding> check_asm(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex pat(R"(\b(__asm__|asm|__asm)\s*[\({"])");
@@ -731,16 +761,16 @@ std::vector<Finding> check_asm(const fs::path& dir) {
             auto t = line.find_first_not_of(" \t");
             if (t != std::string::npos && line[t] == '/') continue;
             if (std::regex_search(line, pat))
-                out.push_back({"LINT028", Severity::WARNING,
-                    "Inline assembly reduces portability and verifiability (MISRA C++:2023 A7-4-1)",
+                out.push_back(make_finding("LINT028", Severity::WARNING,
+                    "Inline assembly reduces portability and verifiability (AUTOSAR C++14 A7-4-1)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace with compiler intrinsics, std::atomic, or platform abstraction layer", "lint"});
+                    "Replace with compiler intrinsics, std::atomic, or platform abstraction layer", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT029 – magic number literals (MISRA C++:2023 A2-13-4) //fusa:req REQ-LINT029
+// LINT029 – magic number literals (AUTOSAR C++14 A2-13-4) //fusa:req REQ-LINT029
 std::vector<Finding> check_magic_numbers(const fs::path& dir) {
     std::vector<Finding> out;
     // Flag integer literals > 1 (i.e. not 0 or 1) that appear in expressions,
@@ -757,16 +787,16 @@ std::vector<Finding> check_magic_numbers(const fs::path& dir) {
             if (std::regex_search(line, decl_re)) continue; // skip named constants
             if (std::regex_search(line, arr_re)) continue;  // skip array size declarations
             if (std::regex_search(line, lit_re))
-                out.push_back({"LINT029", Severity::INFO,
-                    "Magic number literal — prefer named constant (MISRA C++:2023 A2-13-4)",
+                out.push_back(make_finding("LINT029", Severity::INFO,
+                    "Magic number literal — prefer named constant (AUTOSAR C++14 A2-13-4)",
                     fs::relative(p, dir).generic_string(), n,
-                    "Replace with a constexpr named constant to document intent", "lint"});
+                    "Replace with a constexpr named constant to document intent", kAutosarCpp14));
         }
     });
     return out;
 }
 
-// LINT030 – missing include guard or #pragma once in header (MISRA C++:2023 M16-2-1) //fusa:req REQ-LINT030
+// LINT030 – missing include guard or #pragma once in header (MISRA C++:2008 M16-2-1) //fusa:req REQ-LINT030
 std::vector<Finding> check_include_guard(const fs::path& dir) {
     std::vector<Finding> out;
     static const std::regex hdr_ext(R"(\.(hpp|h|hxx|hh)$)");
@@ -781,15 +811,15 @@ std::vector<Finding> check_include_guard(const fs::path& dir) {
         std::string content((std::istreambuf_iterator<char>(f)), {});
         if (std::regex_search(content, pragma_re)) continue;
         if (std::regex_search(content, guard_re))  continue;
-        out.push_back({"LINT030", Severity::WARNING,
-            "Header file missing include guard or #pragma once (MISRA C++:2023 M16-2-1)",
+        out.push_back(make_finding("LINT030", Severity::WARNING,
+            "Header file missing include guard or #pragma once (MISRA C++:2008 M16-2-1)",
             fs::relative(entry.path(), dir).generic_string(), 1,
-            "Add '#pragma once' at the top of the header", "lint"});
+            "Add '#pragma once' at the top of the header", kMisraCpp));
     }
     return out;
 }
 
-// LINT031 – float/double literal in == or != comparison (MISRA C++:2023 Rule 6-2-2)
+// LINT031 – float/double literal in == or != comparison (MISRA C++:2008 Rule 6-2-2)
 //fusa:req REQ-LINT031
 std::vector<Finding> check_float_equality(const fs::path& dir) {
     std::vector<Finding> out;
@@ -811,10 +841,10 @@ std::vector<Finding> check_float_equality(const fs::path& dir) {
             if (line.find("// fusa:suppress LINT031") != std::string::npos) continue;
             auto code = line.substr(0, line.find("//"));
             if (std::regex_search(code, float_eq_re)) {
-                out.push_back({"LINT031", Severity::WARNING,
-                    "Float/double literal compared with == or != (MISRA C++:2023 Rule 6-2-2) — use epsilon comparison",
+                out.push_back(make_finding("LINT031", Severity::WARNING,
+                    "Float/double literal compared with == or != (MISRA C++:2008 Rule 6-2-2) — use epsilon comparison",
                     fs::relative(entry.path(), dir).generic_string(), lineno,
-                    "Replace 'x == 3.14' with 'std::abs(x - 3.14) < eps'", "lint"});
+                    "Replace 'x == 3.14' with 'std::abs(x - 3.14) < eps'", kMisraCpp));
             }
         }
     }
